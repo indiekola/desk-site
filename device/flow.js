@@ -113,7 +113,8 @@ const Flow = (() => {
     });
   }
   const start = from => post("/analyze", from ? { from } : {});
-  const cancel = () => post("/analyze/cancel");
+  // only the cancel key calls this (never a key press, a hover or a page event); why goes to the bridge's log
+  const cancel = (why = "key") => post("/analyze/cancel", { why });
   const changes = () => fetch("/analyze/changes").then(r => r.json()).catch(() => ({ changed: false }));
   // "undo all": the bridge puts back every change BUILD made, from its journal (build.py Builder.undo_all)
   const undo = () => post("/undo");

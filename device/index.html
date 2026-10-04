@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Desk · demo</title>
-<link rel="stylesheet" href="design.css?v=86016cb6b5aa">
+<link rel="stylesheet" href="design.css?v=ad5af09c9248">
 <style>
 /* Desk device page — the strip is the real height of a Max for Live device in Live (169 px) */
 /* sizes, radii, type and motion tokens: design.css (from Figma, product/figma/SPEC.md) */
@@ -229,12 +229,12 @@ if(/[?&]embed\b/.test(location.search))document.documentElement.classList.add("e
   <section class="v"><h2>Desk · device</h2><p>Modules in their colours with two meaning knobs each — drag a module by its name strip to reorder, tap the strip to bypass it (white = bypassed). A half or black dot next to a knob = its plugin is only partly or not supported (hover for details). The master is the square XY pad; loudness on the right; MINE · BYPASS · FULL keys: hold = hear it while held, click = switch on, click again = off. Pushing a knob past its end leans the module into the bottom corner on that side. Six modules per level: more wait on the levels above and below, whose edges peek at the top and bottom of the device — ↑ ↓ on the left, Page Up / Page Down or a click on a peeking strip switch levels, drag a module up or down to move it to another level.</p>
     <div class="scroll"><div class="dev" id="M2"></div></div></section>
 </main>
-<script src="demo.js?v=86016cb6b5aa"></script>
-<script src="design.js?v=86016cb6b5aa"></script>
-<script src="glyphs.js?v=86016cb6b5aa"></script>
-<script src="controls.js?v=86016cb6b5aa"></script>
+<script src="demo.js?v=ad5af09c9248"></script>
+<script src="design.js?v=ad5af09c9248"></script>
+<script src="glyphs.js?v=ad5af09c9248"></script>
+<script src="controls.js?v=ad5af09c9248"></script>
 <script>DeskDemo.attach();</script>
-<script src="flow.js?v=86016cb6b5aa"></script>
+<script src="flow.js?v=ad5af09c9248"></script>
 <script>
 let LOOK={}; // module colours for this project: colorsFor() in design.js
 const st={knobs:{},list:[],strips:[],subs:{}};
@@ -527,7 +527,9 @@ function buildDevice(id){const host=document.getElementById(id);host.className="
   b.append(lv,mt,loudBlock(),c);
   // the ANALYZE work layer covers everything right of the left column (Figma start / progress)
   FLOW.layer=Flow.layer();b.append(FLOW.layer.el);FLOW.layer.el.hidden=FLOW.state==="ready"||FLOW.state==="reveal";flowKey();
-  const x=side.querySelector(".x");x.onclick=()=>{if(FLOW.state==="analysing")Flow.cancel();else if(FLOW.state==="error"&&FLOW.analyzed)backToDesk();};
+  const x=side.querySelector(".x");x.onclick=()=>{if(FLOW.state==="analysing")Flow.cancel("key");else if(FLOW.state==="error"&&FLOW.analyzed)backToDesk();};
+  // Space is Live's play key: pressed while the device has focus it must start the song, never press the cancel key
+  x.addEventListener("keydown",e=>{if(e.key===" ")e.preventDefault();});x.addEventListener("keyup",e=>{if(e.key===" ")e.preventDefault();});
   Desk.info(x,()=>FLOW.state==="analysing"?["Cancel",FLOW.buildMode==="apply"?"Stops now. Anything BUILD already changed is put back.":"Stops now. Nothing has been changed in the set."]:["Back to your desk","The analysis stopped; your desk is as it was."]);
   let at=L.cur;if(!buildDevice.once){buildDevice.once=1;try{at=+localStorage.getItem("nc.level")||0;}catch(e){}}L.cur=-1;L.go(at,false);
   // device width = the left column + six module slots + the fixed blocks; measured again once the font has loaded (Mono is wider)
@@ -545,7 +547,7 @@ const RMQ=matchMedia("(prefers-reduced-motion: reduce)").matches;
 // transport for animated icons: poll Live once a second only while some frame is animated
 // ── ANALYZE flow (product/flow.md; step copy and the work layer in flow.js). States: empty · analysing · reveal ·
 // ready, plus error (the log stays with RETRY). Nothing turns, and MINE / BYPASS stay off, until READY.
-const FLOW={state:"empty",analyzed:false,landing:new Set(),layer:null,err:null,msg:"",changed:null,loudOn:true,buildMode:"plan",undo:{available:false,changes:0},undoing:false};
+const FLOW={state:"empty",starting:false,following:false,refused:null,analyzed:false,landing:new Set(),layer:null,err:null,msg:"",changed:null,loudOn:true,buildMode:"plan",undo:{available:false,changes:0},undoing:false};
 function setFlow(s){FLOW.state=s;document.body.dataset.flow=s;document.body.classList.toggle("ready",s==="ready");document.body.classList.toggle("unbuilt",!FLOW.analyzed);document.body.classList.toggle("analyzed",FLOW.analyzed);
   document.querySelectorAll("#M2 .side .again").forEach(b=>b.setAttribute("aria-disabled",s!=="ready"));
   if(FLOW.layer)flowKey();if(s==="empty")Desk.infoState(...INFO_EMPTY());if(s==="ready")Desk.infoState("","");}
@@ -564,14 +566,30 @@ function flowKey(){const F=FLOW.layer,k=F.key;
     Desk.info(k,()=>FLOW.state==="error"?[FLOW.err.title,FLOW.err.text]:INFO_EMPTY());}
   Desk.infoRefresh(k);}
 function backToDesk(){showLayer(false);FLOW.err=null;setFlow("ready");}
-function showLayer(on){const w=FLOW.layer.el;if(on){w.hidden=false;if(!RMQ){w.classList.add("out");requestAnimationFrame(()=>requestAnimationFrame(()=>w.classList.remove("out")));}}
+// the fade-in needs no animation frame: a page Live does not repaint (device out of view) runs no frames, and a layer
+// left at .out would stay invisible and let clicks through (pointer-events none)
+function showLayer(on){const w=FLOW.layer.el;if(on){w.hidden=false;if(!RMQ){w.classList.add("out");void w.offsetWidth;w.classList.remove("out");}}
   else{w.classList.add("out");setTimeout(()=>{w.hidden=true;w.classList.remove("out");},RMQ?0:MOTION.fast);}}
-function run(from){if(FLOW.state==="analysing")return;setMine(false);
-  Flow.start(from).then(r=>{if(!r.ok){const e=r.error||{};FLOW.msg=e.code==="bypassed"?"modules bypassed \u00b7 switch bp off":"";
-      Desk.infoState(e.title||"Can't analyze now",e.text||"");if(FLOW.state!=="ready")flowKey();say("analyze: "+(e.code||"refused"));return;}
-    FLOW.err=null;FLOW.msg="";setFlow("analysing");if(FLOW.layer.el.hidden)showLayer(true);say("analyzing");follow();})
-  .catch(()=>{say("bridge offline");Desk.infoState("Bridge offline","Desk can't reach its bridge right now (it may be restarting). Nothing was started and nothing changed: press again in a moment.");});}
-function follow(){Flow.follow(fs=>{FLOW.layer.draw(fs);const i=Flow.stepInfo(fs,FLOW.analyzed);if(i)Desk.infoState(...i);}).then(done);}
+// ANALYZE / RETRY / re-analyze. The bridge may take a few seconds to answer (it lets queued knob moves land and brings
+// bypassed modules back first), so a second press meanwhile is ignored; MINE / BYPASS / module switches already on their
+// way are sent first (keyQ). A run the bridge already has (started before this page loaded) is followed, not refused.
+function run(from){if(FLOW.state==="analysing"||FLOW.starting)return;FLOW.starting=true;FLOW.refused=null;setMine(false);
+  keyQ.then(()=>Flow.start(from)).then(r=>{FLOW.starting=false;
+    if(!r.ok&&(r.error||{}).code==="running"){attach();return;}
+    if(!r.ok){const e=r.error||{};FLOW.msg=e.code==="bypassed"?"modules bypassed \u00b7 switch bp off":"";
+      const why=FLOW.refused=[e.title||"Can't analyze now",e.text||""];Desk.infoState(...why);setTimeout(()=>{if(FLOW.refused===why)FLOW.refused=null;},8000);
+      document.querySelectorAll("#M2 .side .again").forEach(b=>Desk.infoRefresh(b));   // shown even with the pointer on the key
+      if(FLOW.state!=="ready")flowKey();say("analyze: "+(e.code||"refused"));return;}
+    bypassCleared();attach();})
+  .catch(()=>{FLOW.starting=false;say("bridge offline");Desk.infoState("Bridge offline","Desk can't reach its bridge right now (it may be restarting). Nothing was started and nothing changed: press again in a moment.");});}
+function attach(){FLOW.err=null;FLOW.msg="";setFlow("analysing");if(FLOW.layer.el.hidden)showLayer(true);say("analyzing");follow();}
+// the bridge switched every bypassed module back on before READ (server.py _precheck): the keys and tiles say so
+function bypassCleared(){VIEW.byp=false;MOD_OFF.clear();document.body.classList.remove("alloff");
+  document.querySelectorAll(".ky.k-byp").forEach(b=>b.setAttribute("aria-pressed",false));
+  document.querySelectorAll("#M2 .t.off").forEach(t=>{t.classList.remove("off");t.querySelector(".nm")?.setAttribute("aria-pressed",false);});}
+// one poll loop at a time, whoever asks (a press, a page that loads into a running analysis)
+function follow(){if(FLOW.following)return;FLOW.following=true;
+  Flow.follow(fs=>{FLOW.layer.draw(fs);const i=Flow.stepInfo(fs,FLOW.analyzed);if(i)Desk.infoState(...i);}).then(fs=>{FLOW.following=false;done(fs);});}
 function done(fs){
   if(fs.undo)FLOW.undo=fs.undo;
   if(fs.state==="done"){FLOW.analyzed=true;const hold=fs.summary&&fs.summary.applied?APPLIED_HOLD:0;
@@ -590,16 +608,19 @@ function done(fs){
     setTimeout(()=>{if(FLOW.state==="empty"&&/cancelled/.test(FLOW.msg)){FLOW.msg="";flowKey();}},4000);return;}
   const e=fs.error||{code:"error",step:"read",title:"Analysis stopped",text:""};say("analyze stopped: "+e.code);
   if(e.code==="notracks"){FLOW.msg="no tracks with clips yet";FLOW.err=null;setFlow("empty");Desk.infoState(e.title,e.text);return;}
-  FLOW.err={...e,retry:["live","error"].includes(e.code)};setFlow("error");Desk.infoState(e.title,e.text+(FLOW.analyzed?"\nEsc returns to your desk.":""));}
+  FLOW.err={...e,retry:["live","error"].includes(e.code)};
+  if(!FLOW.err.retry)FLOW.msg="stopped at "+(e.step||"read");   // never the plain LET'S START after a run: say it stopped
+  setFlow("error");Desk.infoState(e.title,e.text+(FLOW.analyzed?"\nEsc returns to your desk.":""));}
+// Esc only leaves an error for the desk. A running analysis stops on the cancel key alone: no key press, hover, scroll,
+// resize or reload of the page stops it (the founder, 2026-10-04: "analysis stops at any rustle").
 addEventListener("keydown",e=>{if(e.key!=="Escape")return;
-  if(FLOW.state==="analysing"){e.preventDefault();Flow.cancel();}
-  else if(FLOW.state==="error"&&FLOW.analyzed)backToDesk();});
+  if(FLOW.state==="error"&&FLOW.analyzed)backToDesk();});
 // No UNDO key in the device (founder, 2026-10-04): Live's own Undo (Cmd/Ctrl+Z) takes BUILD's changes back. The bridge's
 // journal and POST /undo stay as an internal safety net (no control here).
 const APPLIED_HOLD=900;   // ms the finished panel (all steps done, "N changes" bottom right) stays before the reveal
 // re-analyze (left column): live once the desk is built; a dot when the set changed since the analysis
 function againButton(b){
-  Desk.info(b,()=>FLOW.state!=="ready"?["Re-analyze","Available once the desk is built."]:FLOW.changed?["Set changed · "+FLOW.changed.what,FLOW.changed.why+"\nClick to re-analyze."]:
+  Desk.info(b,()=>FLOW.state!=="ready"?["Re-analyze","Available once the desk is built."]:FLOW.refused?FLOW.refused:FLOW.changed?["Set changed · "+FLOW.changed.what,FLOW.changed.why+"\nClick to re-analyze."]:
     ["Re-analyze","Reads the set again and rebuilds the desk from how it sounds now: the new MINE is the current sound. Takes 10–40 s; CANCEL stops it."]);
   b.addEventListener("click",()=>{if(FLOW.state==="ready")run();});b.classList.toggle("changed",!!FLOW.changed);}
 function pollChanges(){if(FLOW.state==="ready"&&FLOW.analyzed&&!document.hidden)Flow.changes().then(c=>{FLOW.changed=c.changed?c:null;
