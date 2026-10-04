@@ -1,0 +1,208 @@
+/* Desk by Volume Attack — design rules, shared by the device (compact.html), the full view (v2.html) and the labs.
+   Change a value here and every view follows. Values come from the Figma file (product/figma/SPEC.md, 2026-10-04):
+   where Figma and older notes disagree, Figma wins. Motion is the one thing kept from before. */
+/* Spline Sans Mono (captions, numbers in captions) + Spline Sans (big values): OFL (tools/knobs/fonts-ofl/OFL.txt),
+   founder's choice 2026-10-04, replacing GT America Mono everywhere */
+@font-face{font-family:"Spline Sans Mono";src:url("../fonts-ofl/SplineSansMono.ttf") format("truetype");font-weight:300 700;font-display:swap}
+@font-face{font-family:"Spline Sans";src:url("../fonts-ofl/SplineSans.ttf") format("truetype");font-weight:300 700;font-display:swap}
+:root{
+  /* ink: black and white only; one grey for secondary marks, one for "switched off" */
+  --ink:#000;--bg:#fff;--grey:#999;--off-line:#999;--dev:#f2f2f2;--knob:#000;--dot:#fff;
+  /* theme layer: what changes with the theme. ink (text on modules, knobs, keys) and the module colours never change;
+     the device surface, the page, text on the device surface, the label pill and switched-off modules do.
+     #666 (--ghost) = "present but not playing" on a black knob or key (a bypassed module's dot, the MINE ghost). */
+  --page:#fff;--fg:#000;--pill:#ddd;--ghost:#666;--dead:#b9b9b9;
+  --warn:#ff4d00;   /* warnings (true peak above −1 dBTP), Figma 16:2492 */
+  --fg-2:color-mix(in srgb,var(--fg) 50%,var(--page));  /* secondary text: readable on the page in every theme */
+  --ring:var(--bg);   /* the active ring inside knobs, pad and keys */
+  --off:var(--pill);  /* a bypassed module (or everything under BYPASS) takes the label pill's grey, in every theme */
+  /* module colours (also in design.js for the scripts) */
+  --c-master:#c8c8c8;--c-drums:#ffd200;--c-bass:#2b6cff;--c-vocal:#ff4800;--c-backing:#ffaad4;--c-guitars:#00b67a;--c-pad:#add5ff;--c-brass:#ff9b00;
+  --c-lead:#ff6390;--c-fx:#54e3d0;
+  /* type (Figma): captions Spline Sans Mono 10 / 12 uppercase, no tracking; values Spline Sans 24 / 24, lining figures */
+  --font:"Spline Sans Mono",ui-monospace,monospace;--font-num:"Spline Sans",system-ui,sans-serif;--cap:10px;--track:0;
+  /* shape (Figma 15-2254, re-read 2026-10-04): the device is square; modules, pad, MINE / BP keys, start / progress panels
+     4 · the hover pill 10 (a round end on 20 px) · the left column (bolt, re-analyze, cancel, level pill) 12 = round discs */
+  --cs:round;--r-dev:0px;--r-mod:4px;--r-pill:10px;--r-key:12px;
+  /* sizes (Figma): 4 px gap and padding, left column 24, module 51 (35 px knobs), master 161, loudness 106, keys 51 */
+  --g:4px;--col:24px;--tile:51px;--kz:35px;--pad-s:161px;--ld-w:106px;--keys-w:51px;
+  /* motion: 160 small cues · 260 ease-out for touch responses · 460 ease-in-out for mode switches */
+  /* the same numbers for scripts: MOTION in design.js */
+  --m-fast:160ms;--m:260ms;--m-slow:460ms;--e-out:cubic-bezier(.2,.8,.2,1);--e-io:cubic-bezier(.45,0,.2,1);
+}
+*{box-sizing:border-box;font-weight:400}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+/* a switched-off (bypassed) module: white, with a 1 px grey line so it reads on white and on grey alike */
+.is-off{background:var(--off)!important;border-color:var(--off-line)!important}
+.cap{font:400 var(--cap)/1.25 var(--font);text-transform:uppercase;letter-spacing:var(--track)}
+/* plugin-support card and the dot's enlarged hit zone (24 × 24 px) */
+.hit{cursor:help}
+.hit::before{content:"";position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px}
+/* the card reads as sentences: sentence case (the one exception to all-caps captions), headline in caps */
+.tip{position:fixed;z-index:30;max-width:260px;background:var(--knob);color:var(--dot);border-radius:var(--r-mod);corner-shape:var(--cs);padding:10px 12px;font:400 var(--cap)/1.55 var(--font);pointer-events:none}
+.tip .hd{font-size:var(--cap);text-transform:uppercase;letter-spacing:var(--track);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.tip .ls{margin:0 0 8px;display:grid;gap:3px}.tip .ls div{display:flex;align-items:center;gap:6px}
+.tip .sd{flex:none;width:8px;height:8px;border-radius:50%;border:1px solid var(--dot)}
+.tip .sd.partial{background:linear-gradient(90deg,var(--dot) 50%,transparent 50%)}.tip .sd.none{background:var(--dot)}
+.tip p{margin:0 0 6px}.tip p:last-child{margin:0}
+.tip .do{padding-top:6px;border-top:1px solid #444}
+.logo{width:1.25em;height:1.25em;vertical-align:-.25em;flex:none}
+/* bypass mark: the circle stays, the bar turns — tilted / = processing on, upright | = bypassed (pressed key, switched-off module) */
+.bar{transform-box:view-box;transform-origin:center;transform:rotate(45deg);transition:transform var(--m) var(--e-out)}
+[aria-pressed="true"] .bar,.off .bar,.bypassed .bar{transform:none}
+@media (prefers-reduced-motion:reduce){.bar{transition:none}}
+/* active ring (knob being turned, pad being pressed, key on or held): a real 2 px white line 1 px inside the edge,
+   radius 1 px smaller than the host so it runs exactly parallel to the corners; the 1 px ink outside is the host itself.
+   Hosts set --ring-r (default: circle) and --ring-cs (corner shape, default round); the page decides when it shows. */
+.ring::after{content:"";position:absolute;inset:1px;border:2px solid var(--ring);border-radius:var(--ring-r,50%);corner-shape:var(--ring-cs,round);
+  opacity:0;pointer-events:none;transition:opacity var(--m-fast) var(--e-out)}
+/* anything that tilts in 3D (tiltOn marks it with data-tz): its own layer and a transparent 1 px outline, so the
+   browser antialiases the edges and rounded corners while it is transformed instead of drawing them jagged */
+[data-tz]{backface-visibility:hidden;outline:1px solid transparent}
+/* anything that tilts, zooms or is carried keeps its own layer: the browser moves the rendered layer instead of
+   re-drawing it every frame, so text inside (key captions, module names, MASTER) glides instead of jumping a pixel */
+[data-tz],.hz,.sc .t,.mt{will-change:transform,scale,translate,rotate}
+
+/* ── motion system (both views). One property per job, so nothing fights:
+   transform = press tilt (tiltOn) · scale = hover zoom · translate/rotate = drag · .arm rotate / .d scale = knob value.
+   Hover zoom (.hz): grows a touch under the mouse, back to 100 % while pressed or turned; never during another
+   gesture; amount per element via --hz (sized so nothing reaches a neighbour or an edge). */
+.hz{transition:scale var(--m-fast) var(--e-out),transform var(--m) var(--e-out)}
+@media (hover:hover) and (prefers-reduced-motion:no-preference){.hz:hover{scale:var(--hz,1.04)}}
+.hz:active,.hz.active,.hz:has(.active),body:is(.dragx,.turning,.dragging) .hz:not(.active):not(:has(.active)){scale:1}
+/* knob (.dz on the dial): only the disc, its dot and its ring zoom — the scale ticks around it stay put. The disc is
+   drawn by ::before so the dial element itself (which holds the ticks) never scales on hover. */
+.dz{background:none!important}
+.dz::before{content:"";position:absolute;inset:0;border-radius:50%;background:var(--knob)}
+.dz::before,.dz>.arm,.dz::after{transition:scale var(--m-fast) var(--e-out),opacity var(--m-fast) var(--e-out)}
+@media (hover:hover) and (prefers-reduced-motion:no-preference){.dz:hover::before,.dz:hover>.arm,.dz:hover::after{scale:var(--hz,1.06)}}
+:is(.active,.turning,.dragx,.dragging) .dz::before,:is(.active,.turning,.dragx,.dragging) .dz>.arm,:is(.active,.turning,.dragx,.dragging) .dz::after{scale:1}
+/* key icons on hover: MINE's lower-left ↔ upper-right ray grows a little (and stays while hovered) · BYPASS's bar stands up (when processing is on) ·
+   FULL's title bar slides down to the mirrored line (y 5.72 → 14.28) */
+.ray,.fl{transform-box:view-box;transform-origin:center}
+.ray,.fl{transition:transform var(--m) var(--e-out)}
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  .ky:not([aria-pressed="true"]):hover .bar{transform:none}
+  .ky:hover .ray{transform:scale(1.2)}
+  .ky:hover .fl{transform:translateY(8.5556px)}
+}
+/* a knob's value while it changes: written in place of its MINE star in pure ink, swapped instantly (no fade) */
+.mk .v{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;font:400 var(--cap)/12px var(--font);letter-spacing:var(--track);
+  font-variant-numeric:tabular-nums;color:var(--ink);display:none}
+.mk.sv svg{visibility:hidden}.mk.sv .v{display:block}
+/* Info View stand-in for the browser prototype (inside Live the text goes to Live's own Info View) */
+.infov{position:fixed;left:16px;bottom:16px;z-index:29;width:240px;min-height:72px;padding:8px 10px;background:var(--dev);color:var(--fg);
+  border-radius:var(--r-mod,15px);corner-shape:var(--cs);font:400 var(--cap)/12px var(--font);pointer-events:none}
+.infov[hidden]{display:none}
+.infov b{display:block;text-transform:uppercase;letter-spacing:var(--track);margin-bottom:4px}
+.infov p{margin:0;white-space:pre-line}
+/* a knob whose plugin is only partly (half dot) or not at all (solid dot) under control: the support dot takes the MINE
+   star's place above the knob, at the same centre; hover or tap it for the card. The value still replaces it while
+   the knob turns. Both views (.sp mini, .sup full). */
+.mk.has-sp svg{display:none!important}
+/* 1 px larger than the dot on the knob (--dot-d: 5 px mini, 8 px full → 6 / 9 px), centred where the star's centre is */
+.mk :is(.sp,.sup){--sp-d:calc(var(--dot-d,5px) + 1px);position:absolute;left:50%;top:50%;width:var(--sp-d);height:var(--sp-d);
+  margin:calc(var(--sp-d) / -2) 0 0 calc(var(--sp-d) / -2);right:auto;pointer-events:auto}
+.mk.sv :is(.sp,.sup){visibility:hidden}
+/* MINE on: nothing on a module or the master can change, so knobs and pad don't react to the pointer at all */
+body.mine :is(.kn,.mt,.k,.xy){pointer-events:none}
+body.mine .mk :is(.sp,.sup){pointer-events:auto}
+/* Themes, in two modes.
+   Desk mode (default): Desk's own palette and look — "desk-light" (the values above) and "desk-dark".
+   Live mode ("system"): everything follows Ableton — the module colours come from the set's tracks and the interface
+   from Live's theme: device surface = Live's surface; knob, pad and key bodies = Live's display (LCD) background,
+   marks on them = Live's display foreground, active ring = Live's selection colour (live.colors: surface_bg,
+   lcd_bg, lcd_control_fg, selection) — the dark device displays keep the crisp contrast of Desk's black. The four presets approximate Live 12's
+   built-in themes for the browser prototype; in the device the real values come from Live (live.colors), so custom
+   Live themes work too. Switch: L = mode, T = theme within the mode, or ?mode=desk|live&theme=<name>. */
+[data-theme="desk-dark"]{--page:#111;--dev:#1d1d1d;--pill:#2f2f2f;--fg:#ededed;--off-line:#4a4a4a;--grey:#777;--knob:#000;--dot:#fff;--ghost:#444}
+[data-theme="light"]{--page:#d9d9d9;--dev:#c4c4c4;--pill:#b3b3b3;--fg:#111;--off-line:#8a8a8a;
+  --knob:#141414;--dot:#f2f2f2;--ring:#ffa52c}
+[data-theme="mid-light"]{--page:#9e9e9e;--dev:#afafaf;--pill:#9b9b9b;--fg:#111;--off-line:#7a7a7a;
+  --knob:#141414;--dot:#f2f2f2;--ring:#ffa52c}
+[data-theme="mid-dark"]{--page:#3e3e3e;--dev:#4a4a4a;--pill:#5c5c5c;--fg:#ececec;--off-line:#6a6a6a;--grey:#8a8a8a;
+  --knob:#111;--dot:#ececec;--ring:#ffa52c}
+[data-theme="dark"]{--page:#1e1e1e;--dev:#2b2b2b;--pill:#3c3c3c;--fg:#e6e6e6;--off-line:#555;--grey:#7a7a7a;
+  --knob:#0e0e0e;--dot:#e8e8e8;--ring:#ffa52c}
+/* Live look: everything the theme does not send is derived from what it sends, so a custom Live theme (window.deskTheme)
+   moves every colour of the device except the module colours: ghost / bypassed dot = 40 % of the dot on the knob
+   (Figma #666 on black), a dead knob and the bypassed-module line from the knob and the surface. */
+:is([data-theme="light"],[data-theme="mid-light"],[data-theme="mid-dark"],[data-theme="dark"]){--ghost:color-mix(in srgb,var(--dot) 40%,var(--knob));
+  --dead:color-mix(in srgb,var(--knob) 30%,var(--dev));--off-line:color-mix(in srgb,var(--fg) 35%,var(--dev));--grey:color-mix(in srgb,var(--fg) 45%,var(--pill))}
+
+/* ── ANALYZE flow (flow.js, product/flow.md; Figma "start" 15:2123 and "progress" 15:1860): the work layer covers
+   everything right of the left column. START = one black panel (4 px black border, radius 4) with the recording icon
+   and LET'S START; PROGRESS = one grey panel: six steps on top, a fill in a module colour from the left, what the step
+   found (bottom left) and the count (bottom right). */
+.work{position:absolute;inset:var(--g);display:flex;z-index:4;transition:opacity var(--m-fast) var(--e-out)}
+.work[hidden]{display:none}
+.work.out{opacity:0;pointer-events:none}
+.go{appearance:none;flex:1 1 auto;min-width:0;height:100%;border:4px solid var(--knob);border-radius:var(--r-mod);corner-shape:var(--cs);background:var(--knob);color:var(--dot);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;padding:8px;font:400 var(--cap)/12px var(--font);text-transform:uppercase;letter-spacing:var(--track);
+  position:relative;--ring-r:max(0px,calc(var(--r-mod) - 5px));--ring-cs:var(--cs);transition:background-color var(--m-slow) var(--e-io),color var(--m-slow) var(--e-io)}
+.go[hidden]{display:none}
+.go svg{width:20px;height:20px;flex:none}
+.go .kl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.go:active::after,.go:focus-visible::after{opacity:1}
+/* PROGRESS (Figma 15:1860): grey panel, radius 4, padding 8 top and sides, 4 at the
+   bottom; steps on top, the 32 px bottom row at the bottom. --p (0…100) = how far the run is: the fill's width, and the
+   clip of the ink copy of the content (.over) so text on the module colour is Figma's black in every theme while text
+   on the panel takes the theme's text colour. --p is registered so the fill and the clip ease together (260 ms). */
+@property --p{syntax:"<number>";inherits:true;initial-value:0}
+.prog{flex:1 1 auto;min-width:0;height:100%;position:relative;overflow:hidden;background:var(--pill);border-radius:var(--r-mod);corner-shape:var(--cs);
+  font:400 var(--cap)/12px var(--font);text-transform:uppercase;letter-spacing:var(--track);color:var(--fg);--p:0;transition:--p var(--m) var(--e-out)}
+.prog[hidden]{display:none}
+.prog .fill{position:absolute;left:0;top:0;bottom:0;width:calc(var(--p) * 1%);background:var(--c-drums);transition:background-color var(--m-slow) var(--e-io)}
+.prog .pc{position:absolute;inset:0;padding:8px 8px 4px;display:flex;flex-direction:column;justify-content:space-between}
+.prog .pc.over{color:var(--ink);clip-path:inset(0 calc(100% - var(--p) * 1%) 0 0);pointer-events:none}
+.prog .steps,.prog .foot{position:relative;display:flex;justify-content:space-between;align-items:center;white-space:nowrap}
+/* bottom row (Figma 15:2180): 32 px high, bottom-aligned. Left: the big module count (Spline Sans 27, line 32, lining
+   figures), 8 px, then a 24 px column 4 px down: "modules" (Spline Sans 7.74 / 12, lower case) over the module marks
+   (8 px shapes in 12 px cells, 2 apart). Before ROLES knows the modules: the step's finding in caption type. Right: the
+   big seconds, 4 px, "sec" at the top of the same 24 px column; finished with BUILD applied: the changes, "changes". */
+.prog .foot{height:32px;align-items:flex-end;font-variant-numeric:tabular-nums}
+.prog .found{overflow:hidden;text-overflow:ellipsis;min-width:0;margin-right:8px;align-self:center}
+.prog .found[hidden],.prog .mods[hidden]{display:none}
+.prog :is(.mods,.count){display:flex;align-items:center;height:32px}
+.prog .mods{gap:8px}.prog .count{gap:4px}
+.prog .n{font:400 27px/32px var(--font-num);font-variant-numeric:lining-nums proportional-nums;font-feature-settings:"lnum" 1,"pnum" 1;text-transform:none;letter-spacing:0}
+.prog .u{font:400 7.74px/12px var(--font-num);text-transform:none;letter-spacing:0;white-space:nowrap;position:relative;top:-2px}  /* Chromium sets 7.74 px type 2 px lower in its 12 px line than Figma: measured, nudged back */
+.prog .mu,.prog .count .u{display:flex;flex-direction:column;justify-content:flex-start;height:24px}
+.prog .mk{display:flex;gap:2px;height:12px}
+.prog .mk svg{width:8px;height:8px;margin:2px;flex:none;fill:currentColor;overflow:visible}
+.st{display:flex;align-items:center;gap:8px}
+/* marks (Figma Frame 38): a 12 px cell, circle r 4.5 with a 1 px line; filled = finished, ring = to come, breathing =
+   now, square = failed */
+.st .m{width:12px;height:12px;flex:none;fill:none;stroke:currentColor}
+.st.done .m circle,.st.fail .m circle{fill:currentColor}
+.st.cur .m circle{animation:breathe 920ms var(--e-io) infinite alternate}   /* a breath, not a spinner: the count is the progress */
+@keyframes breathe{from{fill:transparent}to{fill:currentColor}}
+.st .m rect{display:none}.st.fail .m circle{display:none}.st.fail .m rect{display:inline;fill:currentColor}
+/* re-analyze key (left column): live once the desk is built; a 5 px ink dot when the set changed since the analysis */
+.side .again{position:relative}
+.side .again .chg{position:absolute;right:-1px;top:-1px;width:5px;height:5px;border-radius:50%;background:var(--fg);opacity:0;scale:.4;
+  transition:opacity var(--m) var(--e-out),scale var(--m) var(--e-out)}
+.side .again.changed .chg{opacity:1;scale:1}
+@media (prefers-reduced-motion:reduce){
+  .work,.go,.prog,.prog .fill,.side .again .chg{transition:none!important}
+  .st.cur .m circle{animation:none;fill:currentColor;opacity:.5}
+}
+
+/* ── native feel (CLAUDE.md "no web artifacts inside the device"): one block for the mini view, ?embed and the labs.
+   Nothing may give away that the device is a web page: no scrollbars, no text selection or I-beam, no browser focus
+   ring (only Desk's own :focus-visible below), no tap highlight, no overscroll / rubber band, no pinch or double-tap zoom,
+   no image or link drag ghosts. The script half (context menu, zoom keys, ctrl+wheel, drag ghosts) is native() in design.js. */
+html{scrollbar-width:none;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%;
+  touch-action:pan-x pan-y;cursor:default}
+html::-webkit-scrollbar,html *::-webkit-scrollbar{display:none;width:0;height:0}
+:where(html *){scrollbar-width:none;overscroll-behavior:contain;-webkit-tap-highlight-color:transparent}
+:where(html,body,html *){-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:inherit}
+:where(input,textarea,[contenteditable="true"]){-webkit-user-select:text;user-select:text;cursor:text}
+:where(a[href]){cursor:pointer}
+:where(img,svg,a,video,canvas){-webkit-user-drag:none}
+/* focus: the browser's ring never shows; keyboard focus shows Desk's own ring (the knob ring, inside the control) */
+:where(:focus,:focus-visible){outline:none}
+.ring:focus-visible::after{opacity:1}
+/* the device inside Live (?embed): exactly the jweb, nothing scrolls; a narrower jweb scales the whole device (fitDevice) */
+.embed,.embed body{overflow:hidden;height:100%}
+

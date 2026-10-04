@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Desk · demo</title>
+<link rel="stylesheet" href="design.css?v=a95f1b76e99a">
+<style>
+/* Desk device page — the strip is the real height of a Max for Live device in Live (169 px) */
+/* sizes, radii, type and motion tokens: design.css (from Figma, product/figma/SPEC.md) */
+*{box-sizing:border-box;font-weight:400}
+body{margin:0;background:var(--page);color:var(--fg);font:400 13px/1.4 var(--font);-webkit-user-select:none;user-select:none}
+header{padding:20px 28px;border-bottom:1px solid var(--fg);display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+header h1{font-size:1.25rem;margin:0;letter-spacing:-.02em}
+#status{font-size:.75rem}
+main{padding:28px;display:grid;gap:40px;grid-template-columns:minmax(0,1fr)}
+.v{min-width:0}
+.v h2{font-size:1rem;margin:0 0 4px}
+.v p{margin:0 0 12px;font-size:.75rem;max-width:72ch}
+.scroll{min-width:0}  /* never scrolls: a narrower column scales the device (Desk.fit) */
+/* the device strip as Live draws it: a title bar on the left edge, fixed height */
+.dev{height:169px;display:inline-flex;background:var(--dev);border-radius:var(--r-dev);corner-shape:var(--cs);overflow:hidden;overflow:clip;vertical-align:top}  /* clip, not hidden: a hidden box can still be scrolled (focus, find), shifting the levels */
+.dev .body{display:flex;gap:var(--g);padding:var(--g);align-items:stretch}
+/* knob */
+.kn{display:grid;justify-items:center;gap:4px;cursor:grab;touch-action:none;position:relative}
+.kn .d{border-radius:50%;background:var(--knob);box-shadow:0 0 0 1px var(--knob);position:relative;outline:none}  /* 35 px disc + 1 px edge in the knob colour (Figma: black; Live: the display colour) */
+.kn .d .arm{position:absolute;inset:0;pointer-events:none}
+/* Braun-clock ticks like the desk: start, centre (mine), end — just outside the dial */
+/* centre mark = MINE: the small MINE asterisk (Figma 601:452) at 7 px instead of the 12 o'clock tick, centred on the knob axis like the ticks; 4 px above the disc */
+/* the knob you are turning (or focused from the keyboard) gets a 1 px ring with a 2 px gap */
+.k1 .ky{--hz:1.04}.mt{--hz:1.015} /* hover zoom: +1 px / +1.2 px per side, inside every gap; knobs: .dz in design.css */
+.kn.active .d::after{opacity:1}
+.kn .d .arm::after,.kn .ghost::after{content:"";position:absolute;width:5px;height:5px;margin:-2.5px;border-radius:50%;background:var(--dot);left:50%;top:50%;transform:translateY(var(--r,-14px))}
+/* var(--ghost) = your setting while it is not playing. MINE on: the white dot sits on MINE, a var(--ghost) dot stays where your knob was.
+   Bypassed (module or all): nothing of Desk plays, so the dot itself turns var(--ghost) — kept, just silent. */
+.kn .ghost{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 0s linear var(--m-slow)}.kn .ghost::after{background:var(--ghost)}
+body.mine .kn .ghost{opacity:1;transition:opacity var(--m) var(--e-out)}
+/* leaving MINE the var(--ghost) dot does not fade: the white dot glides back over it (460 ms) and covers it, then it goes */
+.arm::after{transition:background-color var(--m) var(--e-out)}.t.off .arm::after,body.alloff .tiles .arm::after{background:var(--ghost)}
+.kn .pl{display:flex;justify-content:space-between;gap:4px;width:100%;font-size:.5rem;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+body.turning,body.turning *{cursor:grabbing!important}
+/* pad */
+.pad{outline:none;background:var(--knob);border-radius:var(--r-mod);corner-shape:var(--cs);position:relative;cursor:crosshair;touch-action:none;}
+/* the cross: two real 1 px lines (a 1 px gradient stop can drop out when rasterised), stopping at the ring's inner edge (3 px) */
+.cx,.cy{position:absolute;background:var(--dot);pointer-events:none}.cx{left:0;right:0;top:calc(50% - .5px);height:1px}.cy{top:0;bottom:0;left:calc(50% - .5px);width:1px}  /* edge to edge (Figma) */
+.pad .pk,.pad .pg{position:absolute;width:16px;height:16px;margin:-8px;border-radius:50%;background:var(--dot)}
+/* the puck (Figma 15:109): a 16 px dot in a 2 px ring of the pad colour, so the cross stops 2 px short of it */
+.pad .pk{box-shadow:0 0 0 2px var(--knob)}body.alloff .pad .pk{box-shadow:0 0 0 2px var(--off)}
+.pad .pg{background:var(--ghost);pointer-events:none;opacity:0;transition:opacity 0s linear var(--m-slow)}body.mine .pad .pg{opacity:1;transition:opacity var(--m) var(--e-out)}
+.pad .pk{transition:background-color var(--m) var(--e-out)}body.alloff .pad .pk{background:var(--ghost)}  /* Figma 15:917: #666 on the off grey */
+/* BYPASS (all) switches the master off too (only the safety limiter stays), so the pad looks off like a module */
+.pad{transition:background-color var(--m-slow) var(--e-io)}body.alloff .pad{background:var(--off)}
+.cx,.cy{transition:background-color var(--m-slow) var(--e-io)}body.alloff :is(.cx,.cy){background:var(--ghost)}
+/* on the grey of a switched-off module the text follows the theme (dark text in light themes, light in dark ones) */
+.tiles .t.off,body.alloff .tiles .t{color:var(--fg)}
+body.dragx,body.dragx *{cursor:grabbing!important}
+.mt{flex:none;height:calc(169px - 2 * var(--g));aspect-ratio:1;position:relative}
+.mt .pad{width:100%;height:100%}
+.sc .t{backface-visibility:hidden;outline:1px solid transparent} /* carried tiles rotate: smooth edges, see [data-tz] in design.css */
+/* pressed: the knob ring, drawn inside the pad (1 px ink edge + 2 px white = 3 px) so it never crosses into the gaps */
+.pad{--ring-r:calc(var(--r-mod) - 1px);--ring-cs:var(--cs)}.pad.active::after{opacity:1}
+.ky{appearance:none;border:0;cursor:pointer;display:grid;place-items:center;padding:0;font:400 .5rem var(--font);text-transform:uppercase;letter-spacing:.04em}
+.ky svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1}
+.k1{display:grid;gap:6px;align-content:center;justify-items:center}
+/* two keys (the full view is parked): off = the DESK pill's grey with ink marks, on = ink with light marks and the ring */
+.k1 .ky{width:34px;height:34px;border-radius:50%;background:var(--pill);color:var(--fg);transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out)}
+.k1 .ky[aria-pressed="true"]{background:var(--knob);color:var(--dot)}
+/* on or being pressed: the knob ring, inside the key (1 px ink edge + 2 px white), fading in like the knobs */
+
+.k1 .ky{position:relative;--ring-r:calc(var(--r-mod) - 1px);--ring-cs:var(--cs)}.k1 .ky[aria-pressed="true"]::after,.k1 .ky:active::after{opacity:1}
+/* one type style inside the device (the key captions): Regular, uppercase, tracked, small.
+   Only the loudness number keeps a bigger size so it reads at a glance. */
+.dev,.dev *{text-transform:uppercase;letter-spacing:var(--track)}
+.dev :is(.name,.nm,.pl,.pl2,.cap,.caps,.mini,.btn,.byp,.cmp,.tag,.ov span,.title,.lst button,.tabs button,.nm.turn,.lufs small,.ky){font-size:var(--cap)!important;line-height:12px} /* whole-pixel line boxes: 9 × 1.25 = 11.25 put everything below on quarter pixels */
+/* loudness block */
+/* loudness block (Figma 16:2482): padding 4; LOUDNESS + the value (Spline Sans 27, cap-trimmed to 20 px); below, two 12 px
+   rows of key ← → value: the status line (VS MINE / PEAK share it, crossfading) and SPOTIFY. */
+.ld{display:flex;flex-direction:column;justify-content:space-between;align-self:stretch;padding:4px;flex:none;width:var(--ld-w);font-variant-numeric:tabular-nums}
+.ld .top{display:flex;flex-direction:column;gap:8px}.ld .cap{display:block;font-size:var(--cap);line-height:12px}
+.ld b{font-family:var(--font-num);font-variant-numeric:lining-nums proportional-nums;font-feature-settings:"lnum" 1,"pnum" 1;font-weight:400;font-size:27px;line-height:20px;letter-spacing:0!important;display:block;white-space:nowrap;text-box:trim-both cap alphabetic}
+.ld .bot{display:flex;flex-direction:column;gap:4px}
+.ld .row{display:flex;justify-content:space-between;gap:4px;height:12px;line-height:12px;font-size:var(--cap);white-space:nowrap;position:relative}
+.ld .row .v{text-align:right}
+.ld .u{font-family:var(--font-num);text-transform:none;font-size:7.74px;line-height:12px;margin-left:4px;letter-spacing:0!important;position:relative;top:-2px}  /* on the value's baseline it sat 2 px lower than Figma's (pt 4 in a 12 px row): measured, raised */
+.ld .stl .sl{position:absolute;inset:0;display:flex;justify-content:space-between;gap:4px;opacity:0;transition:opacity var(--m-fast) var(--e-out)}
+.ld .stl[data-show="mine"] .s-mine,.ld .stl[data-show="peak"] .s-peak{opacity:1}
+.ld .s-peak{color:var(--warn)}
+/* the pad's four axis words ON the axes (Figma 15:67, 2026-10-04): LOUD top, QUIET bottom, WARM left, AIRY right; each
+   word sits in a 16 px box of the pad's own colour (4 px each side, 2 px above and below) so the cross line breaks under
+   it. Placed like Figma on whole pixels: the 161 px pad's centre is 80.5, the 1 px lines sit on 80…81. No MASTER label. */
+.pad .ax{position:absolute;height:16px;padding:2px 4px;font-size:var(--cap);line-height:12px;color:var(--dot);background:inherit;pointer-events:none;white-space:nowrap;
+  transition:color var(--m-slow) var(--e-io)}
+.pad .ax.l,.pad .ax.q{left:50%;translate:calc(-50% + .5px) 0}.pad .ax.l{top:7px}.pad .ax.q{bottom:6px}
+.pad .ax.w,.pad .ax.a{top:50%;translate:0 calc(-50% - .5px)}.pad .ax.w{left:5px}.pad .ax.a{right:5px}
+body.alloff .pad .ax{color:var(--fg)}
+/* the device (size M) */
+.sc{display:inline-flex;max-width:100%;height:169px}
+.sc .body{display:flex;gap:var(--g);min-width:0;flex:1 1 auto;position:relative}
+/* explicit row size (set from the module count): engines differ on intrinsic sizes of contained flex items */
+.sc .tiles{display:flex;gap:var(--g);flex:0 0 auto;min-width:0;position:relative}
+.sc .t{color:var(--ink);flex:0 0 var(--tw);width:var(--tw);min-width:var(--tw);border-radius:var(--r-mod);corner-shape:var(--cs);position:relative}
+.sc .t .in{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;padding:8px;--ks:var(--kz)}  /* name on top (the pill), knobs at the bottom, 8 apart */
+.sc .t .nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px;cursor:grab;touch-action:none}
+/* carried tile: elevation shadow in four layers — a tight contact shadow plus wider, softer ambient ones, light from
+   above (offsets only down, negative spread keeps the sides clean). Same layer count at rest (transparent) so the
+   shadow grows and settles smoothly: 160 ms up, 260 ms down with the drop. */
+.sc .t{box-shadow:0 0 0 rgba(0,0,0,0),0 0 0 rgba(0,0,0,0),0 0 0 rgba(0,0,0,0),0 0 0 rgba(0,0,0,0)}
+.sc .t.lift{z-index:3;scale:1.02;
+  box-shadow:0 1px 2px -1px rgba(0,0,0,.16),-4px 0 8px -6px rgba(0,0,0,.22),4px 0 8px -6px rgba(0,0,0,.22),0 0 6px -4px rgba(0,0,0,.18)}
+/* The shadow above must fit the device: a tile is 161 px high in a 169 px device, so it may reach at most 4 px past the
+   tile, scale included (1.02 adds 1.6 px). The layers lean sideways (over the neighbours) and stay ≤ 2 px top and bottom.
+   The carried tile is drawn in .carry, a layer over the whole device outside the level window: nothing but the device
+   edge clips it. The tile in the row stays (invisible) and keeps doing the layout. */
+.dev{position:relative}
+.dev>.carry{position:absolute;inset:0;pointer-events:none;z-index:20;display:block}
+.carry>.t{position:absolute;margin:0}
+.lv .t.carried{opacity:0}
+.sc .mt,.sc .ld,.sc .k1{flex:none}
+.tiles{position:relative;z-index:2}
+.t.lift{z-index:10!important}
+.mt,.ld,.k1,.k4,.seg,.dc{position:relative;z-index:1}
+/* bypassed module: white */
+/* bypass-all on: the name strip is just a title — no hover, no drag, no single-module bypass */
+body.alloff .mv.v2 .t .nm{cursor:default;background:none}body.alloff .mv.v2 .t .nm .tx{opacity:1}body.alloff .mv.v2 .t .nm :is(.gr,.bi){display:none}
+.t.off,body.alloff .tiles .t{background:var(--off)!important}.t.off:not(.lift),body.alloff .tiles .t:not(.lift){box-shadow:none!important}
+.mv .t.off .kn{pointer-events:none}
+.mv .kw{position:relative;display:grid;justify-items:center}
+.mv .sp{position:absolute;right:-4px;top:-4px;width:8px;height:8px;border-radius:50%;border:1px solid var(--knob);background:var(--dot);cursor:help;flex:none}  /* not in Figma: kept at the knob's top right */
+.mv .sp.partial{background:linear-gradient(90deg,var(--knob) 50%,var(--dot) 50%)}.mv .sp.none{background:var(--knob)}
+.mv .kw.dead .d{background:var(--dead)}.mv .kw.dead{pointer-events:none}
+.mv.v2 .t .nm{position:absolute;left:4px;top:4px;width:43px;height:20px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;transition:background-color var(--m-fast) var(--e-out)}  /* the name; on hover a white pill with drag + bypass (Figma 15:391) */
+.mv.v2 .t .nm:hover,.mv.v2 .t.lift .nm{background:var(--dot);color:var(--knob)}  /* Figma: a white pill with black marks = the knob's dot and body colours, so Live themes follow */
+/* hovering the name strip swaps the name for what the strip does: drag (left) and bypass (right), 12 px icons
+   at their original size; the same while the module is carried */
+.mv.v2 .t .nm .tx{display:block;min-width:0;max-width:35px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:12px}
+.mv.v2 .t .nm .tx,.mv.v2 .t .nm .gr,.mv.v2 .t .nm .bi{transition:opacity var(--m-fast) var(--e-out)}
+.mv.v2 .t .nm .gr,.mv.v2 .t .nm .bi{position:absolute;top:50%;margin-top:-6px;width:12px;height:12px;opacity:0;pointer-events:none;display:grid}
+.mv.v2 .t .nm .gr{left:4px}.mv.v2 .t .nm .bi{right:5px}  /* 12 px icons, 10 apart */
+.mv.v2 .t .nm .bi{pointer-events:auto;cursor:pointer;touch-action:none}.mv.v2 .t .nm .bi::before{content:"";position:absolute;inset:-6px -6px -6px -4px} /* 24 px hit zone */
+.mv.v2 .t .nm svg{width:12px;height:12px}
+.mv.v2 .t .nm:hover .gr,.mv.v2 .t .nm:hover .bi,.mv.v2 .t.lift .nm .gr,.mv.v2 .t.lift .nm .bi{opacity:1}
+.mv.v2 .t .nm:hover .tx,.mv.v2 .t.lift .nm .tx{opacity:0}
+/* while a module is carried, hover belongs to it alone: the others don't light up as the pointer passes them */
+body.dragx .tiles .t:not(.lift){pointer-events:none}
+.k1{display:grid!important;grid-template-rows:1fr 1fr;gap:3px!important;align-content:stretch!important;height:var(--pad-s);width:var(--keys-w);flex:none}  /* two keys of 79, 3 apart (Figma) */
+.k1 .ky{width:100%!important;height:100%!important;border-radius:var(--r-mod)!important;corner-shape:var(--cs);display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.k1 .ky{padding:8px}.k1 .ky .kl{font-size:var(--cap);line-height:12px;text-align:center}
+.k1 .ky svg{width:20px;height:20px}
+/* MINE / bypass switches: a slow ease-in-out so the change reads as one smooth move */
+body.glide .kn .d .arm{transition:rotate var(--m-slow) var(--e-io),scale var(--m-fast) var(--e-out)}
+body.glide .pad .pk{transition:left var(--m-slow) var(--e-io),top var(--m-slow) var(--e-io)}
+body.glide .kn .pl span{transition:opacity var(--m-slow) var(--e-io)}
+/* motion system: 160 ms small cues · 260 ms ease-out for anything answering touch · 460 ms ease-in-out for mode switches */
+.tiles .t{transition:background-color var(--m-slow) var(--e-io),box-shadow var(--m) var(--e-out),scale var(--m) var(--e-out),transform var(--m) var(--e-out)}
+.tiles .t.lift{transition:background-color var(--m-slow) var(--e-io),box-shadow var(--m-fast) var(--e-out),scale var(--m-fast) var(--e-out),transform var(--m) var(--e-out)}
+body.mine .kn,body.mine .pad,body.mine .fd{pointer-events:none}
+.sc.m{--tw:var(--tile)}
+.sc .t .kn .pl{display:none!important}
+/* rubber end stops (iOS overscroll): past an end the dial keeps turning a little with growing resistance and
+   stretches along the drag; on release it eases back to the stop — no oscillation. --a is registered so it can ease. */
+.rubber-back,.rubber-back .arm{transition:rotate var(--m) var(--e-out),scale var(--m) var(--e-out)!important}
+/* embedded in Live: the device fills the jweb exactly (169 px high), no header, no captions, no page gutters */
+.embed body{background:var(--page)}  /* around the device: the page colour (the device is square, so nothing of it shows in Live) */
+.embed header,.embed .v>h2,.embed .v>p{display:none}
+.embed main,.embed .v,.embed .scroll{margin:0;padding:0}
+.embed .dev{border-radius:var(--r-dev)}  /* Figma: the device is square in every state */
+/* the device never squeezes or scrolls: it is always 692 × 169; a jweb smaller than that shows the whole device scaled
+   down (Desk.fit, called from size()) instead of cutting the last tiles or MINE / BP at the edge */
+.embed .sc{max-width:none}.embed .scroll{overflow:hidden}
+/* left column: level arrows (one pill, top) · re-analyze (round, centre) · the DESK label (pill, bottom) */
+/* whole pixels: fixed heights (48 · 20 · 44) and a fixed 24 px gap above re-analyze — space-between would put them on half pixels */
+.dev .side{flex:none;width:var(--col);margin:var(--g) 0 var(--g) var(--g);display:flex;flex-direction:column;justify-content:space-between;align-items:center;position:relative;z-index:1}  /* bolt on top; levels, re-analyze / cancel at the bottom */
+.side .low{display:flex;flex-direction:column;gap:var(--g)}.side .logo-d{display:block;width:24px;height:24px;color:var(--fg)}.side .logo-d svg{width:24px;height:24px}
+.side button{appearance:none;border:0;padding:0;background:none;color:var(--fg);display:grid;place-items:center;cursor:pointer;outline:none;position:relative}
+.side svg{width:12px;height:12px;display:block}
+/* re-analyze is parked until the ANALYZE flow exists: #444 mark, like a key that is coming later */
+.side :is(.again,.x){width:24px;height:24px;border-radius:var(--r-key);background:var(--pill);color:var(--fg)}.side .x{display:none}
+.side .lvk{width:24px;border-radius:var(--r-key);background:var(--pill);display:none;grid-template-rows:16px 16px;gap:var(--g);padding:var(--g)}.side.multi .lvk{display:grid}
+.side .lvk button{width:16px;height:16px;border-radius:var(--r-mod);transition:color var(--m-fast) var(--e-out),background-color var(--m-fast) var(--e-out)}
+/* hover: a 16 px ink key behind each arrow on its own (radius 4, Figma 27:2746),
+   the arrow turns white on it like a knob's dot */
+.side .lvk svg{width:16px;height:16px}
+.side .lvk button:not([aria-disabled="true"]):is(:hover,:focus-visible){color:var(--dot);background:var(--knob)}
+.side .lvk button[aria-disabled="true"]{color:var(--grey);cursor:default}  /* no level there: #999 (Figma) */
+/* levels (pages): six module slots, so the device keeps one width. With more than one level the tiles are 126 high
+   (pitch 130) and the neighbours peek at the device edge (Figma 15:1716 / 27:2740 / 27:2926):
+     first  — shown level at y 4; the next level's names peek below (134–169, 35 px)
+     middle — shown level at y 21 (Figma 21.5, floored to a whole pixel); the previous level's tile bottoms peek above
+              (0–17) and the next level's names below (151–169)
+     last   — shown level at y 39; the previous level's tile bottoms peek above (0–35)
+   A click on a peeking strip goes to that level (.peek, over the strip). Levels slide 260 ms ease-out (instant with
+   reduced motion); a module carried to another level stays under the pointer while they slide. */
+.lv .peek{position:absolute;left:0;right:0;z-index:4;display:none;appearance:none;border:0;padding:0;margin:0;background:none;cursor:pointer;outline:none}
+.lv .peek.on{display:block}
+body.dragx .lv .peek,body:not(.ready) .lv .peek{pointer-events:none}
+.sc .lv{flex:none;width:calc(6 * var(--tw) + 5 * var(--g));height:169px;margin:calc(-1 * var(--g)) 0;position:relative;z-index:2} /* no clip: the device edge clips the other levels */
+.lv .track{display:grid;grid-auto-rows:var(--th);row-gap:var(--g);--th:161px;transition:translate var(--m) var(--e-out)}
+.lv.multi .track{--th:126px}  /* levels: tiles 126 high, 4 apart (Figma 15:1716) */
+.lv .tiles{height:var(--th)}
+.sc .lv .t{height:100%}
+@media (prefers-reduced-motion:reduce){.lv .track{transition:none}}
+/* ANALYZE flow (flow.js): the work layer covers the whole level window (slots and peek); before the desk is
+   built everything but ANALYZE is switched off — re-analyze, levels, the master pad and the two keys */
+.side :is(.again[aria-disabled="false"],.x){cursor:pointer;transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out)}
+.side :is(.again[aria-disabled="false"],.x):is(:hover,:focus-visible){background:var(--knob);color:var(--dot)}
+/* start: only the bolt; working: the x key cancels; an error after an analysis: x returns to the desk */
+body[data-flow="empty"] .side .again,body[data-flow="analysing"] .side .again,body[data-flow="error"] .side .again{display:none}
+body[data-flow="analysing"] .side .x,body.analyzed[data-flow="error"] .side .x{display:grid}
+body:not(.ready) :is(.side .again,.side .lvk button,.k1 .ky,.mt){pointer-events:none}
+/* no UNDO key (founder, 2026-10-04): BUILD's writes are undone with Live's own Undo (Cmd/Ctrl+Z); the bridge keeps
+   its journal and POST /undo as an internal safety net, with no control in the device */
+/* under the start / progress panel nothing of the desk shows through its edges; hidden once the panel has faded in */
+.body>:not(.work){transition:visibility 0s linear var(--m-fast)}
+body:is([data-flow="empty"],[data-flow="analysing"],[data-flow="error"]) .body>:not(.work){visibility:hidden}
+body:not(.ready) .k1 .ky{color:var(--ghost)}
+body.unbuilt :is(.cx,.cy){opacity:.35}body.unbuilt .pad .pk{opacity:0}
+.ld .none{color:var(--fg-2)}
+/* the reveal: tiles land left to right, each knob's dot travels from its left stop up to MINE, then the star shows */
+.t.landing{opacity:0}
+body.revealing .pad .pk{opacity:0}.pad .pk{transition:background-color var(--m) var(--e-out),opacity var(--m-fast) var(--e-out)}
+body.revealing .kn .d .arm{transition:rotate var(--m-slow) var(--e-io)}
+.k1 .ky.flash::after{opacity:1;transition:opacity var(--m-slow) var(--e-io)}
+</style>
+</head>
+<body>
+<script>/* ?embed: the page lives inside the Desk device in Live (jweb) — only the device, no page chrome */
+if(/[?&]embed\b/.test(location.search))document.documentElement.classList.add("embed");</script>
+<header><h1>Desk <span style="color:var(--fg-2)">by Volume Attack</span></h1><div id="status" role="status" aria-live="polite">connecting to Live…</div></header>
+<main>
+  <section class="v"><h2>Desk · device</h2><p>Modules in their colours with two meaning knobs each — drag a module by its name strip to reorder, tap the strip to bypass it (white = bypassed). A half or black dot next to a knob = its plugin is only partly or not supported (hover for details). The master is the square XY pad; loudness on the right; MINE · BYPASS · FULL keys: hold = hear it while held, click = switch on, click again = off. Pushing a knob past its end leans the module into the bottom corner on that side. Six modules per level: more wait on the levels above and below, whose edges peek at the top and bottom of the device — ↑ ↓ on the left, Page Up / Page Down or a click on a peeking strip switch levels, drag a module up or down to move it to another level.</p>
+    <div class="scroll"><div class="dev" id="M2"></div></div></section>
+</main>
+<script src="demo.js?v=a95f1b76e99a"></script>
+<script src="design.js?v=a95f1b76e99a"></script>
+<script src="glyphs.js?v=a95f1b76e99a"></script>
+<script src="controls.js?v=a95f1b76e99a"></script>
+<script>DeskDemo.attach();</script>
+<script src="flow.js?v=a95f1b76e99a"></script>
+<script>
+let LOOK={}; // module colours for this project: colorsFor() in design.js
+const st={knobs:{},list:[],strips:[],subs:{}};
+const say=t=>document.getElementById("status").textContent=t;
+const post=(u,b)=>fetch(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});  // JSON: the bridge guard (guard.py) needs it
+const pending={};
+// bridge offline (stopped, restarting): a knob move that did not reach it is kept — one entry per knob, its latest
+// position — and sent once when /health answers again; nothing is lost and nothing is sent twice
+const UNSENT=new Set();
+function send(id){if(pending[id])return;pending[id]=1;setTimeout(()=>{pending[id]=0;
+  post("/knob",{id,x:st.knobs[id]}).then(()=>UNSENT.delete(id),()=>{UNSENT.add(id);offline();});},40);}
+function offline(){say("bridge offline");if(offline.t)return;
+  const ping=()=>fetch("/health").then(r=>{if(!r.ok)throw new Error(r.status);offline.t=0;const ids=[...UNSENT];UNSENT.clear();ids.forEach(send);say("bridge back");})
+    .catch(()=>{offline.t=setTimeout(ping,1000);});
+  offline.t=setTimeout(ping,1000);}
+// a call that must reach the bridge: tried again every second while it is offline (startup reads, the desk after ANALYZE)
+const retrying=fn=>fn().catch(()=>{offline();return new Promise(r=>setTimeout(r,1000)).then(()=>retrying(fn));});
+// every view of the same knob redraws together
+function sub(id,fn){(st.subs[id]=st.subs[id]||[]).push(fn);fn();}
+function setK(id,x){st.knobs[id]=Math.max(0,Math.min(1,x));(st.subs[id]||[]).forEach(f=>f());send(id);}
+const K=id=>st.list.find(k=>k.id===id);
+const word=(k,x)=>x<.2?"very "+k.l:x<.42?"a bit "+k.l:x<=.58?"center":x<.8?"a bit "+k.r:"very "+k.r;
+const lufs=lufsEst; // shared estimate (design.js)
+function el(h){const t=document.createElement("template");t.innerHTML=h.trim();return t.content.firstChild;}
+// iOS-style rubber band: over = how far past the end (in knob travel), r = 0..1 with diminishing returns
+// knob: markup + drawing here, behaviour (detent, dead start, rubber end stops, tilt, wheel, glide) in controls.js
+function knob(id){const k=K(id);
+  const w=el(`<div class="kn"><div class="d ring dz" role="slider" tabindex="0" aria-label="${k.strip}: ${k.l} to ${k.r}" aria-valuemin="0" aria-valuemax="100" style="width:var(--ks);height:var(--ks);--r:-11px"><i class="ghost"></i><i class="arm"></i></div></div>`);
+  const d=w.querySelector(".d");
+  const gh=d.querySelector(".ghost");
+  sub(id,()=>{const x=vx(id);gh.style.rotate=(-135+st.knobs[id]*270)+"deg";if(!d.classList.contains("rubbing"))Desk.angle(d,-135+x*270);d.setAttribute("aria-valuenow",Math.round(x*100));d.setAttribute("aria-valuetext",word(k,x));});
+  Desk.knob({el:w,dial:d,get:()=>st.knobs[id],set:x=>{setK(id,x);showWord(w.closest(".t")?.querySelector(".nm .tx"),k.strip,pole(k,x));},
+    host:()=>w.closest(".t"),locked:()=>VIEW.mine||FLOW.state!=="ready",badge:false});  // the mini view shows the pole word, not a number
+  Desk.info(w,()=>[`${k.strip} · ${k.l} ↔ ${k.r}`,VIEW.mine?"MINE is on: every knob rests on the reference built for this track. Switch MINE off to change it."
+    :`Now ${Desk.rel(st.knobs[id])} (${word(k,st.knobs[id])}): −10 is ${k.l}, +10 is ${k.r}, 0 is MINE. Drag to turn · Shift-drag for fine steps · Shift + digits for an exact value (−10 … +10, Shift 0 = MINE) · double-click returns to MINE.`+((u=>u?"\n\n"+u:"")(unitsFor(id,st.knobs[id],()=>Desk.infoRefresh(w))))]);
+  return w;}
+// master XY pad: x = warm↔airy, y = quiet↔loud; the puck's edge stays 4 px inside the pad (inset 4 + radius 6)
+function pad(ax,ay){const p=el(`<div class="pad ring" role="slider" tabindex="0" aria-label="master: warm to airy, quiet to loud"><i class="cx"></i><i class="cy"></i><span class="ax w">warm</span><span class="ax a">airy</span><span class="ax l">loud</span><span class="ax q">quiet</span><span class="pg"></span><span class="pk"></span></div>`);
+  const xy=Desk.xyPad({pad:p,puck:p.querySelector(".pk"),inset:13,get:()=>[vx(ax),vx(ay)],
+    set:(x,y)=>{setK(ax,x);setK(ay,y);},
+    host:()=>p.closest(".mt"),locked:()=>VIEW.mine||FLOW.state!=="ready"});
+  const pg=p.querySelector(".pg"),ghost=()=>{pg.style.left=`calc(13px + (100% - 26px) * ${st.knobs[ax].toFixed(4)})`;pg.style.top=`calc(13px + (100% - 26px) * ${(1-st.knobs[ay]).toFixed(4)})`;};
+  sub(ax,xy.draw);sub(ay,xy.draw);sub(ax,ghost);sub(ay,ghost);
+  Desk.info(p,()=>["Master · warm ↔ airy · quiet ↔ loud",VIEW.mine?"MINE is on: the master rests on the reference built for this track."
+    :`Now ${word(K(ax),st.knobs[ax])}, ${word(K(ay),st.knobs[ay])}. Drag the dot · arrow keys move it, Shift for fine steps · double-click returns to MINE.`]);
+  return p;}
+function frame(id){const f=document.getElementById(id);
+  f.innerHTML=`<div class="side"><i class="logo-d" role="img" aria-label="Desk by Volume Attack">${ICON.bolt}</i><div class="low">`+
+    `<div class="lvk" role="group" aria-label="levels"><button class="up" type="button" aria-label="level up">${ICON.up}</button><button class="dn" type="button" aria-label="level down">${ICON.down}</button></div>`+
+    `<button class="again" type="button" aria-disabled="${FLOW.state!=="ready"}" aria-label="analyse the set again">${ICON.refresh}<i class="chg" aria-hidden="true"></i></button>`+
+    `<button class="x" type="button" aria-label="cancel">${ICON.close}</button></div></div><div class="body"></div>`;return f.querySelector(".body");}
+const mods=()=>st.strips.filter(s=>s!=="master");
+
+// L — more logical layouts
+// hold to hear the release mix: the bridge resets to CR, letting go sends every knob back where it was
+// pictograms: release = rewind-to-mark, bypass = circle with a slash, board = expand
+// pictograms: PIC from design.js
+// one behaviour for both A/B keys: hold to hear, a quick click latches, click again to return
+// MINE and BYPASS are plain toggles shared by every view: click = on, click again = off
+const VIEW={mine:false,byp:false};
+const vx=id=>{const k=K(id);if(k&&FLOW.landing.has(k.strip))return 0;return VIEW.mine?.5:st.knobs[id];}; // centre of every knob = MINE (the reference mix)
+function redrawAll(){Object.values(st.subs).forEach(a=>a.forEach(f=>f()));}
+function glide(){document.body.classList.add("glide");clearTimeout(glide.t);glide.t=setTimeout(()=>document.body.classList.remove("glide"),MOTION.slow+60);}  // just after the 460 ms glide
+let keyQ=Promise.resolve();
+// MINE / BYPASS / module commands run in order; one that fails (bridge offline) must not stop the ones after it
+const queueKey=fn=>(keyQ=keyQ.then(fn).catch(()=>offline()));
+function setMine(on){if(VIEW.mine===on||(on&&FLOW.state!=="ready"))return;VIEW.mine=on;document.body.classList.toggle("mine",on);
+  document.querySelectorAll(".ky.k-mine").forEach(b=>b.setAttribute("aria-pressed",on));glide();redrawAll();
+  if(on){say("mine · the reference mix · knobs locked");queueKey(()=>post("/reset",{}));}
+  else{say("your mix");queueKey(()=>Promise.all(st.list.map(k=>post("/knob",{id:k.id,x:st.knobs[k.id]}))));}}
+function setBypassAll(on){if(VIEW.byp===on||(on&&FLOW.state!=="ready"))return;VIEW.byp=on;document.body.classList.toggle("alloff",on);document.querySelectorAll(".ky.k-byp").forEach(b=>b.setAttribute("aria-pressed",on));
+  if(on){say("original tracks");queueKey(async()=>{for(const s of st.strips)await post("/strip_off",{strip:s});});}
+  else{say("processed");queueKey(async()=>{for(const s of st.strips)if(!MOD_OFF.has(s))await post("/strip_on",{strip:s});});}}
+function keysFor(){const rel=el(`<button class="ky ring hz k-mine" type="button" aria-pressed="${VIEW.mine}">${PIC.rel}</button>`),
+  byp=el(`<button class="ky ring hz k-byp" type="button" aria-pressed="${VIEW.byp}">${PIC.byp}</button>`);
+  Desk.pressToggle(rel,()=>VIEW.mine,setMine);
+  Desk.info(rel,()=>FLOW.state!=="ready"?["MINE","The sound Desk builds for this song. Available after ANALYZE."]:["MINE · the reference built for this track","Hold: hear MINE while held · click: switch on, click again: off · double-click: apply it (every knob to its centre)."]);
+  Desk.info(byp,()=>FLOW.state!=="ready"?["Bypass","Your original tracks. Available after ANALYZE; until then you hear only your original."]:["Bypass · your original tracks",VIEW.byp?"On: you hear the set without Desk (the safety limiter stays). Click to switch it off."
+    :"Hold: hear the set without Desk while held · click: switch on, click again: off. The safety limiter stays on."]);
+  // double-click MINE = apply it: every knob moves to its centre for good (the two clicks before it toggle on/off)
+  rel.addEventListener("dblclick",()=>{setMine(false);st.list.forEach(k=>st.knobs[k.id]=.5);glide();redrawAll();
+    queueKey(()=>post("/reset",{}));say("mine applied · every knob at its centre");});Desk.pressToggle(byp,()=>VIEW.byp,setBypassAll);
+  [rel,byp].forEach(Desk.pressable);return {rel,byp};}
+// drag a tile by its name: sideways it reorders inside its level (lift, follow, neighbours glide via the order property);
+// pulled up or down past 32 px toward another level and held there 260 ms, the levels slide and the tile moves over
+// the carried tile is drawn as a copy in .carry (over the device, outside the level window) so its shadow is never
+// clipped; the real tile stays in its row, invisible, and does the layout. sync() copies its place and motion every
+// frame; end() lets the copy settle with the tile (drop animation, shadow fading) and then shows the tile again.
+function carry(t){const dev=t.closest(".dev");if(!dev)return {end(){}};
+  let layer=dev.querySelector(":scope>.carry");if(!layer){layer=document.createElement("div");layer.className="tiles carry";dev.append(layer);}
+  const c=t.cloneNode(true);c.classList.remove("lift");c.style.order="";c.setAttribute("aria-hidden","true");
+  // only the lift eases on the copy (160 ms up, 260 ms down); its place and motion come from the tile every frame
+  c.style.transition="box-shadow var(--m-fast) var(--e-out),scale var(--m-fast) var(--e-out)";layer.append(c);t.classList.add("carried");
+  requestAnimationFrame(()=>{if(!done)c.classList.add("lift");});
+  let done=false,until=0;
+  const sync=()=>{const d=dev.getBoundingClientRect(),r=t.parentElement.getBoundingClientRect(),cs=getComputedStyle(t);
+    const z=d.width/dev.offsetWidth||1;   // a scaled device (Desk.fit) reports rects scaled, offsets not
+    c.style.left=((r.left-d.left)/z+t.offsetLeft)+"px";c.style.top=((r.top-d.top)/z+t.offsetTop)+"px";
+    c.style.width=t.offsetWidth+"px";c.style.height=t.offsetHeight+"px";
+    c.style.translate=cs.translate;c.style.rotate=cs.rotate;c.style.transform=cs.transform;
+    if(done&&!t.getAnimations().length&&performance.now()>=until){c.remove();t.classList.remove("carried");return;}
+    requestAnimationFrame(sync);};
+  sync();
+  return {end(){done=true;c.style.transition="box-shadow var(--m) var(--e-out),scale var(--m) var(--e-out)";c.classList.remove("lift");until=performance.now()+(RMQ?0:MOTION.base);}};}
+const rowItems=row=>[...row.children].sort((a,b)=>(+a.style.order)-(+b.style.order));
+function reorderable(L,onDone){const lv=L.lv;
+  lv.addEventListener("pointerdown",e=>{const h=e.target.closest(".nm");if(!h||VIEW.byp||e.target.closest(".bi"))return;const t=h.closest(".t");e.preventDefault();t.classList.add("lift");const cr=carry(t);
+    const S=+(lv.closest(".dev")?.dataset.scale)||1;   // a scaled device (Desk.fit): pointer moves are screen px, the card moves in device px
+    let row=t.parentElement;const items=()=>rowItems(row);items().forEach((o,i)=>o.style.order=i);
+    const sx=e.clientX;let sy=e.clientY,live=false,raf=0,px=sx,py=sy,ty=0,armed=0,T=0;
+    const flipTo=list=>{const before=new Map(items().filter(o=>o!==t).map(o=>[o,o.getBoundingClientRect().left]));list.forEach((o,i)=>o.style.order=i);
+      before.forEach((x,o)=>{o.getAnimations().forEach(a=>a.cancel());const dx=x-o.getBoundingClientRect().left;if(Math.abs(dx)>.5)o.animate([{transform:`translateX(${dx}px)`},{transform:"none"}],{duration:RMQ?0:MOTION.base,easing:MOTION.out});});};
+    let x=0,vx=0,rot=0,t0=performance.now();const Wn=RMQ?1e4:38;
+    const walls={1:lv.parentElement.querySelector(".mt"),"-1":lv.closest(".dev")?.querySelector(".side")};
+    const pushWall=(side,d)=>{for(const k in walls){const w=walls[k];if(w)w.style.translate=+k===side&&d?`${(side*d).toFixed(2)}px 0`:"";}};
+    // to another level: the slot under the card decides where it lands (a full level swaps that slot's module into
+    // the card's old place). The new row comes in under the card; a transform from where the card was, easing out
+    // with the same 260 ms curve as the track, keeps it still under the pointer while the levels slide.
+    const cross=dir=>{const r=t.getBoundingClientRect(),slot=Math.round((r.left-row.getBoundingClientRect().left)/S/(t.offsetWidth+G()));
+      const m=Desk.moveLevel(L.read(),t.dataset.s,L.cur+dir,slot,CAP);ty=0;t.style.translate=`${T}px 0`;const top0=t.getBoundingClientRect().top;
+      L.layout(m.levels);row=t.parentElement;const top1=t.getBoundingClientRect().top;
+      t.style.transition="none";t.style.transform=`translateY(${((top0-top1)/S).toFixed(2)}px)`;void t.offsetWidth;t.style.transition="";
+      L.go(m.at);t.style.transform="";sy=py;};
+    const tick=()=>{const now=performance.now(),dt=Math.min(.05,(now-t0)/1000)||.016;t0=now;
+      const dy=py-sy,dir=dy<-32?-1:dy>32?1:0,next=L.levels[L.cur+Math.sign(dy)];
+      if(dir&&next){if(!armed)armed=now;else if(now-armed>=260){armed=0;cross(dir);}}else armed=0;
+      const r0=row.getBoundingClientRect();
+      // weight: trail the pointer on a critically damped spring and lean into the motion (max 4°)
+      const tx=(px-sx)/S;if(RMQ){x=tx;vx=0;}else{vx+=(Wn*Wn*(tx-x)-2*Wn*vx)*dt;x+=vx*dt;}
+      rot+=(Math.max(-4,Math.min(4,RMQ?0:vx*.006))-rot)*(1-Math.exp(-dt/.05));
+      // toward a level the card leans that way a little (max 6 px, growing resistance), so the gesture reads before it lands
+      const want=next&&dy?Math.sign(dy)*6*(1-1/(Math.abs(dy)/40+1)):0;ty=RMQ?want:ty+(want-ty)*(1-Math.exp(-dt/.05));
+      // reorder first, then place the card against the NEW layout — otherwise one frame is painted
+      // with the old offset and the card blinks on every swap
+      const cx=px-sx+startCenter,list=items();
+      const hit=list.find(o=>o!==t&&cx>r0.left+o.offsetLeft*S&&cx<r0.left+(o.offsetLeft+o.offsetWidth)*S);
+      if(hit){const j=list.indexOf(hit),nl=list.filter(o=>o!==t);nl.splice(j,0,t);flipTo(nl);}
+      // the card stops at the row's ends; pushed further, the wall it rests on gives way a little under its weight
+      // (left column to the left, master to the right, max 6 px) and the card moves with it; both ease back on release
+      const lay=t.offsetLeft,lo=-lay,hi=row.clientWidth-t.offsetWidth-lay;T=x-(lay-startLeft);
+      if(T<lo||T>hi){const side=T<lo?-1:1,over=side<0?lo-T:T-hi,s=6*(1-1/(over/40+1));T=side<0?lo-s:hi+s;pushWall(side,s);}
+      else pushWall(0,0);
+      t.style.translate=`${T}px ${ty.toFixed(2)}px`;t.style.rotate=rot.toFixed(2)+"deg";raf=requestAnimationFrame(tick);};
+    const startLeft=t.offsetLeft,startCenter=t.getBoundingClientRect().left+t.offsetWidth*S/2;
+    // below the 4 px start threshold the card already follows at half the distance (no dead zone, no catch-up jump);
+    // past it the spring takes over from exactly where the card is
+    const mv=ev=>{px=ev.clientX;py=ev.clientY;if(live)return;const pre=(px-sx)*.5/S;
+      if(Math.hypot(px-sx,py-sy)>4){live=true;x=pre;vx=0;document.body.classList.add("dragx");document.querySelectorAll(".tip").forEach(x=>x.remove());raf=requestAnimationFrame(tick);}
+      else t.style.translate=`${pre.toFixed(2)}px 0`;};
+    const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up);cancelAnimationFrame(raf);
+      if(!live){t.classList.remove("lift");cr.end();const f=t.style.translate;t.style.translate="";if(f&&f!=="0px 0px")t.animate([{translate:f},{translate:"0 0"}],{duration:RMQ?0:MOTION.fast,easing:MOTION.out});return;}
+      const from=t.style.translate,fr=t.style.rotate;t.style.translate="";t.style.rotate="";t.classList.remove("lift");document.body.classList.remove("dragx");
+      h.dataset.dragged="1";setTimeout(()=>delete h.dataset.dragged,0);
+      t.animate([{translate:from||"0 0",rotate:fr||"0deg"},{translate:"0 0",rotate:"0deg"}],{duration:RMQ?0:MOTION.base,easing:MOTION.out});cr.end();
+      for(const k in walls){const w=walls[k];if(w&&w.style.translate){const f=w.style.translate;w.style.translate="";w.animate([{translate:f},{translate:"0 0"}],{duration:RMQ?0:MOTION.base,easing:MOTION.out});}}onDone(L.read());};
+    addEventListener("pointermove",mv);addEventListener("pointerup",up);});}
+const G=()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--g"))||4;
+// "streaming": one generic, brand-free readout of what loudness normalisation does to the track.
+// Under the hood it uses the most common reference, −14 LUFS (Spotify, also Tidal, Amazon Music, YouTube).
+function tweenText(node,from,to,fmt){if(RMQ||!document.body.classList.contains("glide")){node.innerHTML=fmt(to);return;}
+  const t0=performance.now(),D=460,e=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;cancelAnimationFrame(node._tw);
+  const step=now=>{const p=Math.min(1,(now-t0)/D);node.innerHTML=fmt(from+(to-from)*e(p));if(p<1)node._tw=requestAnimationFrame(step);};node._tw=requestAnimationFrame(step);}
+// Loudness shows what the Desk device on the master measures (GET /meter, EBU R128) while it posts; the estimate from
+// the pad is the fallback when the device is absent, stopped or has no value yet (silence, < 400 ms since reset).
+// Integrated wins (it's what normalisation uses); short-term covers the first seconds after a reset.
+let METER=null,LOUD_DRAW=null;  // the loudness block on screen (rebuilt with the device) redraws on each reading
+let RUN_LUFS=null;   // the master loudness ANALYZE measured (its summary.measured_lufs; null = not measured, e.g. stopped)
+function measured(){const m=METER;if(!m||!m.live)return null;
+  return m.integrated!=null?{l:m.integrated,cap:"lufs int.",what:"integrated"}:m.short_term!=null?{l:m.short_term,cap:"lufs short",what:"short-term"}:null;}
+function pollMeter(){fetch("/meter").then(r=>r.ok?r.json():null).catch(()=>null).then(m=>{METER=m;LOUD_DRAW&&LOUD_DRAW();setTimeout(pollMeter,m&&m.live?500:1000);});}  // the device posts at 10 Hz; 1 s while it's away
+const fmtDb=d=>(d>0?"+":"−")+Math.abs(d).toFixed(1);
+// Loudness block (Figma 16:2482, 2026-10-04): LOUDNESS + short-term LUFS (27 px, one decimal; the Desk meter while it
+// plays, the pad's estimate otherwise); then one STATUS line and SPOTIFY. The status line holds "VS MINE ±X" (pad off
+// its centre) and "PEAK −X.X" (true peak since the last play above −1 dBTP, warning colour): one shows alone; both
+// alternate every 2 s with a 160 ms crossfade; with reduced motion only PEAK (the warning matters more); none = an
+// empty line, so the block never changes height. SPOTIFY: how much Spotify turns the song down (see spotify() below).
+const SPOTIFY_MIN_S=10,STATUS_EVERY=2000;
+function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="cap">loudness</span><b class="lv-n"></b></div>`+
+    `<div class="bot"><div class="row stl"><span class="sl s-mine"><span class="k">vs mine</span><span class="v"></span></span>`+
+      `<span class="sl s-peak"><span class="k">peak</span><span class="v"></span></span></div>`+
+    `<div class="row"><span class="k">spotify</span><span class="v sp-n"></span></div></div></div>`),
+    v=b.querySelector(".lv-n"),sp=b.querySelector(".sp-n"),stl=b.querySelector(".stl"),
+    mineV=b.querySelector(".s-mine .v"),peakV=b.querySelector(".s-peak .v");
+  const fmtL=l=>(l<0?"−":"")+Math.abs(l).toFixed(1),trim=t=>t.replace(/\.0$/,"");
+  let last=null,turn="mine";
+  const shortNow=()=>{const m=METER&&METER.live?METER:null;
+    return m&&m.short_term!=null?{l:m.short_term,what:"measured"}:{l:lufs(vx("master_loud")),what:null};};
+  // SPOTIFY (founder, 2026-10-04): how much Spotify turns the song down at −14 LUFS = max(0, integrated + 14) dB, shown
+  // the Figma way ("−3.9 dB", "0 dB"). Integrated from the Desk meter once it has 10 s gated (this run), else the
+  // loudness ANALYZE measured on the master (its summary); nothing measured = "play" (Info View: press play in Live).
+  const spotify=()=>{const m=METER&&METER.live?METER:null;
+    const i=m&&m.integrated!=null&&(m.gated_s??0)>=SPOTIFY_MIN_S?{l:m.integrated,from:"meter"}:RUN_LUFS!=null?{l:RUN_LUFS,from:"analysis"}:null;
+    return i&&{...i,down:Math.max(0,i.l-STREAM_REF)};};
+  const spText=s=>s?(s.down<.05?"0":"−"+s.down.toFixed(1))+'<span class="u">dB</span>':'<span class="none">play</span>';
+  // which of the two status items shows now: "", "mine", "peak" (both: the one whose turn it is)
+  const status=()=>{const off=VIEW.mine?0:lufs(vx("master_loud"))-lufs(.5),tp=METER&&METER.live?METER.true_peak_db:null;
+    const hasMine=Math.abs(off)>=.05,hasPeak=tp!=null&&tp>-1;
+    mineV.textContent=hasMine?trim(fmtDb(off)):"";peakV.textContent=hasPeak?fmtDb(tp):"";
+    stl.dataset.both=hasMine&&hasPeak?"1":"";
+    stl.dataset.show=hasMine&&hasPeak?(RMQ?"peak":turn):hasPeak?"peak":hasMine?"mine":"";};
+  setInterval(()=>{turn=turn==="mine"?"peak":"mine";if(stl.dataset.both)status();},STATUS_EVERY);
+  const draw=()=>{if(!FLOW.analyzed||FLOW.state==="reveal"&&!FLOW.loudOn){v.innerHTML='<span class="none">—</span>';sp.innerHTML="";stl.dataset.show="";last=null;return;}
+    status();const s=spText(spotify());if(sp.innerHTML!==s)sp.innerHTML=s;
+    const n=shortNow();if(last!=null&&Math.abs(n.l-last)<.05)return;if(last==null)last=n.l;
+    tweenText(v,last,n.l,fmtL);last=n.l;};
+  sub("master_loud",draw);LOUD_DRAW=draw;
+  if(FLOW.analyzed)Flow.status().then(fs=>{RUN_LUFS=fs.summary&&fs.summary.measured_lufs!=null?fs.summary.measured_lufs:RUN_LUFS;draw();}).catch(()=>{});
+  const [lb,sb]=b.children;
+  Desk.info(lb,()=>{if(!FLOW.analyzed)return ["Loudness","Nothing measured yet: the master is measured during the analysis (step 4, while the song plays)."];
+    const n=shortNow();return n.what?["Loudness · short-term",`${n.l.toFixed(1)} LUFS short-term (the last 3 s), measured on the master (EBU R128).`]:
+      ["Loudness · from the pad",`About ${n.l.toFixed(1)} LUFS, estimated from the master pad's quiet ↔ loud position: the Desk device on the master measures it while the song plays.`];});
+  Desk.info(sb,()=>{if(!FLOW.analyzed)return ["Spotify","Shown after the analysis."];const s=spotify(),m=METER,tp=m&&m.live?m.true_peak_db:null;
+    const peak=tp!=null&&tp>-1?` True peak ${fmtDb(tp)} dBTP since the last play: above −1 dBTP, it may distort after encoding.`:"";
+    const off=VIEW.mine?0:lufs(vx("master_loud"))-lufs(.5),mine=Math.abs(off)>=.05?` The pad is ${fmtDb(off)} dB from MINE.`:"";
+    if(!s)return ["Spotify · press play",`Spotify plays everything at −14 LUFS and turns louder songs down. Press play in Live: once the Desk device has measured ${SPOTIFY_MIN_S} s of the song, this shows how much.`+mine+peak];
+    return ["Spotify",(s.down<.05?"Spotify does not turn it down: it is at or under −14 LUFS.":`Spotify turns it down by ${s.down.toFixed(1)} dB${s.down>1?": extra loudness buys nothing there":""}.`)+
+      ` From ${s.l.toFixed(1)} LUFS integrated, ${s.from==="meter"?"measured on the master over this run":"measured on the master during the analysis"} (−14 LUFS reference).`+mine+peak];});
+  return b;}
+// support is per knob (each knob moves its own devices); demo: the bridge reports levels from Live
+// module bypass state lives in one place so BYPASS (all) can restore exactly the modules that weren't off on their own
+const MOD_OFF=new Set();
+let LIVECOL=null;  // the bridge's /colors (Live track colours per module), when it answers
+// the progress fill takes the same colour as the module's tile: the set's track colour in the Live look
+Flow.colorOf=s=>{const lc=colorsMode()==="live"&&LIVECOL?.modules?.[s];return lc&&lc.color?deskTone(lc.color):null;};
+addEventListener("desk-mode",()=>{if(st.list){buildDevice("M2");say("look · "+MODE);}});  // L: Desk ↔ Live look rebuilds the modules
+// levels of six modules (Desk.levelsFrom / moveLevel in controls.js); the layout and the level you are on are kept per browser
+const CAP=6,L={levels:[],cur:0,go:()=>{}};
+addEventListener("keydown",e=>{if((e.key!=="PageUp"&&e.key!=="PageDown")||e.metaKey||e.ctrlKey||e.altKey||/input|textarea/i.test(e.target.tagName))return;
+  e.preventDefault();L.go(L.cur+(e.key==="PageUp"?-1:1));});
+function buildDevice(id){const host=document.getElementById(id);host.className="dev sc m mv v2";host.style.width=host.style.minWidth="";
+  const b=frame(id),side=host.querySelector(".side"),title=side.querySelector(".logo-d"),lvk=side.querySelector(".lvk"),[up,dn]=lvk.children,T={};
+  let saved=null;try{saved=JSON.parse(localStorage.getItem("nc.levels")||localStorage.getItem("nc.board")||"null");}catch(e){}
+  const list=Desk.levelsFrom(mods(),saved,CAP).flat();
+  LOOK=colorsFor(["master",...list]);
+  Desk.info(title,()=>["Desk by Volume Attack",FLOW.analyzed?"Meaning knobs built for this set: each module is a group of tracks, each knob a sound you can steer. The centre of every knob is MINE.":"Not analyzed yet: click LET’S START."]);
+  againButton(side.querySelector(".again"));
+  Desk.info(lvk,()=>{const n=L.levels.length;return ["Levels",n<2?`All ${list.length} modules fit on one level. With more than ${CAP}, the others wait on levels below this one.`
+    :`Level ${L.cur+1} of ${n}.${L.cur===0?" This is the first level.":L.cur===n-1?" This is the last level.":""} ↑ ↓, Page Up / Page Down or a click on the strip peeking at the top or bottom switch levels · drag a module by its name up or down to move it to another level.`];});
+  list.forEach(s=>{const ks=st.list.filter(k=>k.strip===s),lc=colorsMode()==="live"&&LIVECOL?.modules?.[s],col=(lc&&lc.color&&deskTone(lc.color))||LOOK[s],
+      t=el(`<div class="t" data-s="${s}" style="background:${col}"><div class="in"></div></div>`),inn=t.querySelector(".in");
+
+    // the name strip: drag to move, tap to bypass (grip and bypass marks show on hover)
+    const nm=el(`<div class="nm" role="button" tabindex="0" aria-pressed="false"><i class="gr" aria-hidden="true">${ICON.drag}</i><span class="tx">${s}</span><i class="bi" aria-hidden="true">${ICON["bypass-sml"]}</i></div>`);
+    inn.append(nm);
+    Desk.info(nm,()=>[`${s} module`,VIEW.byp?"Everything is bypassed: switch BYPASS off to change single modules."
+      :MOD_OFF.has(s)?"Bypassed: you hear these tracks without Desk. Tap or ⊘ to bring the processing back · drag to reorder."
+      :"Drag to reorder · tap or ⊘ to bypass this module (hold ⊘ to hear it without processing only while held)."]);
+    ks.forEach(k=>{const w=el(`<div class="kw"></div>`),lv=k.support||"full";w.append(knob(k.id));
+      if(lv!=="full"){const sp=el(`<span class="sp ${lv}"></span>`);w.append(sp);tipFor(sp,k.devices||[]);
+        Desk.info(sp,()=>["Plugin support",lv==="none"?"This knob can't reach one of its plugins yet. Hover the dot for what to do.":"One of this knob's plugins gives Live bare numbers, so Desk moves it within safe limits. Nothing to do."]);}
+      if(lv==="none")w.classList.add("dead");inn.append(w);});
+    // through the shared queue; the bridge puts the knobs back where they were when the module returns
+    const toggle=()=>{if(VIEW.byp||FLOW.state!=="ready")return; // everything is bypassed: a single module has nothing to switch
+      const off=!MOD_OFF.has(s);off?MOD_OFF.add(s):MOD_OFF.delete(s);t.classList.toggle("off",off);nm.setAttribute("aria-pressed",off);
+      queueKey(()=>post(off?"/strip_off":"/strip_on",{strip:s}));say(s+(off?" · original":" · processed"));};
+    nm.addEventListener("click",e=>{if(nm.dataset.dragged){delete nm.dataset.dragged;return;}if(e.target.closest(".bi"))return;toggle();});
+    // the bypass icon is a real button, like the keys: click = on/off, hold = hear it only while held; it never lifts the card
+    const bi=nm.querySelector(".bi");Desk.pressToggle(bi,()=>MOD_OFF.has(s),off=>{if(off!==MOD_OFF.has(s))toggle();});
+    nm.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle();}});
+    T[s]=t;});
+  const lv=el(`<div class="lv"><div class="track"></div><button class="peek prev" type="button" tabindex="-1"></button><button class="peek next" type="button" tabindex="-1"></button></div>`),
+    track=lv.firstChild,[pv,nx]=lv.querySelectorAll(".peek");
+  // the strips of the neighbouring levels peeking at the top / bottom: a click goes there (keyboard: Page Up / Down)
+  [[pv,-1],[nx,1]].forEach(([p,d])=>{p.onclick=()=>L.go(L.cur+d);
+    Desk.info(p,()=>{const k=L.cur+d+1,n=L.levels.length;return [`Level ${k} of ${n}`,`${(L.levels[k-1]||[]).join(", ")}. Click to go to level ${k} · or ${d<0?"↑ / Page Up":"↓ / Page Down"}.`];});});
+  L.lv=lv;
+  L.read=()=>[...track.children].map(r=>rowItems(r).map(t=>t.dataset.s));
+  L.layout=levels=>{L.levels=levels;lv.classList.toggle("multi",levels.length>1);side.classList.toggle("multi",levels.length>1);
+    track.replaceChildren(...levels.map(l=>{const r=el(`<div class="tiles"></div>`);l.forEach((s,j)=>{T[s].style.order=j;r.append(T[s]);});return r;}));};
+  // where the shown level sits in the 169 px window (Figma 15:1716 / 27:2740 / 27:2926): first 4 from the top, last 4
+  // from the bottom, a middle one centred between them (21.5 in Figma, floored to a whole pixel)
+  L.top=(i,n)=>{const g=G(),th=n>1?126:161,first=g,last=169-g-th;return n<2||i===0?first:i===n-1?last:Math.floor((first+last)/2);};
+  L.go=(i,anim=true)=>{const n=L.levels.length,g=G(),th=n>1?126:161;i=Math.max(0,Math.min(n-1,i));const moved=i!==L.cur;L.cur=i;
+    const y=L.top(i,n);
+    if(!anim)track.style.transition="none";track.style.translate=`0 ${y-i*(th+g)}px`;if(!anim){void track.offsetWidth;track.style.transition="";}
+    pv.classList.toggle("on",i>0);pv.style.top="0px";pv.style.height=`${y}px`;
+    nx.classList.toggle("on",i<n-1);nx.style.top=`${y+th}px`;nx.style.height=`${169-y-th}px`;
+    pv.setAttribute("aria-label",`level ${i}`);nx.setAttribute("aria-label",`level ${i+2}`);
+    [...track.children].forEach((r,k)=>r.inert=k!==i);up.setAttribute("aria-disabled",i===0);dn.setAttribute("aria-disabled",i===n-1);
+    Desk.infoRefresh(pv);Desk.infoRefresh(nx);
+    Desk.infoRefresh(lvk);if(moved&&anim)say(`level ${i+1} of ${n}`);try{localStorage.setItem("nc.level",i);}catch(e){}};
+  up.onclick=()=>L.go(L.cur-1);dn.onclick=()=>L.go(L.cur+1);
+  L.layout(Desk.levelsFrom(mods(),saved,CAP));
+  reorderable(L,levels=>{try{localStorage.setItem("nc.levels",JSON.stringify(levels));}catch(e){}say("order saved");});
+  const mt=el(`<div class="mt hz"></div>`);
+  if(K("master_air")&&K("master_loud"))mt.prepend(pad("master_air","master_loud"));
+  else{const p=el(`<div class="pad"><i class="cx"></i><i class="cy"></i><span class="pk" style="left:50%;top:50%"></span></div>`);mt.prepend(p);
+    Desk.info(p,()=>["Master","Warm ↔ airy, quiet ↔ loud. Appears with the modules after ANALYZE."]);}
+  const {rel,byp}=keysFor(),c=el(`<div class="k1"></div>`);[[rel,"mine"],[byp,"bp"]].forEach(([k,l])=>{k.append(el(`<span class="kl">${l}</span>`));c.append(k);});
+  b.append(lv,mt,loudBlock(),c);
+  // the ANALYZE work layer covers everything right of the left column (Figma start / progress)
+  FLOW.layer=Flow.layer();b.append(FLOW.layer.el);FLOW.layer.el.hidden=FLOW.state==="ready"||FLOW.state==="reveal";flowKey();
+  const x=side.querySelector(".x");x.onclick=()=>{if(FLOW.state==="analysing")Flow.cancel();else if(FLOW.state==="error"&&FLOW.analyzed)backToDesk();};
+  Desk.info(x,()=>FLOW.state==="analysing"?["Cancel",FLOW.buildMode==="apply"?"Stops now. Anything BUILD already changed is put back.":"Stops now. Nothing has been changed in the set."]:["Back to your desk","The analysis stopped; your desk is as it was."]);
+  let at=L.cur;if(!buildDevice.once){buildDevice.once=1;try{at=+localStorage.getItem("nc.level")||0;}catch(e){}}L.cur=-1;L.go(at,false);
+  // device width = the left column + six module slots + the fixed blocks; measured again once the font has loaded (Mono is wider)
+  const size=()=>{const g=G(),kids=[...b.children].filter(x=>!x.classList.contains("work")),  // the work layer lies on top, it takes no slot
+    rest=kids.reduce((a,x)=>a+x.offsetWidth,0)+g*(kids.length-1)+2*g;
+    host.style.width=host.style.minWidth=(g+side.offsetWidth+rest)+"px";
+    // whole pixels: a 1–2 px line on a fractional position smears across two device pixels, worst on the corners
+    host.style.translate="";const r=host.getBoundingClientRect();host.style.translate=`${(Math.round(r.left)-r.left).toFixed(3)}px ${(Math.round(r.top)-r.top).toFixed(3)}px`;
+    // narrower than the device (a small jweb, a narrow window): the whole device scales down, never a scrollbar or a cut
+    Desk.fit(host);};
+  removeEventListener("resize",host._size||size);host._size=size;addEventListener("resize",size);
+  requestAnimationFrame(size);document.fonts.ready.then(size);}
+const RMQ=matchMedia("(prefers-reduced-motion: reduce)").matches;
+// B+ — team pick with icon placement options
+// transport for animated icons: poll Live once a second only while some frame is animated
+// ── ANALYZE flow (product/flow.md; step copy and the work layer in flow.js). States: empty · analysing · reveal ·
+// ready, plus error (the log stays with RETRY). Nothing turns, and MINE / BYPASS stay off, until READY.
+const FLOW={state:"empty",analyzed:false,landing:new Set(),layer:null,err:null,msg:"",changed:null,loudOn:true,buildMode:"plan",undo:{available:false,changes:0},undoing:false};
+function setFlow(s){FLOW.state=s;document.body.dataset.flow=s;document.body.classList.toggle("ready",s==="ready");document.body.classList.toggle("unbuilt",!FLOW.analyzed);document.body.classList.toggle("analyzed",FLOW.analyzed);
+  document.querySelectorAll("#M2 .side .again").forEach(b=>b.setAttribute("aria-disabled",s!=="ready"));
+  if(FLOW.layer)flowKey();if(s==="empty")Desk.infoState(...INFO_EMPTY());if(s==="ready")Desk.infoState("","");}
+const INFO_EMPTY=()=>["Desk · not analyzed yet","ANALYZE reads this set, groups its tracks into modules and builds two knobs for each. Takes 10–40 s."+
+  (FLOW.buildMode==="apply"?"\nIt can add Live's own devices at the end of tracks and set levels, pan and sends; it never removes your devices. CANCEL at any point puts the set back.":
+   "\nThis bridge only plans BUILD: nothing is written to the set. CANCEL stops at any point.")];
+function loadDesk(){return Promise.all([fetch("/knobs").then(r=>r.json()),fetch("/library").then(r=>r.json()),fetch("/state").then(r=>r.json()),
+  fetch("/colors").then(r=>r.ok?r.json():null).catch(()=>null)]).then(([knobs,lib,state,cols])=>{LIVECOL=cols;
+  st.list=knobs;st.subs={};knobs.forEach(k=>st.knobs[k.id]=state.knobs[k.id]??.5);st.strips=lib.modules.map(m=>m.strip);MOD_OFF.clear();});}
+// the key: ANALYZE (empty) · CANCEL (working) · RETRY (stopped on a step that can go on)
+function flowKey(){const F=FLOW.layer,k=F.key;
+  if(FLOW.state==="analysing"){k.onclick=null;return;}   // the progress panel shows; the x key in the left column cancels
+  if(FLOW.state==="error"&&FLOW.err&&FLOW.err.retry){F.setKey("retry","retry \u00b7 from "+FLOW.err.step);k.onclick=()=>run(FLOW.err.step);
+    Desk.info(k,()=>["Retry",`Continues from ${FLOW.err.step.toUpperCase()}; the steps before it are kept.`+(FLOW.analyzed?" Esc returns to your desk.":"")]);}
+  else{F.setKey("analyze",FLOW.msg||"");k.onclick=()=>run();
+    Desk.info(k,()=>FLOW.state==="error"?[FLOW.err.title,FLOW.err.text]:INFO_EMPTY());}
+  Desk.infoRefresh(k);}
+function backToDesk(){showLayer(false);FLOW.err=null;setFlow("ready");}
+function showLayer(on){const w=FLOW.layer.el;if(on){w.hidden=false;if(!RMQ){w.classList.add("out");requestAnimationFrame(()=>requestAnimationFrame(()=>w.classList.remove("out")));}}
+  else{w.classList.add("out");setTimeout(()=>{w.hidden=true;w.classList.remove("out");},RMQ?0:MOTION.fast);}}
+function run(from){if(FLOW.state==="analysing")return;setMine(false);
+  Flow.start(from).then(r=>{if(!r.ok){const e=r.error||{};FLOW.msg=e.code==="bypassed"?"modules bypassed \u00b7 switch bp off":"";
+      Desk.infoState(e.title||"Can't analyze now",e.text||"");if(FLOW.state!=="ready")flowKey();say("analyze: "+(e.code||"refused"));return;}
+    FLOW.err=null;FLOW.msg="";setFlow("analysing");if(FLOW.layer.el.hidden)showLayer(true);say("analyzing");follow();})
+  .catch(()=>{say("bridge offline");Desk.infoState("Bridge offline","Desk can't reach its bridge right now (it may be restarting). Nothing was started and nothing changed: press again in a moment.");});}
+function follow(){Flow.follow(fs=>{FLOW.layer.draw(fs);const i=Flow.stepInfo(fs,FLOW.analyzed);if(i)Desk.infoState(...i);}).then(done);}
+function done(fs){
+  if(fs.undo)FLOW.undo=fs.undo;
+  if(fs.state==="done"){FLOW.analyzed=true;const hold=fs.summary&&fs.summary.applied?APPLIED_HOLD:0;
+    if(hold)Desk.infoState("Analyze · done",`${fs.summary.changes} changes applied to the set. Every knob lands on MINE; Undo in Live (Cmd/Ctrl+Z) takes them back.`);
+    Promise.all([retrying(loadDesk),new Promise(r=>setTimeout(r,hold))]).then(reveal);return;}
+  // the bridge restarted during the run (it forgets a run it did not finish): say so; a BUILD it had started is in
+  // its journal: Live's own Undo takes it back
+  if(fs.state==="idle"){const back=FLOW.undo.available;FLOW.msg="analysis interrupted";
+    if(FLOW.analyzed){showLayer(false);setFlow("ready");}else setFlow("empty");say("analysis interrupted");
+    Desk.infoState("Analysis interrupted","The bridge restarted while Desk was analyzing. "+(back?"Changes BUILD had made are still in the set: Undo in Live (Cmd/Ctrl+Z) takes them back. ":"Nothing in the set was changed. ")+
+      (FLOW.analyzed?"Re-analyze to try again.":"Click LET’S START to try again."));return;}
+  if(fs.state==="cancelled"){const restored=/undone/.test(fs.steps[4].text);
+    Desk.infoState("Cancelled",restored?"What BUILD had changed is put back. Your set is as it was.":"Desk stopped before changing anything.");say("cancelled");
+    if(FLOW.analyzed){showLayer(false);setFlow("ready");return;}
+    FLOW.msg=restored?"cancelled \u00b7 set restored":"cancelled \u00b7 nothing changed";setFlow("empty");Desk.infoState("Cancelled",restored?"What BUILD had changed is put back. Your set is as it was.":"Desk stopped before changing anything.");
+    setTimeout(()=>{if(FLOW.state==="empty"&&/cancelled/.test(FLOW.msg)){FLOW.msg="";flowKey();}},4000);return;}
+  const e=fs.error||{code:"error",step:"read",title:"Analysis stopped",text:""};say("analyze stopped: "+e.code);
+  if(e.code==="notracks"){FLOW.msg="no tracks with clips yet";FLOW.err=null;setFlow("empty");Desk.infoState(e.title,e.text);return;}
+  FLOW.err={...e,retry:["live","error"].includes(e.code)};setFlow("error");Desk.infoState(e.title,e.text+(FLOW.analyzed?"\nEsc returns to your desk.":""));}
+addEventListener("keydown",e=>{if(e.key!=="Escape")return;
+  if(FLOW.state==="analysing"){e.preventDefault();Flow.cancel();}
+  else if(FLOW.state==="error"&&FLOW.analyzed)backToDesk();});
+// No UNDO key in the device (founder, 2026-10-04): Live's own Undo (Cmd/Ctrl+Z) takes BUILD's changes back. The bridge's
+// journal and POST /undo stay as an internal safety net (no control here).
+const APPLIED_HOLD=900;   // ms the finished panel (all steps done, "N changes" bottom right) stays before the reveal
+// re-analyze (left column): live once the desk is built; a dot when the set changed since the analysis
+function againButton(b){
+  Desk.info(b,()=>FLOW.state!=="ready"?["Re-analyze","Available once the desk is built."]:FLOW.changed?["Set changed · "+FLOW.changed.what,FLOW.changed.why+"\nClick to re-analyze."]:
+    ["Re-analyze","Reads the set again and rebuilds the desk from how it sounds now: the new MINE is the current sound. Takes 10–40 s; CANCEL stops it."]);
+  b.addEventListener("click",()=>{if(FLOW.state==="ready")run();});b.classList.toggle("changed",!!FLOW.changed);}
+function pollChanges(){if(FLOW.state==="ready"&&FLOW.analyzed&&!document.hidden)Flow.changes().then(c=>{FLOW.changed=c.changed?c:null;
+  document.querySelectorAll("#M2 .side .again").forEach(b=>{b.classList.toggle("changed",!!FLOW.changed);Desk.infoRefresh(b);});});setTimeout(pollChanges,10000);}
+// the reveal (flow.md §3): tiles land left to right, 90 ms apart; each knob's dot glides from its left stop to MINE;
+// then the master gets its puck, loudness its number, and MINE rings once. A click on the device skips to the end.
+function reveal(){FLOW.state="reveal";FLOW.changed=null;FLOW.loudOn=false;document.body.classList.add("revealing");document.body.classList.remove("unbuilt");
+  FLOW.landing=new Set(mods());buildDevice("M2");FLOW.layer.el.hidden=true;
+  const tiles=L.levels[L.cur].map(s=>document.querySelector(`#M2 .t[data-s="${CSS.escape(s)}"]`)).filter(Boolean);
+  document.querySelectorAll("#M2 .t").forEach(t=>t.classList.add("landing"));
+  const n=FLOW.landing.size;Desk.infoState("Here is your desk",`${n} module${n===1?"":"s"}. Every knob lands on MINE, the sound built for this song.`);
+  const timers=[],STAG=RMQ?0:90;
+  const land=t=>{if(!t.classList.contains("landing"))return;const s=t.dataset.s;t.classList.remove("landing");t.classList.add("gliding");
+    if(!RMQ)t.animate([{opacity:0,translate:"0 8px"},{opacity:1,translate:"0 0"}],{duration:MOTION.base,easing:MOTION.out});
+    FLOW.landing.delete(s);st.list.filter(k=>k.strip===s).forEach(k=>(st.subs[k.id]||[]).forEach(f=>f()));
+    timers.push(setTimeout(()=>t.classList.remove("gliding"),RMQ?0:MOTION.slow));};
+  const finish=()=>{if(FLOW.state!=="reveal")return;timers.forEach(clearTimeout);document.querySelectorAll("#M2 .t.landing").forEach(land);
+    document.querySelectorAll("#M2 .t.gliding").forEach(t=>t.classList.remove("gliding"));
+    FLOW.landing.clear();FLOW.loudOn=true;document.body.classList.remove("revealing");setFlow("ready");redrawAll();say("ready · every knob on MINE");
+    if(!RMQ){const k=document.querySelector("#M2 .k-mine");k?.classList.add("flash");setTimeout(()=>k?.classList.remove("flash"),MOTION.slow);}
+    readyInfo();};
+  timers.push(setTimeout(()=>{tiles.forEach((t,j)=>timers.push(setTimeout(()=>land(t,j),j*STAG)));
+    timers.push(setTimeout(finish,(tiles.length-1)*STAG+MOTION.slow+(RMQ?0:MOTION.fast)));},RMQ?0:MOTION.fast));
+  document.getElementById("M2").addEventListener("pointerdown",finish,{once:true,capture:true});}
+function readyInfo(){Flow.status().then(fs=>{const sm=fs.summary||{},extra=[];
+  if(sm.dead_knobs&&sm.dead_knobs.length)extra.push(`${sm.dead_knobs.length} knob${sm.dead_knobs.length>1?"s":""} can't move: a plugin hides its settings (black dot).`);
+  else if(sm.hidden&&sm.hidden.length)extra.push(`${sm.hidden.join(", ")} hide${sm.hidden.length>1?"":"s"} its settings: left as it is, Live's own devices used instead.`);
+  if(sm.measured_lufs==null)extra.push("Loudness is an estimate until the song plays.");
+  if(sm.proposed&&!sm.applied)extra.push(`BUILD planned ${sm.proposed} changes and applied none (plan mode).`);
+  if(sm.applied)extra.push(`${sm.changes} changes applied to the set. Undo in Live (Cmd/Ctrl+Z) takes them back.`);
+  Desk.infoState("Ready · every knob on MINE",`${mods().length} modules. Turn anything; double-click a knob or hold MINE to come back.`+(extra.length?"\n"+extra.join("\n"):""));
+  setTimeout(()=>{if(FLOW.state==="ready")Desk.infoState("","");},8000);}).catch(()=>{});}
+setTimeout(pollChanges,1000);  // first look soon after load, then every 10 s
+
+// startup: what the bridge holds decides the state — no design yet = EMPTY, an analysis running = follow it
+Flow.status().then(fs=>{FLOW.analyzed=!!fs.analyzed;FLOW.buildMode=fs.build_mode;if(fs.undo)FLOW.undo=fs.undo;
+  return loadDesk().then(()=>{if(fs.state==="running"){setFlow("analysing");follow(!fs.analyzed?false:true);}
+    else setFlow(FLOW.analyzed?"ready":"empty");buildDevice("M2");pollMeter();
+    say(fs.state==="running"?"analyzing":FLOW.analyzed?"synced with Live":"not analyzed yet");});
+}).catch(()=>say("bridge offline — start tools/knobs/server.py"));
+</script>
+</body>
+</html>
