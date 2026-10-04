@@ -1,3 +1,3 @@
-# Desk by Volume Attack
+# desk.volumeattack.ru
 
-Landing page. Published copy; do not edit here.
+Published copy; do not edit here. Built by `tools/site/build.py` in indiekola/desk (version a95f1b76e99a); see product/site.md there.

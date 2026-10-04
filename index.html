@@ -4,171 +4,82 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Desk by Volume Attack</title>
-<meta name="description" content="Desk by Volume Attack: a Max for Live device that turns your own Ableton set into two meaning knobs per instrument. The AI doesn't hear. It measures. Your ear decides.">
+<meta name="description" content="Desk by Volume Attack: a Max for Live device in development. It reads your Ableton set, groups the tracks into modules and gives each module two knobs in plain words, built on Live's own devices.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%23000'/%3E%3Cpath d='M126 86.7H96L118.5 0 60 105.3H90L67.5 192Z' fill='%23fff' transform='translate(24 24) scale(.75)'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<!-- Source of the public site. Publish with tools/site/build.py (product/site.md); the markers [{"s":"pad","l":"close","r":"spacious"},{"s":"pad","l":"warm","r":"airy"},{"s":"drums","l":"dark","r":"bright"},{"s":"drums","l":"tucked","r":"upfront"},{"s":"vocal","l":"tucked","r":"upfront"},{"s":"vocal","l":"close","r":"spacious"},{"s":"lead","l":"close","r":"spacious"},{"s":"lead","l":"steady","r":"wobbly"},{"s":"fx","l":"warm","r":"airy"},{"s":"fx","l":"tucked","r":"upfront"},{"s":"bass","l":"heavy","r":"clear"},{"s":"bass","l":"dark","r":"bright"},{"s":"master","l":"warm","r":"airy"},{"s":"master","l":"quiet","r":"loud"}] and
+     a95f1b76e99a are filled in by the build. Copy rule (founder, 2026-10-04): only what exists in main today and was verified,
+     by tests or in Live. No dates, prices, plans, "coming soon", quality claims or numbers that were not measured. -->
 <style>
+@font-face{font-family:"Spline Sans Mono";src:url("fonts-ofl/SplineSansMono.ttf?v=a95f1b76e99a") format("truetype");font-weight:300 700;font-display:swap}
+@font-face{font-family:"Spline Sans";src:url("fonts-ofl/SplineSans.ttf?v=a95f1b76e99a") format("truetype");font-weight:300 700;font-display:swap}
 :root{
-  --bg:#fff;--ink:#000;--grey:#8a8a8a;--line:#000;
-  --font:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;--track:.06em;
-  --cs:superellipse(1.5);
+  --bg:#fff;--ink:#000;--grey:#767676;--line:#000;--soft:#f2f2f2;
+  --font:"Spline Sans Mono",ui-monospace,SFMono-Regular,Menlo,monospace;--font-num:"Spline Sans",system-ui,sans-serif;
   --m-fast:160ms;--m:260ms;--m-slow:460ms;--e-out:cubic-bezier(.2,.8,.2,1);--e-io:cubic-bezier(.45,0,.2,1);
   color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000;--ink:#fff;--grey:#8a8a8a;--line:#fff;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#000;--ink:#fff;--grey:#8a8a8a;--line:#fff;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111;--ink:#fff;--grey:#9a9a9a;--line:#fff;--soft:#1d1d1d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111;--ink:#fff;--grey:#9a9a9a;--line:#fff;--soft:#1d1d1d;color-scheme:dark}
 *{box-sizing:border-box;font-weight:400}
 html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-size-adjust:100%;scroll-padding-top:56px}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.6 var(--font);overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.6 var(--font);overflow-x:hidden;transition:background-color var(--m-slow) var(--e-io),color var(--m-slow) var(--e-io)}
 a{color:inherit}
 p{margin:0 0 12px}
-h1,h2,h3{margin:0;font-weight:400}
-.cap{font-size:9px;line-height:12px;text-transform:uppercase;letter-spacing:var(--track)}
+h1,h2,h3{margin:0;font-weight:400;font-family:var(--font-num)}
+.cap{font-size:10px;line-height:12px;text-transform:uppercase}
 .g{color:var(--grey)}
 .wrap{max-width:1120px;margin:0 auto;padding:0 32px}
 .logo{width:16px;height:16px;flex:none;display:block}
 
 /* header */
-.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);transition:background-color var(--m-slow) var(--e-io)}
 .top .wrap{display:flex;align-items:center;gap:24px;height:48px}
 .mark{text-decoration:none;display:flex;gap:8px;align-items:center;white-space:nowrap}
 .top nav{display:flex;gap:16px;margin-left:auto}
 .top nav a{text-decoration:none;opacity:.6;transition:opacity var(--m-fast) var(--e-out)}
 .top nav a:hover,.top nav a:focus-visible{opacity:1}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;gap:2px}
-.seg button{appearance:none;border:0;background:none;color:var(--ink);border-radius:999px;padding:4px 10px;font:400 9px/12px var(--font);text-transform:uppercase;letter-spacing:var(--track);cursor:pointer;transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out)}
+.seg button{appearance:none;border:0;background:none;color:var(--ink);border-radius:999px;padding:4px 10px;font:400 10px/12px var(--font);text-transform:uppercase;cursor:pointer;transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 
-/* buttons */
-.btn{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--ink);color:var(--bg);font:400 11px var(--font);text-transform:uppercase;letter-spacing:var(--track);text-decoration:none;cursor:pointer;transition:scale var(--m-fast) var(--e-out);white-space:nowrap}
-.btn.ghost{background:transparent;color:var(--ink)}
-.btn:active{scale:.96}
-
 /* hero */
-.hero{padding-top:56px;padding-bottom:40px}
-.hero h1{font-size:clamp(28px,5vw,48px);line-height:1.1;letter-spacing:-.04em;margin:16px 0}
+.hero{padding-top:56px;padding-bottom:48px}
+.hero h1{font-size:clamp(32px,5.4vw,56px);line-height:1.05;letter-spacing:-.03em;margin:16px 0}
 .lede{max-width:62ch;font-size:15px}
-.cta{display:flex;gap:8px;flex-wrap:wrap;margin:24px 0 48px}
-.stage{margin:0}
-.stage .bar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px}
-.fit{width:100%;overflow:hidden}
-.under{display:grid;grid-template-columns:minmax(0,1fr) 288px;gap:24px;margin-top:16px;align-items:start}
+.stage{margin:40px 0 0}
+.stage>.cap{margin-bottom:12px}
+/* the device: the real device page (device/index.html) in a frame of the device's own size and corners */
+.fit{width:100%}
+.devf{display:block;border:0;width:692px;max-width:100%;height:169px;border-radius:0;background:transparent;color-scheme:normal}
+.under{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;margin-top:16px;align-items:start}
 .hints{display:grid;gap:4px;margin:0;padding:0;list-style:none}
 .hints li{display:flex;gap:8px}
-.hints li span:first-child{min-width:112px}
-
-/* ── the device replica (mini view). Tokens per look/theme, as in design.css ── */
-.dev{--ink:#000;--bg:#fff;--dev:#e9e9e9;--pill:#d6d6d6;--fg:#000;--knob:#000;--dot:#fff;--ghost:#444;--ring:#fff;--off:var(--pill);--off-line:#9a9a9a;--grey:#9a9a9a}
-.dev[data-t="desk-dark"]{--dev:#1d1d1d;--pill:#2f2f2f;--fg:#ededed;--off-line:#4a4a4a;--grey:#777}
-.dev[data-t="light"]{--dev:#c4c4c4;--pill:#b3b3b3;--fg:#111;--off-line:#8a8a8a;--knob:#141414;--dot:#f2f2f2;--ghost:#4a4a4a;--ring:#ffa52c}
-.dev[data-t="dark"]{--dev:#2b2b2b;--pill:#3c3c3c;--fg:#e6e6e6;--off-line:#555;--grey:#7a7a7a;--knob:#0e0e0e;--dot:#e8e8e8;--ghost:#444;--ring:#ffa52c}
-.dev{display:inline-flex;height:169px;background:var(--dev);color:var(--fg);border-radius:19px;corner-shape:var(--cs);overflow:hidden;
-  user-select:none;-webkit-user-select:none;font:400 9px/12px var(--font);text-transform:uppercase;letter-spacing:.06em;
-  transition:background-color var(--m-slow) var(--e-io),color var(--m-slow) var(--e-io)}
-/* left column: analyse again (parked) · level arrows (one level here, so faded) · DESK pill */
-.dev .side{width:20px;margin:4px 0 4px 4px;display:flex;flex-direction:column;align-items:center}
-.side button{appearance:none;border:0;padding:0;font:inherit;cursor:default;display:grid;place-items:center}
-.side svg{width:12px;height:12px}
-.side .again{width:20px;height:20px;border-radius:50%;background:var(--pill);color:var(--ghost)}
-.side .lvk{margin-top:24px;width:20px;border-radius:999px;background:var(--pill);display:grid}
-.side .lvk button{height:24px;background:none;color:color-mix(in srgb,var(--fg) 37%,var(--pill))}
-.dev .title{width:20px;margin-top:auto;height:44px;display:grid;place-items:center;border-radius:999px;padding:0;background:var(--pill);writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;white-space:nowrap;transition:background-color var(--m-slow) var(--e-io)}
-.dev .body{display:flex;gap:4px;padding:4px}
-.tiles{display:flex;gap:4px}
-.t{width:64px;height:161px;border-radius:15px;corner-shape:var(--cs);color:var(--ink);display:grid;grid-template-rows:auto 1fr 1fr;justify-items:center;align-items:center;padding:0 2px 3px;
-  transition:background-color var(--m-slow) var(--e-io),color var(--m-slow) var(--e-io)}
-.nm{appearance:none;align-self:stretch;width:calc(100% - 4px);margin:4px 2px 0;min-height:22px;display:flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:999px;
-  background:transparent;color:inherit;font:inherit;letter-spacing:.03em;padding:0 2px;cursor:pointer;white-space:nowrap;overflow:hidden;transition:border-color var(--m-fast) var(--e-out),background-color var(--m) var(--e-out),color var(--m) var(--e-out)}
-.nm:hover,.nm:focus-visible{border-color:var(--ink);outline:none}
-.t.off,.dev.alloff .t{background:var(--off)!important;color:var(--fg)}
-.t.off .nm{background:var(--ink);color:var(--bg)}
-.dev.alloff .nm{background:var(--ink);color:var(--bg);cursor:default;border-color:transparent}
-/* knob: disc, white dot, ticks at the ends, the MINE star at the centre (12 o'clock) */
-.d{width:40px;height:40px;border-radius:50%;background:var(--knob);position:relative;outline:none;cursor:grab;touch-action:none}
-.d .tk{position:absolute;left:50%;top:50%;width:1px;height:4px;margin-left:-.5px;background:var(--ink);transform-origin:50% 0;transform:rotate(var(--t)) translateY(-30px);pointer-events:none}
-.d .mk{position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;color:var(--ink);transform:translateY(-27.5px);pointer-events:none}
-.d .mk svg{display:block;width:7px;height:7px}
-.d .arm,.d .ghost{position:absolute;inset:0;pointer-events:none}
-.d .arm::after,.d .ghost::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px;border-radius:50%;background:var(--dot);transform:translateY(-10.5px);transition:background-color var(--m) var(--e-out)}
-.d .ghost::after{background:var(--ghost)}
-.d .ghost{opacity:0;transition:opacity 0s linear var(--m-slow)}
-.dev.mine .d .ghost,.dev.mine .pad .pg{opacity:1;transition:opacity var(--m) var(--e-out)}
-.t.off .arm::after,.dev.alloff .t .arm::after{background:var(--ghost)}
-/* active ring: 2 px of --ring, 1 px inside the edge */
-.ring::after{content:"";position:absolute;inset:1px;border:2px solid var(--ring);border-radius:var(--ring-r,50%);corner-shape:var(--ring-cs,round);opacity:0;pointer-events:none;transition:opacity var(--m-fast) var(--e-out)}
-.d.active::after,.d:focus-visible::after{opacity:1}
-.dev.glide .d .arm{transition:rotate var(--m-slow) var(--e-io)}
-.dev.glide .pad .pk{transition:left var(--m-slow) var(--e-io),top var(--m-slow) var(--e-io),background-color var(--m) var(--e-out)}
-.dev.mine .d,.dev.mine .pad,.t.off .d,.dev.alloff .d{cursor:default}
-/* master pad */
-.mt{position:relative;width:161px;height:161px;flex:none}
-.pad{position:absolute;inset:0;background:var(--knob);border-radius:15px;corner-shape:var(--cs);cursor:crosshair;touch-action:none;outline:none;--ring-r:14px;--ring-cs:var(--cs);transition:background-color var(--m-slow) var(--e-io)}
-.pad.active::after,.pad:focus-visible::after{opacity:1}
-.cx,.cy{position:absolute;background:var(--dot);pointer-events:none;transition:background-color var(--m-slow) var(--e-io)}
-.cx{left:3px;right:3px;top:calc(50% - .5px);height:1px}.cy{top:3px;bottom:3px;left:calc(50% - .5px);width:1px}
-.pk,.pg{position:absolute;width:12px;height:12px;margin:-6px;border-radius:50%;background:var(--dot);pointer-events:none}
-.pg{background:var(--ghost);opacity:0;transition:opacity 0s linear var(--m-slow)}
-.mt .tag{position:absolute;left:12px;top:10px;color:var(--dot);pointer-events:none;transition:color var(--m-slow) var(--e-io)}
-.dev.alloff .pad{background:var(--off)}.dev.alloff :is(.cx,.cy,.pk){background:var(--grey)}.dev.alloff .mt .tag{color:var(--fg)}
-/* loudness */
-.ld{width:130px;flex:none;display:flex;flex-direction:column;justify-content:space-between;padding:12px 0 12px 8px;font-variant-numeric:tabular-nums}
-.ld b{display:block;margin-top:2px;font-weight:400;font-size:26px;line-height:26px;letter-spacing:-.07em;white-space:nowrap;text-transform:none}
-.ld .u{letter-spacing:0;margin-left:.3em}
-/* keys */
-.k1{display:grid;grid-template-rows:78px 79px;gap:4px;width:52px;flex:none}
-.nm,.ky{text-transform:inherit}
-.ky{appearance:none;border:0;position:relative;border-radius:15px;corner-shape:var(--cs);background:var(--pill);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:1px 0 0;
-  font:inherit;letter-spacing:.02em;cursor:pointer;--ring-r:14px;--ring-cs:var(--cs);transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out),scale var(--m-fast) var(--e-out)}
-.ky svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1}
-.ky[aria-pressed="true"]{background:var(--knob);color:var(--dot)}
-.ky[aria-pressed="true"]::after,.ky:active::after{opacity:1}
-.ky:active{scale:.97}
-.ky .bar,.nm .bar{transform-box:view-box;transform-origin:center;transform:rotate(45deg);transition:transform var(--m) var(--e-out)}
-.ky[aria-pressed="true"] .bar{transform:none}
-.ky:focus-visible{outline:1px solid var(--fg);outline-offset:2px}
-
-/* Info View stand-in (inside Live the text goes to Live's own Info View) */
-.infov{background:var(--ink);color:var(--bg);border-radius:15px;corner-shape:var(--cs);padding:10px 12px;min-height:116px;font:400 9px/14px var(--font)}
-.infov b{display:block;font-weight:400;text-transform:uppercase;letter-spacing:var(--track);margin-bottom:6px}
+.hints li span:first-child{min-width:128px;flex:none}
+/* the device's own help text (what it writes about the control under the pointer) */
+.infov{background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 12px;min-height:124px;font:400 10px/14px var(--font)}
+.infov b{display:block;font-weight:400;text-transform:uppercase;margin-bottom:6px}
 .infov p{margin:0;white-space:pre-line;font-variant-numeric:tabular-nums}
 
 /* sections */
 .sec{border-top:1px solid var(--line);padding:56px 0}
 .sh{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;margin-bottom:32px}
-.sh h2{font-size:clamp(22px,3vw,30px);line-height:1.2;letter-spacing:-.03em;margin-bottom:12px;max-width:26ch}
+.sh h2{font-size:clamp(24px,3vw,32px);line-height:1.15;letter-spacing:-.02em;margin-bottom:12px;max-width:26ch}
 .sh p{max-width:64ch}
 .cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
-.cols h3{font-size:15px;margin:8px 0}
+.cols h3{font-size:17px;margin:8px 0}
 .cols p{font-size:13px}
-.proof{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border:1px solid var(--line);border-radius:15px;corner-shape:var(--cs);overflow:hidden;margin-bottom:32px}
+.proof{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:32px}
 .proof div{padding:16px 12px;border-left:1px solid var(--line)}
 .proof div:first-child{border-left:0}
 .proof .cap{display:block}
-.proof b{display:block;font-weight:400;font-size:28px;line-height:32px;letter-spacing:-.05em;font-variant-numeric:tabular-nums;margin-bottom:4px}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{text-align:left;vertical-align:top;padding:12px 12px 12px 0;border-bottom:1px solid var(--line)}
-th{font-weight:400}
-tr.us td{font-weight:400}
-tr.us td:first-child::before{content:"→ "}
-.tw{overflow-x:auto}
+.proof b{display:block;font:400 32px/32px var(--font-num);font-feature-settings:"lnum" 1;letter-spacing:-.02em;margin-bottom:8px}
 .words{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-bottom:32px}
-.w{border-radius:15px;corner-shape:var(--cs);padding:8px 12px 12px;color:#000}
+.w{border-radius:12px;padding:8px 12px 12px;color:#000}
 .w .cap{display:block;margin-bottom:8px}
 .w div{font-size:13px;line-height:20px}
-.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
-.card{border-radius:15px;corner-shape:var(--cs);background:var(--ink);color:var(--bg);padding:12px}
-.card b{display:block;font-weight:400;font-size:9px;line-height:12px;text-transform:uppercase;letter-spacing:var(--track);margin-bottom:8px}
-.card p{font-size:13px;margin:0 0 8px}
-.card .cap{opacity:.6}
-.chip{display:inline-block;border:1px solid currentColor;border-radius:999px;padding:0 6px;font-size:9px;line-height:14px;text-transform:uppercase;letter-spacing:var(--track);vertical-align:2px;margin-left:6px}
 .req{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px}
 .req div{border-bottom:1px solid var(--line);padding:12px 0}
 .req div p{margin:0;font-size:13px}
-.wl{display:flex;gap:8px;flex-wrap:wrap;max-width:480px}
-.wl input{flex:1 1 220px;height:40px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);font:400 13px var(--font);padding:0 16px}
-.wl input:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
 footer{border-top:1px solid var(--line);padding:24px 0 40px}
 footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
@@ -177,16 +88,16 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   .seg.theme{margin-left:auto}
   .under{grid-template-columns:minmax(0,1fr)}
   .sh{grid-template-columns:minmax(0,1fr);gap:8px}
-  .cols,.cards{grid-template-columns:minmax(0,1fr)}
-  .proof{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .proof div:nth-child(4){border-left:0}
-  .proof div:nth-child(n+4){border-top:1px solid var(--line)}
+  .cols{grid-template-columns:minmax(0,1fr)}
+  .proof{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .proof div:nth-child(odd){border-left:0}
+  .proof div:nth-child(n+3){border-top:1px solid var(--line)}
   .words{grid-template-columns:repeat(2,minmax(0,1fr))}
   .req{grid-template-columns:minmax(0,1fr)}
 }
 @media (max-width:600px){
   .wrap{padding:0 16px}
-  .hints li span:first-child{min-width:96px}
+  .hints li span:first-child{min-width:104px}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:0s!important}}
 </style>
@@ -194,265 +105,105 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 <body>
 <header class="top"><div class="wrap">
   <a class="mark" href="#top"><svg class="logo" viewBox="0 0 192 192" aria-hidden="true"><path d="M126 86.7097H95.9992L118.499 0L60 105.29H89.9986L67.4991 192L126 86.7097Z" fill="currentColor"/></svg><span>Desk <span class="g">by Volume Attack</span></span></a>
-  <nav aria-label="Sections"><a href="#project">Project</a><a href="#meaning">Meaning</a><a href="#mine">Mine</a><a href="#honest">Honest</a><a href="#waitlist">Waitlist</a></nav>
+  <nav aria-label="Sections"><a href="#project">Project</a><a href="#meaning">Meaning</a><a href="#mine">Mine</a><a href="#status">Status</a></nav>
   <div class="seg theme" role="group" aria-label="Page theme"><button type="button" data-theme-set="light">Light</button><button type="button" data-theme-set="dark">Dark</button></div>
 </div></header>
 
 <main id="top">
 <section class="hero wrap" aria-labelledby="h1">
-  <p class="cap">For Ableton Live 12 · Max for Live · in development</p>
+  <p class="cap">Max for Live device for Ableton Live 12 · in development</p>
   <h1 id="h1">Turn meaning,<br>not knobs.</h1>
-  <p class="lede">Desk reads your whole Live set, groups the tracks by their job in the song and gives each group two knobs in plain words: <i>tucked ↔ upfront</i>, <i>heavy ↔ clear</i>. The centre of every knob is MINE: the mix Desk built for this track. Everything it moves is a stock Live device you can open.</p>
-  <p class="lede g">For producers who finish tracks in Live and stall at the mix. The AI doesn't hear. It measures. Your ear decides.</p>
-  <div class="cta"><a class="btn" href="#waitlist">Join the waitlist</a><a class="btn ghost" href="#project">How it works</a></div>
+  <p class="lede">Desk reads your Live set, groups the tracks into modules by their job in the song and gives each module two knobs in plain words: <i>tucked ↔ upfront</i>, <i>heavy ↔ clear</i>. The centre of every knob is MINE: the mix Desk built for this track. Everything it moves is a stock Live device you can open.</p>
 
   <figure class="stage" aria-labelledby="cap-dev">
-    <div class="bar">
-      <p class="cap" id="cap-dev">The real layout, with the knobs Desk designed for our promo track · try it</p>
-      <div class="seg" role="group" aria-label="Device look"><button type="button" data-look="desk">Desk look</button><button type="button" data-look="live">Live look</button></div>
-    </div>
-    <div class="fit" id="fit"><div class="dev" id="dev" aria-label="Interactive replica of the Desk device"></div></div>
+    <p class="cap g" id="cap-dev">The device as it is today, in Desk's own colours. Demo data: one real analysis of our promo track. Nothing here talks to Live.</p>
+    <div class="fit" id="fit"><iframe class="devf" id="devf" src="device/index.html?embed&amp;mode=desk&amp;v=a95f1b76e99a" title="Desk device, interactive demo" scrolling="no"></iframe></div>
     <div class="under">
       <ul class="hints cap">
-        <li><span>Drag · scroll</span><span class="g">turn a knob or the master pad</span></li>
+        <li><span>Drag a knob</span><span class="g">up or down to turn it; Shift for fine steps</span></li>
+        <li><span>Master pad</span><span class="g">drag the dot: warm ↔ airy, quiet ↔ loud</span></li>
         <li><span>Double-click</span><span class="g">back to MINE</span></li>
-        <li><span>Shift + digits</span><span class="g">type a value: Shift 4 = +4, Shift − 7 = −7, Shift 0 = MINE</span></li>
-        <li><span>Tap a name</span><span class="g">switch that module off and on</span></li>
-        <li><span>MINE · BYPASS</span><span class="g">hold to hear while held, click to stay</span></li>
+        <li><span>Shift + digits</span><span class="g">type a value: Shift 4 = +4, Shift 0 = MINE</span></li>
+        <li><span>Module name</span><span class="g">tap to bypass that module; drag to reorder</span></li>
+        <li><span>MINE · BP</span><span class="g">hold to hear while held, click to switch on and off</span></li>
+        <li><span>Round key, left</span><span class="g">re-analyze: replays the recorded analysis, 4× faster</span></li>
       </ul>
-      <div class="infov" aria-live="polite"><b id="iv-t">Info View</b><p id="iv-p">Point at anything on the device. In Live this text goes to Live's Info View.</p></div>
+      <div class="infov" aria-live="polite"><b id="iv-t">Desk</b><p id="iv-p">Point at anything on the device: this is the help text it writes for each control.</p></div>
     </div>
-    <div class="cta" style="margin:24px 0 0"><a class="btn" href="#waitlist">Join the waitlist</a></div>
   </figure>
 </section>
 
 <section class="sec" id="project" aria-labelledby="h-project"><div class="wrap">
   <div class="sh"><p class="cap">01 · In your project</p><div><h2 id="h-project">Not a file. Your set.</h2>
-    <p>Mastering services see one stereo file. Desk sits on your master and works on every track of the set: no bouncing, no uploads, no leaving Live. It groups tracks by their job in the song, and puts two knobs on each group, built on Ableton's stock devices.</p></div></div>
-  <div class="proof" aria-label="The promo track, in numbers">
-    <div><b>11</b><span class="cap g">tracks in the promo set</span></div>
-    <div><b>6+1</b><span class="cap g">modules + master</span></div>
+    <p>Desk works on the tracks of your set, inside Live: no bouncing, no uploads. ANALYZE reads the tracks, groups them into modules, checks the master and builds the knobs on Live's own devices.</p></div></div>
+  <div class="proof" aria-label="One analysis of our promo track, recorded 2026-10-03">
+    <div><b>11</b><span class="cap g">tracks read</span></div>
+    <div><b>6</b><span class="cap g">modules + master</span></div>
     <div><b>14</b><span class="cap g">meaning knobs</span></div>
-    <div><b>33</b><span class="cap g">device parameters under them</span></div>
     <div><b>0</b><span class="cap g">third-party plugins</span></div>
-    <div><b>−1.01</b><span class="cap g">dBTP, measured in Live</span></div>
+    <div><b>29.7</b><span class="cap g">seconds, the whole analysis</span></div>
   </div>
   <div class="cols">
-    <div><p class="cap">01</p><h3>One device on the master</h3><p>Drop it on the master and sign in once. No scripts to copy, no companion app, no AI account or key of your own.</p></div>
-    <div><p class="cap">02</p><h3>Modules by job, not by instrument</h3><p>A rhythm guitar and a guitar solo are different jobs, so they get different tiles. Doubles ride with their source. Six modules per row; more go on rows below. Nothing is hidden.</p></div>
-    <div><p class="cap">03</p><h3>Stock devices, open to you</h3><p>EQ Eight, Saturator, Limiter, volume and sends. Every move Desk makes is on a device you can open, read and change.</p></div>
+    <div><p class="cap">01</p><h3>Modules by job</h3><p>Tracks are grouped by what they do in the song. Six modules fit on one level; more go on levels below, one key away.</p></div>
+    <div><p class="cap">02</p><h3>Live's own devices</h3><p>EQ Eight, Saturator, Limiter, Utility, track volume and sends. Every move Desk makes is on a device you can open, read and change.</p></div>
+    <div><p class="cap">03</p><h3>Your devices stay</h3><p>Desk adds its devices at the end of a track and sets values. It never removes a device of yours.</p></div>
   </div>
 </div></section>
 
 <section class="sec" id="meaning" aria-labelledby="h-meaning"><div class="wrap">
   <div class="sh"><p class="cap">02 · Meaning</p><div><h2 id="h-meaning">Turn the meaning. Desk turns the devices.</h2>
-    <p>The words are chosen for each project, from what the tracks can really do. These are the knobs on the promo track. Each knob reads from −10 to +10 around MINE, and Live's Info View says exactly what moved, in dB and Hz.</p></div></div>
+    <p>These are the knobs Desk built for our promo track. Each one reads from −10 to +10 around MINE, and its help text lists the devices it moves in their own units: dB, Hz, %.</p></div></div>
   <div class="words" id="words"></div>
-  <div class="cols">
-    <div><p class="cap">Info View</p><h3>Device units, not a 0–100 macro</h3><p>Point at a knob and Live's Info View shows each device it drives, from MINE to now: <i>EQ Eight · Gain +1.5 dB → +2.8 dB</i>.</p></div>
-    <div><p class="cap">Typing</p><h3>Shift + digits</h3><p>Focus a knob and type its value: Shift 4 = +4, Shift − 7 . 5 = −7.5, Shift 0 = MINE. Arrows step it by one; hold Shift while dragging for fine steps.</p></div>
-    <div><p class="cap">Live parameters <span class="chip">planned</span></p><h3>Automate it. Map it.</h3><p>Every knob and both master axes become real Live parameters: draw or record automation, MIDI-map them with Cmd/Ctrl+M, and see them on Push and other controllers that follow the selected device.</p></div>
-  </div>
 </div></section>
 
 <section class="sec" id="mine" aria-labelledby="h-mine"><div class="wrap">
-  <div class="sh"><p class="cap">03 · Your mix is the centre</p><div><h2 id="h-mine">MINE is always one click away.</h2>
-    <p>The centre of every knob, the MINE star, is the mix Desk built for this track. BYPASS is your original. Turn away freely: comparing takes one finger. The keys drive the device at the top of the page.</p></div></div>
+  <div class="sh"><p class="cap">03 · Your mix is the centre</p><div><h2 id="h-mine">MINE is one click away.</h2>
+    <p>The centre of every knob is MINE, the mix Desk built for this track. BP (bypass) is your original. The keys work on the demo at the top of the page.</p></div></div>
   <div class="cols">
-    <div><p class="cap">Mine</p><h3>Hear MINE</h3><p>Hold MINE to hear Desk's mix while held; click to stay. Grey dots keep your own positions. Double-click to send every knob back to MINE.</p></div>
-    <div><p class="cap">Bypass</p><h3>Hear your original</h3><p>All of Desk's processing off, master included. Tap a module's name to switch just that one.</p></div>
-    <div><p class="cap">Loudness</p><h3>Measured, not guessed</h3><p>An EBU R128 meter inside Desk reads the master. On our promo track the loud section reads −13.3 LUFS short-term at MINE, true peak −1.01 dBTP. Streaming shows what normalisation will do (reference −14 LUFS).</p></div>
+    <div><p class="cap">Mine</p><h3>Hear MINE</h3><p>Hold MINE to hear Desk's mix while held; click to switch it on and off. Grey dots keep your own positions. Double-click a knob to send it back to MINE.</p></div>
+    <div><p class="cap">Bypass</p><h3>Hear your original</h3><p>BP switches all of Desk's processing off, master included; only a safety limiter stays. Tap a module's name to bypass just that module.</p></div>
+    <div><p class="cap">Loudness</p><h3>Measured on the master</h3><p>An EBU R128 meter inside the device reads the master while the song plays: short-term loudness, and what Spotify's −14 LUFS normalisation will do once it has 10 seconds of the song. On this page there is no audio, so the number is the device's estimate from the master pad.</p></div>
   </div>
 </div></section>
 
-<section class="sec" id="honest" aria-labelledby="h-honest"><div class="wrap">
-  <div class="sh"><p class="cap">04 · Honest</p><div><h2 id="h-honest">When it can't, it says why.</h2>
-    <p>Desk drops a meaning it can't deliver honestly instead of faking it. Three from our promo track:</p></div></div>
-  <div class="cards">
-    <div class="card"><b>Pad · width</b><p>No device on these tracks controls width, and Desk won't fake it with pan.</p><span class="cap">Not offered</span></div>
-    <div class="card"><b>Drums · space</b><p>Reverb and delay sends are already off: there is no drier side to turn toward.</p><span class="cap">Not offered</span></div>
-    <div class="card"><b>Vocal · harshness</b><p>No EQ band on the vocals works in the harsh range, and the nearest one already belongs to tucked ↔ upfront.</p><span class="cap">Not offered</span></div>
-  </div>
-  <div class="tw" style="margin-top:40px">
-    <table>
-      <thead><tr><th class="cap g">Approach</th><th class="cap g">What it sees</th><th class="cap g">Where you work</th><th class="cap g">What you control</th></tr></thead>
-      <tbody>
-        <tr><td>AI mastering services</td><td>One stereo file</td><td>Upload, download</td><td>A few presets. Cheap or free, and good at it.</td></tr>
-        <tr><td>Per-track assistant plugins</td><td>An instance on each track</td><td>In the DAW</td><td>Each plugin's own controls</td></tr>
-        <tr><td>AI chat assistants for Live</td><td>What you type</td><td>In Live, via prompts</td><td>A prompt, and often your own AI key</td></tr>
-        <tr><td>Multitrack cloud mixers</td><td>Stems you bounce</td><td>Outside Live, then re-import</td><td>Mix parameters, reports</td></tr>
-        <tr class="us"><td>Desk</td><td>Every track of your set</td><td>Inside Live, nothing bounced</td><td>Two meaning knobs per module. Every device stays open.</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div></section>
-
-<section class="sec" id="need" aria-labelledby="h-need"><div class="wrap">
-  <div class="sh"><p class="cap">05 · What you need</p><div><h2 id="h-need">One device. Nothing else to install.</h2>
-    <p class="g">Desk is in development; this describes the planned release.</p></div></div>
+<section class="sec" id="status" aria-labelledby="h-status"><div class="wrap">
+  <div class="sh"><p class="cap">04 · Status</p><div><h2 id="h-status">In development.</h2>
+    <p>Desk is not available yet. This is where it stands today.</p></div></div>
   <div class="req">
-    <div><p class="cap">Live</p><p>Ableton Live 12 with Suite, or Live 12 Standard with the Max for Live add-on.</p></div>
-    <div><p class="cap">Setup</p><p>One device on the master, one sign-in. No AI key, no scripts.</p></div>
-    <div><p class="cap">Offline <span class="chip">planned</span></p><p>Once built, knobs, MINE and BYPASS work without a connection; their state is saved in your set.</p></div>
-    <div><p class="cap">Your audio</p><p>Stays on your machine. Track names, device names and measurements go to our service; audio only if you allow it for one request.</p></div>
-    <div><p class="cap">Your theme <span class="chip">planned</span></p><p>Desk follows Live's theme. Desk look keeps its colours; Live look takes your track colours.</p></div>
-    <div><p class="cap">Help <span class="chip">planned</span></p><p>No pop-ups: every control explains itself in Live's Info View.</p></div>
+    <div><p class="cap">Live</p><p>Developed on Ableton Live 12.4 Suite, which includes Max for Live.</p></div>
+    <div><p class="cap">Your audio</p><p>Stays on your computer: Desk reads the set and measures the master locally.</p></div>
+    <div><p class="cap">Tested</p><p>Every change runs through automated checks of the device, the knob math and the interface before it is merged.</p></div>
+    <div><p class="cap">Contact</p><p><a href="https://volumeattack.ru">volumeattack.ru</a></p></div>
   </div>
-</div></section>
-
-<section class="sec" id="waitlist" aria-labelledby="h-wl"><div class="wrap">
-  <div class="sh"><p class="cap">06 · Waitlist</p><div><h2 id="h-wl">Closed beta, then launch.</h2>
-    <p>We're looking for 10–20 producers who finish tracks in Live 12 and stall at the mix. Beta testers get founding-member pricing.</p>
-  <form class="wl" id="wl" novalidate><label class="cap" for="em" style="flex-basis:100%">Email</label><input id="em" name="email" type="email" required autocomplete="email" placeholder="you@studio.com"><button class="btn" type="submit">Join</button></form>
-  <p class="cap g" id="wl-note" style="margin-top:12px">Preview: this form isn't connected yet, nothing is sent.</p></div></div>
 </div></section>
 </main>
 
 <footer><div class="wrap cap"><span>Volume Attack · <a href="https://volumeattack.ru">volumeattack.ru</a></span><span class="g">Ableton and Live are trademarks of Ableton AG. Desk is not affiliated with Ableton.</span></div></footer>
 
 <script>
-// The knobs Desk designed for our promo track: module and pole words.
-const DETAIL={"pad-1":{s:"pad",l:"close",r:"spacious"},"pad-2":{s:"pad",l:"warm",r:"airy"},"drums-1":{s:"drums",l:"dark",r:"bright"},"drums-2":{s:"drums",l:"tucked",r:"upfront"},"vocal-1":{s:"vocal",l:"tucked",r:"upfront"},"vocal-2":{s:"vocal",l:"close",r:"spacious"},"lead-1":{s:"lead",l:"close",r:"spacious"},"lead-2":{s:"lead",l:"steady",r:"wobbly"},"fx-1":{s:"fx",l:"warm",r:"airy"},"fx-2":{s:"fx",l:"tucked",r:"upfront"},"bass-1":{s:"bass",l:"heavy",r:"clear"},"bass-2":{s:"bass",l:"dark",r:"bright"},"master-x":{s:"master",l:"warm",r:"airy"},"master-y":{s:"master",l:"quiet",r:"loud"}};
-const MODS=["pad","drums","vocal","lead","fx","bass"];
-const COL={desk:{pad:"#b5d4ff",drums:"#ffd400",vocal:"#ff5a1f",lead:"#ff6f91",fx:"#7fe0d0",bass:"#3d6bff"},
-  // Live look: the set's track colours, toned into Desk's range
-  live:{pad:"#42dff0",drums:"#5480e4",vocal:"#f4f17b",lead:"#42b6f0",fx:"#8ef472",bass:"#42f0e1"}};
-const KN={};for(const id in DETAIL){const k=DETAIL[id];(KN[k.s]=KN[k.s]||[]).push(id);}
-const STAR='<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M6 1.5V10.5M2 3.75L10 8.25M10 3.75L2 8.25" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const MINE_I='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3V17M4 6.5L16 13.5M16 6.5L4 13.5" stroke-linecap="round"/></svg>';
-const BYP_I='<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path class="bar" d="M10 6L10 14" stroke-linecap="round"/></svg>';
-const $=s=>document.querySelector(s),dev=$("#dev");
-const minus=n=>String(n).replace("-","−");
-const sgn=s=>s>0?"+"+s:s<0?minus(s):"0";
-// measured on the promo master in Live (EBU R128, loud section, short-term) at MINE; elsewhere the device re-measures
-const STREAM_REF=-14,MEASURED=-13.3;
-const pole=(id,s)=>s===0?"mine":s<0?DETAIL[id].l:DETAIL[id].r;
-
-// state: whole steps −10…+10 (the device also has 0.1 steps with Shift)
-const st={};for(const id in DETAIL)st[id]=0;
-let mine=false,alloff=false;const off=new Set();
-const shown=id=>mine?0:st[id];
-
-// ── build the device ──
-dev.innerHTML=`<div class="side"><button class="again" type="button" aria-disabled="true" aria-label="analyse the set again"><svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M9.9 6.9A4 4 0 1 1 8.8 3.2M9 1.5V3.5H7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <div class="lvk" role="group" aria-label="levels"><button type="button" aria-disabled="true" aria-label="level up"><svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 7.5L6 4.5L9 7.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" aria-disabled="true" aria-label="level down"><svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
-  <div class="title">desk</div></div><div class="body"><div class="tiles">${MODS.map(m=>`<div class="t" data-m="${m}">
-  <button class="nm" type="button" aria-pressed="false" aria-label="${m}: switch module off or on"><span class="tx">${m}</span></button>
-  ${KN[m].map(id=>`<div class="d ring" data-k="${id}" role="slider" tabindex="0" aria-label="${m}: ${DETAIL[id].l} to ${DETAIL[id].r}" aria-valuemin="-10" aria-valuemax="10" aria-valuenow="0">
-    <i class="tk" style="--t:-135deg"></i><i class="tk" style="--t:135deg"></i><i class="mk">${STAR}</i><i class="ghost"></i><i class="arm"></i></div>`).join("")}</div>`).join("")}</div>
-  <div class="mt"><div class="pad ring" role="slider" tabindex="0" aria-label="master: warm to airy, quiet to loud"><i class="cx"></i><i class="cy"></i><span class="pg"></span><span class="pk"></span></div><span class="tag">master</span></div>
-  <div class="ld"><div><span>lufs short</span><b id="lv"></b></div><div><span>streaming</span><b id="ls"></b></div></div>
-  <div class="k1"><button class="ky ring" id="k-mine" type="button" aria-pressed="false">${MINE_I}<span>mine</span></button><button class="ky ring" id="k-byp" type="button" aria-pressed="false">${BYP_I}<span>bypass</span></button></div></div>`;
-
-const tiles=[...dev.querySelectorAll(".t")],dials=[...dev.querySelectorAll(".d")],pad=$(".pad"),pk=$(".pk"),pg=$(".pg");
-const INSET=13; // 3 px ring + 4 px safe zone + puck radius
-const place=(el,x,y)=>{el.style.left=`calc(${INSET}px + (100% - ${2*INSET}px) * ${(x+10)/20})`;el.style.top=`calc(${INSET}px + (100% - ${2*INSET}px) * ${(10-y)/20})`;};
-function draw(){
-  for(const d of dials){const id=d.dataset.k,s=shown(id);d.querySelector(".arm").style.rotate=s*13.5+"deg";d.querySelector(".ghost").style.rotate=st[id]*13.5+"deg";
-    d.setAttribute("aria-valuenow",s);d.setAttribute("aria-valuetext",s===0?"MINE":sgn(s));}
-  place(pk,shown("master-x"),shown("master-y"));place(pg,st["master-x"],st["master-y"]);
-  const at=!alloff&&shown("master-y")===0&&shown("master-x")===0;
-  $("#lv").textContent=at?minus(MEASURED.toFixed(1)):"—";
-  $("#ls").innerHTML=at?minus((STREAM_REF-MEASURED).toFixed(1))+'<span class="u">dB</span>':"—";
-  dev.classList.toggle("mine",mine);dev.classList.toggle("alloff",alloff);
-  for(const t of tiles){const o=off.has(t.dataset.m);t.classList.toggle("off",o);t.querySelector(".nm").setAttribute("aria-pressed",o);}
-}
-
-// ── look: Desk / Live × the page's light / dark ──
-let look="desk";
+// the knobs of the demo analysis (filled in by tools/site/build.py from tests/fixtures/analyze/knobs.json)
+const KNOBS=[{"s":"pad","l":"close","r":"spacious"},{"s":"pad","l":"warm","r":"airy"},{"s":"drums","l":"dark","r":"bright"},{"s":"drums","l":"tucked","r":"upfront"},{"s":"vocal","l":"tucked","r":"upfront"},{"s":"vocal","l":"close","r":"spacious"},{"s":"lead","l":"close","r":"spacious"},{"s":"lead","l":"steady","r":"wobbly"},{"s":"fx","l":"warm","r":"airy"},{"s":"fx","l":"tucked","r":"upfront"},{"s":"bass","l":"heavy","r":"clear"},{"s":"bass","l":"dark","r":"bright"},{"s":"master","l":"warm","r":"airy"},{"s":"master","l":"quiet","r":"loud"}];
+// Desk look module colours (tools/knobs/design.js PALETTE)
+const COL={pad:"#add5ff",drums:"#ffd200",vocal:"#ff4800",lead:"#ff6390",fx:"#54e3d0",bass:"#2b6cff",master:"#c8c8c8"};
+const $=s=>document.querySelector(s),frame=$("#devf"),fit=$("#fit");
 const dark=()=>document.documentElement.dataset.theme?document.documentElement.dataset.theme==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
-function paint(){
-  dev.dataset.t=look==="desk"?(dark()?"desk-dark":"desk-light"):(dark()?"dark":"light");
-  for(const t of tiles)t.style.background=COL[look][t.dataset.m];
-  document.querySelectorAll("[data-look]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.look===look));
-  document.querySelectorAll("[data-theme-set]").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.themeSet==="dark")===dark()));
-  document.querySelectorAll(".w").forEach(w=>{if(COL[look][w.dataset.m])w.style.background=COL[look][w.dataset.m];});
-}
-document.querySelectorAll("[data-look]").forEach(b=>b.addEventListener("click",()=>{look=b.dataset.look;paint();}));
+// the page theme also sets the device's (Desk look: desk-light / desk-dark)
+const tell=()=>{try{frame.contentWindow.postMessage({src:"desk-landing",look:"desk",dark:dark()},location.origin);}catch(e){/* not loaded */}};
+function paint(){document.querySelectorAll("[data-theme-set]").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.themeSet==="dark")===dark()));tell();}
 document.querySelectorAll("[data-theme-set]").forEach(b=>b.addEventListener("click",()=>{document.documentElement.dataset.theme=b.dataset.themeSet;paint();}));
 matchMedia("(prefers-color-scheme:dark)").addEventListener("change",paint);
-
-// ── Info View: what the control means (in Live it also lists every device it moves, MINE → now, in device units) ──
-const ivT=$("#iv-t"),ivP=$("#iv-p");
-const lines=()=>"Moves stock devices on this module. In Live, Info View lists each one from MINE to now, in device units.";
-function info(id){const k=DETAIL[id],m=k.s,s=shown(id);
-  if(alloff||off.has(m)){ivT.textContent=`${m} · ${k.l} ↔ ${k.r}`;ivP.textContent=alloff?"Bypass is on: none of Desk's processing plays. Your setting is kept (grey dot).":"This module is switched off: its processing doesn't play. Tap its name to switch it back on.";return;}
-  ivT.textContent=`${m} · ${k.l} ↔ ${k.r} · ${s===0?"MINE":sgn(s)}`;ivP.textContent=lines(id);}
-function infoPad(){ivT.textContent=`master · ${pole("master-x",shown("master-x"))} · ${pole("master-y",shown("master-y"))}`;ivP.textContent="Warm ↔ airy across, quiet ↔ loud up and down. Moves the master's stock devices; the true-peak ceiling holds at −1 dB.";}
-const say=(t,p)=>{ivT.textContent=t;ivP.textContent=p;};
-
-// ── knobs: drag (200 px = full travel), wheel, arrows, double-click, Shift + digits ──
-let last=null,glideT=0;
-const glide=()=>{if(matchMedia("(prefers-reduced-motion:reduce)").matches)return;dev.classList.add("glide");clearTimeout(glideT);glideT=setTimeout(()=>dev.classList.remove("glide"),460);};
-const locked=id=>mine||alloff||(DETAIL[id].s!=="master"&&off.has(DETAIL[id].s));
-function word(id){const t=tiles.find(t=>t.dataset.m===DETAIL[id].s);if(!t)return;const tx=t.querySelector(".tx");tx.textContent=pole(id,st[id]);clearTimeout(tx._b);tx._b=setTimeout(()=>tx.textContent=t.dataset.m,700);}
-function set(id,s,g){s=Math.max(-10,Math.min(10,Math.round(s)));if(s===st[id])return;if(g)glide();st[id]=s;draw();word(id);info(id);}
-for(const d of dials){const id=d.dataset.k;let y0=null,s0=0,liveDrag=false;
-  d.addEventListener("pointerdown",e=>{if(e.button||locked(id))return;e.preventDefault();y0=e.clientY;s0=st[id];liveDrag=false;d.classList.add("active");d.setPointerCapture(e.pointerId);d.focus({preventScroll:true});last=id;info(id);});
-  d.addEventListener("pointermove",e=>{if(y0===null)return;const dy=y0-e.clientY;if(!liveDrag){if(Math.abs(dy)<3)return;liveDrag=true;y0=e.clientY;return;}set(id,s0+dy/10);});
-  const end=()=>{y0=null;d.classList.remove("active");};d.addEventListener("pointerup",end);d.addEventListener("pointercancel",end);
-  d.addEventListener("wheel",e=>{if(locked(id))return;e.preventDefault();d._w=(d._w||0)-e.deltaY;if(Math.abs(d._w)>=25){set(id,st[id]+Math.sign(d._w));d._w=0;}},{passive:false});
-  d.addEventListener("dblclick",()=>{if(!locked(id))set(id,0,true);});
-  d.addEventListener("keydown",e=>{const k={ArrowUp:1,ArrowRight:1,ArrowDown:-1,ArrowLeft:-1}[e.key];if(!k||locked(id))return;e.preventDefault();set(id,st[id]+k);});
-  d.addEventListener("focus",()=>{last=id;info(id);});d.addEventListener("pointerenter",()=>info(id));
-}
-// Shift + digits: the device's typing rule, whole steps on this page
-let typed="",typedAt=0;
-addEventListener("keydown",e=>{const m=/^(?:Digit|Numpad)(\d)$/.exec(e.code),pt=/^(Period|Comma|NumpadDecimal)$/.test(e.code),neg=/^(Minus|NumpadSubtract)$/.test(e.code);
-  if(!(m||pt||neg)||!e.shiftKey||e.metaKey||e.ctrlKey||e.altKey||!last||!dev.contains(document.activeElement)||locked(last))return;e.preventDefault();
-  const key=neg?"-":pt?".":m[1],now=performance.now(),gap=typed.includes(".")?800:400;
-  if(now-typedAt>gap||key==="-"||/\.\d$/.test(typed)||(key==="."&&typed.includes("."))||parseFloat("0"+typed.replace("-","")+key)>10)typed="";
-  typed+=key;typedAt=now;const digits=typed.replace("-","");if(!digits||digits===".")return;
-  set(last,(typed.startsWith("-")?-1:1)*Math.min(10,parseFloat(digits)),true);});
-
-// ── master pad ──
-let padDn=false;
-function padAt(e){const r=pad.getBoundingClientRect(),z=r.width/161;
-  const x=(e.clientX-r.left-INSET*z)/(r.width-2*INSET*z)*20-10,y=10-(e.clientY-r.top-INSET*z)/(r.height-2*INSET*z)*20;
-  const ax=Math.max(-10,Math.min(10,Math.round(x))),ay=Math.max(-10,Math.min(10,Math.round(y)));
-  if(ax!==st["master-x"]||ay!==st["master-y"]){st["master-x"]=ax;st["master-y"]=ay;draw();}
-  const tag=$(".mt .tag");tag.textContent=`${pole("master-x",ax)} · ${pole("master-y",ay)}`;clearTimeout(tag._b);tag._b=setTimeout(()=>tag.textContent="master",700);infoPad();}
-pad.addEventListener("pointerdown",e=>{if(e.button||mine||alloff)return;e.preventDefault();padDn=true;pad.classList.add("active");pad.setPointerCapture(e.pointerId);pad.focus({preventScroll:true});padAt(e);});
-pad.addEventListener("pointermove",e=>{if(padDn)padAt(e);});
-["pointerup","pointercancel"].forEach(v=>pad.addEventListener(v,()=>{padDn=false;pad.classList.remove("active");}));
-pad.addEventListener("dblclick",()=>{if(mine||alloff)return;glide();st["master-x"]=st["master-y"]=0;draw();infoPad();});
-pad.addEventListener("keydown",e=>{const k={ArrowUp:[0,1],ArrowDown:[0,-1],ArrowRight:[1,0],ArrowLeft:[-1,0]}[e.key];if(!k||mine||alloff)return;e.preventDefault();
-  st["master-x"]=Math.max(-10,Math.min(10,st["master-x"]+k[0]));st["master-y"]=Math.max(-10,Math.min(10,st["master-y"]+k[1]));draw();infoPad();});
-pad.addEventListener("pointerenter",infoPad);pad.addEventListener("focus",infoPad);
-$(".ld").addEventListener("pointerenter",()=>say("Loudness · measured","Measured by the EBU R128 meter inside Desk. Here: our promo master at MINE, loud section, short-term. Streaming says what normalisation will do (reference −14 LUFS). Turn the master and the device measures again."));
-
-// ── modules: tap the name = switch off / on ──
-for(const t of tiles){const b=t.querySelector(".nm"),m=t.dataset.m;
-  b.addEventListener("click",()=>{if(alloff)return;off.has(m)?off.delete(m):off.add(m);draw();
-    say(`${m} · ${off.has(m)?"off":"on"}`,off.has(m)?"Desk's processing on this module is switched off. Your knob settings are kept (grey dots).":"Desk's processing on this module plays again.");});
-  b.addEventListener("pointerenter",()=>say(`${m} · ${KN[m].map(id=>DETAIL[id].l+" ↔ "+DETAIL[id].r).join(" · ")}`,"Tap the name to switch the module off and on. In the device, drag it to reorder."));}
-
-// ── keys: hold = hear while held, click = stay; double-click MINE = apply your mix for good ──
-function key(btn,get,setv,text){let t0=0,held=false;
-  btn.addEventListener("pointerdown",e=>{if(e.button)return;t0=performance.now();held=!get();if(held){setv(true);}});
-  btn.addEventListener("pointerup",()=>{const long=performance.now()-t0>350;if(held&&long)setv(false);else if(!held)setv(false);held=false;});
-  btn.addEventListener("pointerleave",()=>{if(held&&performance.now()-t0>350){setv(false);held=false;}});
-  btn.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setv(!get());}});
-  btn.addEventListener("pointerenter",()=>say(...text()));}
-const kMine=$("#k-mine"),kByp=$("#k-byp");
-key(kMine,()=>mine,v=>{glide();mine=v;kMine.setAttribute("aria-pressed",v);draw();say(v?"MINE · on":"MINE · off",v?"You hear your mix: every knob at its centre. Grey dots keep your own positions.":"Back to your knob positions.");},
-  ()=>["MINE","Hold to hear your mix while held, click to stay. Double-click to make your mix the answer for good (every knob back to centre)."]);
-kMine.addEventListener("dblclick",()=>{glide();for(const id in st)st[id]=0;mine=false;kMine.setAttribute("aria-pressed",false);draw();say("MINE · applied","Every knob is back at your mix.");});
-key(kByp,()=>alloff,v=>{alloff=v;kByp.setAttribute("aria-pressed",v);draw();say(v?"Bypass · on":"Bypass · off",v?"The set without Desk: all of its processing is off, master included. Only the safety limiter stays.":"Desk's processing plays again.");},
-  ()=>["Bypass","Hold to hear the set without Desk while held, click to stay."]);
-
-// ── fit the 791 px device into narrow screens (the real device never scales) ──
-const fit=$("#fit");const fitDev=()=>{dev.style.zoom="";const z=Math.min(1,fit.clientWidth/dev.offsetWidth);dev.style.zoom=z<1?z.toFixed(4):"";fit.style.height=Math.ceil(169*z)+"px";};
-addEventListener("resize",fitDev);
-
-// ── meaning words (section 02) ──
-$("#words").innerHTML=MODS.concat("master").map(m=>`<div class="w" data-m="${m}"${m==="master"?' style="background:#c8c8c8"':""}><span class="cap">${m}</span>${(KN[m]).map(id=>`<div>${DETAIL[id].l} ↔ ${DETAIL[id].r}</div>`).join("")}</div>`).join("");
-
-// ── waitlist (not connected) ──
-$("#wl").addEventListener("submit",e=>{e.preventDefault();const i=e.target.querySelector("input");
-  $("#wl-note").textContent=i.checkValidity()?"Thanks. Preview only: nothing was sent, the list opens with the beta.":"That email doesn't look complete.";});
-
-paint();draw();fitDev();
+// the device page reports its help text and its size; the frame takes the device's width (scaled down on narrow screens)
+let devW=692;
+const size=()=>{frame.style.width=Math.min(devW,fit.clientWidth)+"px";};
+addEventListener("resize",size);
+addEventListener("message",e=>{if(e.origin!==location.origin||e.source!==frame.contentWindow||!e.data||e.data.src!=="desk-demo")return;const d=e.data;
+  if(d.type==="hello")tell();
+  if(d.type==="info"){$("#iv-t").textContent=d.title;$("#iv-p").textContent=d.text;}
+  if(d.type==="size"&&d.w){devW=d.w;size();frame.style.height=d.h+"px";}});
+// meaning words (section 02)
+const by={};KNOBS.forEach(k=>(by[k.s]=by[k.s]||[]).push(k));
+$("#words").innerHTML=Object.keys(by).map(m=>`<div class="w" style="background:${COL[m]||"#c8c8c8"}"><span class="cap">${m}</span>${by[m].map(k=>`<div>${k.l} ↔ ${k.r}</div>`).join("")}</div>`).join("");
+paint();size();
 </script>
 </body>
 </html>
