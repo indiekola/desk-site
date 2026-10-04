@@ -34,7 +34,7 @@ ICON.again='<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path vector
 const PIC={rel:ICON.mine,brd:ICON.full,byp:ICON['bypass-big']};
 // Figma icons (product/figma/SPEC.md): the bolt disc tops the left column; refresh = re-analyze; recording = start;
 // x-close = cancel; chevrons 16 px cells (8 × 4 path); bypass small/big off (slash) and on (bar)
-ICON.bolt='<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect width="24" height="24" rx="12" fill="var(--pill)"/><path d="M15.5 11.125H12L13.3125 5L8.5 12.875H12L10.6875 19L15.5 11.125Z" fill="currentColor"/></svg>';
+ICON.bolt='<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect width="24" height="24" rx="12" fill="var(--key)"/><path d="M15.5 11.125H12L13.3125 5L8.5 12.875H12L10.6875 19L15.5 11.125Z" fill="currentColor"/></svg>';
 ICON.refresh='<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M1 5C1 5 2.00249 3.63411 2.81692 2.81912C3.63134 2.00413 4.7568 1.5 6 1.5C8.48528 1.5 10.5 3.51472 10.5 6C10.5 8.48528 8.48528 10.5 6 10.5C3.94845 10.5 2.21756 9.12714 1.67588 7.25M4 5H1V2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 ICON.recording='<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M2.5 8.33333L2.5 11.6667M6.25 9.16667V10.8333M10 5V15M13.75 2.5V17.5M17.5 8.33333V11.6667" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 ICON.close='<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>';

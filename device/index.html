@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Desk · demo</title>
-<link rel="stylesheet" href="design.css?v=a95f1b76e99a">
+<link rel="stylesheet" href="design.css?v=86016cb6b5aa">
 <style>
 /* Desk device page — the strip is the real height of a Max for Live device in Live (169 px) */
 /* sizes, radii, type and motion tokens: design.css (from Figma, product/figma/SPEC.md) */
@@ -28,7 +28,6 @@ main{padding:28px;display:grid;gap:40px;grid-template-columns:minmax(0,1fr)}
 /* Braun-clock ticks like the desk: start, centre (mine), end — just outside the dial */
 /* centre mark = MINE: the small MINE asterisk (Figma 601:452) at 7 px instead of the 12 o'clock tick, centred on the knob axis like the ticks; 4 px above the disc */
 /* the knob you are turning (or focused from the keyboard) gets a 1 px ring with a 2 px gap */
-.k1 .ky{--hz:1.04}.mt{--hz:1.015} /* hover zoom: +1 px / +1.2 px per side, inside every gap; knobs: .dz in design.css */
 .kn.active .d::after{opacity:1}
 .kn .d .arm::after,.kn .ghost::after{content:"";position:absolute;width:5px;height:5px;margin:-2.5px;border-radius:50%;background:var(--dot);left:50%;top:50%;transform:translateY(var(--r,-14px))}
 /* var(--ghost) = your setting while it is not playing. MINE on: the white dot sits on MINE, a var(--ghost) dot stays where your knob was.
@@ -45,14 +44,14 @@ body.turning,body.turning *{cursor:grabbing!important}
 .cx,.cy{position:absolute;background:var(--dot);pointer-events:none}.cx{left:0;right:0;top:calc(50% - .5px);height:1px}.cy{top:0;bottom:0;left:calc(50% - .5px);width:1px}  /* edge to edge (Figma) */
 .pad .pk,.pad .pg{position:absolute;width:16px;height:16px;margin:-8px;border-radius:50%;background:var(--dot)}
 /* the puck (Figma 15:109): a 16 px dot in a 2 px ring of the pad colour, so the cross stops 2 px short of it */
-.pad .pk{box-shadow:0 0 0 2px var(--knob)}body.alloff .pad .pk{box-shadow:0 0 0 2px var(--off)}
+.pad .pk{box-shadow:0 0 0 2px var(--knob)}body.alloff .pad .pk{box-shadow:0 0 0 2px var(--pad-off)}
 .pad .pg{background:var(--ghost);pointer-events:none;opacity:0;transition:opacity 0s linear var(--m-slow)}body.mine .pad .pg{opacity:1;transition:opacity var(--m) var(--e-out)}
 .pad .pk{transition:background-color var(--m) var(--e-out)}body.alloff .pad .pk{background:var(--ghost)}  /* Figma 15:917: #666 on the off grey */
 /* BYPASS (all) switches the master off too (only the safety limiter stays), so the pad looks off like a module */
-.pad{transition:background-color var(--m-slow) var(--e-io)}body.alloff .pad{background:var(--off)}
+.pad{transition:background-color var(--m-slow) var(--e-io)}body.alloff .pad{background:var(--pad-off)}
 .cx,.cy{transition:background-color var(--m-slow) var(--e-io)}body.alloff :is(.cx,.cy){background:var(--ghost)}
 /* on the grey of a switched-off module the text follows the theme (dark text in light themes, light in dark ones) */
-.tiles .t.off,body.alloff .tiles .t{color:var(--fg)}
+.tiles .t.off,body.alloff .tiles .t{color:var(--off-fg)}
 body.dragx,body.dragx *{cursor:grabbing!important}
 .mt{flex:none;height:calc(169px - 2 * var(--g));aspect-ratio:1;position:relative}
 .mt .pad{width:100%;height:100%}
@@ -63,7 +62,7 @@ body.dragx,body.dragx *{cursor:grabbing!important}
 .ky svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1}
 .k1{display:grid;gap:6px;align-content:center;justify-items:center}
 /* two keys (the full view is parked): off = the DESK pill's grey with ink marks, on = ink with light marks and the ring */
-.k1 .ky{width:34px;height:34px;border-radius:50%;background:var(--pill);color:var(--fg);transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out)}
+.k1 .ky{width:34px;height:34px;border-radius:50%;background:var(--key);color:var(--key-fg);transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out)}
 .k1 .ky[aria-pressed="true"]{background:var(--knob);color:var(--dot)}
 /* on or being pressed: the knob ring, inside the key (1 px ink edge + 2 px white), fading in like the knobs */
 
@@ -92,23 +91,23 @@ body.dragx,body.dragx *{cursor:grabbing!important}
   transition:color var(--m-slow) var(--e-io)}
 .pad .ax.l,.pad .ax.q{left:50%;translate:calc(-50% + .5px) 0}.pad .ax.l{top:7px}.pad .ax.q{bottom:6px}
 .pad .ax.w,.pad .ax.a{top:50%;translate:0 calc(-50% - .5px)}.pad .ax.w{left:5px}.pad .ax.a{right:5px}
-body.alloff .pad .ax{color:var(--fg)}
+body.alloff .pad .ax{color:var(--pad-off-fg)}
 /* the device (size M) */
 .sc{display:inline-flex;max-width:100%;height:169px}
 .sc .body{display:flex;gap:var(--g);min-width:0;flex:1 1 auto;position:relative}
 /* explicit row size (set from the module count): engines differ on intrinsic sizes of contained flex items */
 .sc .tiles{display:flex;gap:var(--g);flex:0 0 auto;min-width:0;position:relative}
-.sc .t{color:var(--ink);flex:0 0 var(--tw);width:var(--tw);min-width:var(--tw);border-radius:var(--r-mod);corner-shape:var(--cs);position:relative}
+.sc .t{color:var(--on-mod);flex:0 0 var(--tw);width:var(--tw);min-width:var(--tw);border-radius:var(--r-mod);corner-shape:var(--cs);position:relative}
 .sc .t .in{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;padding:8px;--ks:var(--kz)}  /* name on top (the pill), knobs at the bottom, 8 apart */
 .sc .t .nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px;cursor:grab;touch-action:none}
 /* carried tile: elevation shadow in four layers — a tight contact shadow plus wider, softer ambient ones, light from
    above (offsets only down, negative spread keeps the sides clean). Same layer count at rest (transparent) so the
    shadow grows and settles smoothly: 160 ms up, 260 ms down with the drop. */
 .sc .t{box-shadow:0 0 0 rgba(0,0,0,0),0 0 0 rgba(0,0,0,0),0 0 0 rgba(0,0,0,0),0 0 0 rgba(0,0,0,0)}
-.sc .t.lift{z-index:3;scale:1.02;
+.sc .t.lift{z-index:3;
   box-shadow:0 1px 2px -1px rgba(0,0,0,.16),-4px 0 8px -6px rgba(0,0,0,.22),4px 0 8px -6px rgba(0,0,0,.22),0 0 6px -4px rgba(0,0,0,.18)}
 /* The shadow above must fit the device: a tile is 161 px high in a 169 px device, so it may reach at most 4 px past the
-   tile, scale included (1.02 adds 1.6 px). The layers lean sideways (over the neighbours) and stay ≤ 2 px top and bottom.
+   tile (the carried tile keeps its size: Figma shows no lift scale). The layers lean sideways (over the neighbours) and stay ≤ 2 px top and bottom.
    The carried tile is drawn in .carry, a layer over the whole device outside the level window: nothing but the device
    edge clips it. The tile in the row stays (invisible) and keeps doing the layout. */
 .dev{position:relative}
@@ -129,7 +128,7 @@ body.alloff .mv.v2 .t .nm{cursor:default;background:none}body.alloff .mv.v2 .t .
 .mv .sp.partial{background:linear-gradient(90deg,var(--knob) 50%,var(--dot) 50%)}.mv .sp.none{background:var(--knob)}
 .mv .kw.dead .d{background:var(--dead)}.mv .kw.dead{pointer-events:none}
 .mv.v2 .t .nm{position:absolute;left:4px;top:4px;width:43px;height:20px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;transition:background-color var(--m-fast) var(--e-out)}  /* the name; on hover a white pill with drag + bypass (Figma 15:391) */
-.mv.v2 .t .nm:hover,.mv.v2 .t.lift .nm{background:var(--dot);color:var(--knob)}  /* Figma: a white pill with black marks = the knob's dot and body colours, so Live themes follow */
+.mv.v2 .t .nm:hover,.mv.v2 .t.lift .nm{background:var(--name-pill);color:var(--name-pill-fg)}  /* Desk (Figma 15:391): a white pill with black marks; Live (Figma 28:4610): a panel pill with light marks */
 /* hovering the name strip swaps the name for what the strip does: drag (left) and bypass (right), 12 px icons
    at their original size; the same while the module is carried */
 .mv.v2 .t .nm .tx{display:block;min-width:0;max-width:35px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:12px}
@@ -170,17 +169,17 @@ body.mine .kn,body.mine .pad,body.mine .fd{pointer-events:none}
 /* left column: level arrows (one pill, top) · re-analyze (round, centre) · the DESK label (pill, bottom) */
 /* whole pixels: fixed heights (48 · 20 · 44) and a fixed 24 px gap above re-analyze — space-between would put them on half pixels */
 .dev .side{flex:none;width:var(--col);margin:var(--g) 0 var(--g) var(--g);display:flex;flex-direction:column;justify-content:space-between;align-items:center;position:relative;z-index:1}  /* bolt on top; levels, re-analyze / cancel at the bottom */
-.side .low{display:flex;flex-direction:column;gap:var(--g)}.side .logo-d{display:block;width:24px;height:24px;color:var(--fg)}.side .logo-d svg{width:24px;height:24px}
-.side button{appearance:none;border:0;padding:0;background:none;color:var(--fg);display:grid;place-items:center;cursor:pointer;outline:none;position:relative}
+.side .low{display:flex;flex-direction:column;gap:var(--g)}.side .logo-d{display:block;width:24px;height:24px;color:var(--key-fg)}.side .logo-d svg{width:24px;height:24px}
+.side button{appearance:none;border:0;padding:0;background:none;color:var(--key-fg);display:grid;place-items:center;cursor:pointer;outline:none;position:relative}
 .side svg{width:12px;height:12px;display:block}
 /* re-analyze is parked until the ANALYZE flow exists: #444 mark, like a key that is coming later */
-.side :is(.again,.x){width:24px;height:24px;border-radius:var(--r-key);background:var(--pill);color:var(--fg)}.side .x{display:none}
-.side .lvk{width:24px;border-radius:var(--r-key);background:var(--pill);display:none;grid-template-rows:16px 16px;gap:var(--g);padding:var(--g)}.side.multi .lvk{display:grid}
+.side :is(.again,.x){width:24px;height:24px;border-radius:var(--r-key);background:var(--key);color:var(--key-fg)}.side .x{display:none}
+.side .lvk{width:24px;border-radius:var(--r-key);background:var(--key);display:none;grid-template-rows:16px 16px;gap:var(--g);padding:var(--g)}.side.multi .lvk{display:grid}
 .side .lvk button{width:16px;height:16px;border-radius:var(--r-mod);transition:color var(--m-fast) var(--e-out),background-color var(--m-fast) var(--e-out)}
 /* hover: a 16 px ink key behind each arrow on its own (radius 4, Figma 27:2746),
    the arrow turns white on it like a knob's dot */
 .side .lvk svg{width:16px;height:16px}
-.side .lvk button:not([aria-disabled="true"]):is(:hover,:focus-visible){color:var(--dot);background:var(--knob)}
+.side .lvk button:not([aria-disabled="true"]):is(:hover,:focus-visible){color:var(--key-hov-fg);background:var(--key-hov)}
 .side .lvk button[aria-disabled="true"]{color:var(--grey);cursor:default}  /* no level there: #999 (Figma) */
 /* levels (pages): six module slots, so the device keeps one width. With more than one level the tiles are 126 high
    (pitch 130) and the neighbours peek at the device edge (Figma 15:1716 / 27:2740 / 27:2926):
@@ -202,7 +201,7 @@ body.dragx .lv .peek,body:not(.ready) .lv .peek{pointer-events:none}
 /* ANALYZE flow (flow.js): the work layer covers the whole level window (slots and peek); before the desk is
    built everything but ANALYZE is switched off — re-analyze, levels, the master pad and the two keys */
 .side :is(.again[aria-disabled="false"],.x){cursor:pointer;transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out)}
-.side :is(.again[aria-disabled="false"],.x):is(:hover,:focus-visible){background:var(--knob);color:var(--dot)}
+.side :is(.again[aria-disabled="false"],.x):is(:hover,:focus-visible){background:var(--key-hov);color:var(--key-hov-fg)}
 /* start: only the bolt; working: the x key cancels; an error after an analysis: x returns to the desk */
 body[data-flow="empty"] .side .again,body[data-flow="analysing"] .side .again,body[data-flow="error"] .side .again{display:none}
 body[data-flow="analysing"] .side .x,body.analyzed[data-flow="error"] .side .x{display:grid}
@@ -230,12 +229,12 @@ if(/[?&]embed\b/.test(location.search))document.documentElement.classList.add("e
   <section class="v"><h2>Desk · device</h2><p>Modules in their colours with two meaning knobs each — drag a module by its name strip to reorder, tap the strip to bypass it (white = bypassed). A half or black dot next to a knob = its plugin is only partly or not supported (hover for details). The master is the square XY pad; loudness on the right; MINE · BYPASS · FULL keys: hold = hear it while held, click = switch on, click again = off. Pushing a knob past its end leans the module into the bottom corner on that side. Six modules per level: more wait on the levels above and below, whose edges peek at the top and bottom of the device — ↑ ↓ on the left, Page Up / Page Down or a click on a peeking strip switch levels, drag a module up or down to move it to another level.</p>
     <div class="scroll"><div class="dev" id="M2"></div></div></section>
 </main>
-<script src="demo.js?v=a95f1b76e99a"></script>
-<script src="design.js?v=a95f1b76e99a"></script>
-<script src="glyphs.js?v=a95f1b76e99a"></script>
-<script src="controls.js?v=a95f1b76e99a"></script>
+<script src="demo.js?v=86016cb6b5aa"></script>
+<script src="design.js?v=86016cb6b5aa"></script>
+<script src="glyphs.js?v=86016cb6b5aa"></script>
+<script src="controls.js?v=86016cb6b5aa"></script>
 <script>DeskDemo.attach();</script>
-<script src="flow.js?v=a95f1b76e99a"></script>
+<script src="flow.js?v=86016cb6b5aa"></script>
 <script>
 let LOOK={}; // module colours for this project: colorsFor() in design.js
 const st={knobs:{},list:[],strips:[],subs:{}};
@@ -309,8 +308,8 @@ function setMine(on){if(VIEW.mine===on||(on&&FLOW.state!=="ready"))return;VIEW.m
 function setBypassAll(on){if(VIEW.byp===on||(on&&FLOW.state!=="ready"))return;VIEW.byp=on;document.body.classList.toggle("alloff",on);document.querySelectorAll(".ky.k-byp").forEach(b=>b.setAttribute("aria-pressed",on));
   if(on){say("original tracks");queueKey(async()=>{for(const s of st.strips)await post("/strip_off",{strip:s});});}
   else{say("processed");queueKey(async()=>{for(const s of st.strips)if(!MOD_OFF.has(s))await post("/strip_on",{strip:s});});}}
-function keysFor(){const rel=el(`<button class="ky ring hz k-mine" type="button" aria-pressed="${VIEW.mine}">${PIC.rel}</button>`),
-  byp=el(`<button class="ky ring hz k-byp" type="button" aria-pressed="${VIEW.byp}">${PIC.byp}</button>`);
+function keysFor(){const rel=el(`<button class="ky ring k-mine" type="button" aria-pressed="${VIEW.mine}">${PIC.rel}</button>`),
+  byp=el(`<button class="ky ring k-byp" type="button" aria-pressed="${VIEW.byp}">${PIC.byp}</button>`);
   Desk.pressToggle(rel,()=>VIEW.mine,setMine);
   Desk.info(rel,()=>FLOW.state!=="ready"?["MINE","The sound Desk builds for this song. Available after ANALYZE."]:["MINE · the reference built for this track","Hold: hear MINE while held · click: switch on, click again: off · double-click: apply it (every knob to its centre)."]);
   Desk.info(byp,()=>FLOW.state!=="ready"?["Bypass","Your original tracks. Available after ANALYZE; until then you hear only your original."]:["Bypass · your original tracks",VIEW.byp?"On: you hear the set without Desk (the safety limiter stays). Click to switch it off."
@@ -520,7 +519,7 @@ function buildDevice(id){const host=document.getElementById(id);host.className="
   up.onclick=()=>L.go(L.cur-1);dn.onclick=()=>L.go(L.cur+1);
   L.layout(Desk.levelsFrom(mods(),saved,CAP));
   reorderable(L,levels=>{try{localStorage.setItem("nc.levels",JSON.stringify(levels));}catch(e){}say("order saved");});
-  const mt=el(`<div class="mt hz"></div>`);
+  const mt=el(`<div class="mt"></div>`);
   if(K("master_air")&&K("master_loud"))mt.prepend(pad("master_air","master_loud"));
   else{const p=el(`<div class="pad"><i class="cx"></i><i class="cy"></i><span class="pk" style="left:50%;top:50%"></span></div>`);mt.prepend(p);
     Desk.info(p,()=>["Master","Warm ↔ airy, quiet ↔ loud. Appears with the modules after ANALYZE."]);}
