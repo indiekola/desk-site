@@ -32,6 +32,11 @@ ICON.up='<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path vector-ef
 ICON.down='<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 ICON.again='<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path vector-effect="non-scaling-stroke" d="M9.9 6.9A4 4 0 1 1 8.8 3.2M9 1.5V3.5H7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const PIC={rel:ICON.mine,brd:ICON.full,byp:ICON['bypass-big']};
+// the mini view's MINE / BP keys (Figma 15:75 · 38:5141 · 38:5152, 2026-10-04): one SVG per key holding every state, so
+// the page morphs them with CSS (compact.html .kc / .ast / .chk / .bar). MINE: asterisk (off) · disc + check (on) ·
+// asterisk shrunk into a ring (while BP is on). BP: ring + slash (off) · disc + upright bar (on).
+ICON.mineKey='<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle class="kc" vector-effect="non-scaling-stroke" cx="10" cy="10" r="8"/><g class="ast"><path vector-effect="non-scaling-stroke" d="M10 3V17M4 6.5L16 13.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path class="ray" vector-effect="non-scaling-stroke" d="M16 6.5L4 13.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></g><path class="chk" vector-effect="non-scaling-stroke" d="M13.5 8L8.6875 12L6.5 10" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+ICON.bpKey='<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle class="kc" vector-effect="non-scaling-stroke" cx="10" cy="10" r="8"/><path class="bar" vector-effect="non-scaling-stroke" d="M10 6L10 14" stroke="currentColor" stroke-linecap="round"/></svg>';
 // Figma icons (product/figma/SPEC.md): the bolt disc tops the left column; refresh = re-analyze; recording = start;
 // x-close = cancel; chevrons 16 px cells (8 × 4 path); bypass small/big off (slash) and on (bar)
 ICON.bolt='<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect width="24" height="24" rx="12" fill="var(--key)"/><path d="M15.5 11.125H12L13.3125 5L8.5 12.875H12L10.6875 19L15.5 11.125Z" fill="currentColor"/></svg>';

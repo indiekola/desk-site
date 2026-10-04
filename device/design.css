@@ -21,6 +21,9 @@
      pointer · name-pill = the hover pill on a module · on-mod = text on a module colour (names, progress text on its fill)
      · off-fg = text on a bypassed module · pad-off = the pad under BYPASS (and its words) */
   --key:var(--pill);--key-fg:var(--fg);--key-hov:var(--knob);--key-hov-fg:var(--dot);--name-pill:var(--dot);--name-pill-fg:var(--knob);
+  /* key-on = MINE / BP latched on: Desk look keeps the key (the icon fills, Figma 15:666 / 15:822); key-on-mark = the
+     mark punched out of the filled icon disc (Figma white) */
+  --key-on:var(--key);--key-on-fg:var(--key-fg);--key-on-mark:var(--dot);
   --on-mod:var(--ink);--off-fg:var(--fg);--pad-off:var(--off);--pad-off-fg:var(--fg);
   /* module colours (also in design.js for the scripts) */
   --c-master:#c8c8c8;--c-drums:#ffd200;--c-bass:#2b6cff;--c-vocal:#ff4800;--c-backing:#ffaad4;--c-guitars:#00b67a;--c-pad:#add5ff;--c-brass:#ff9b00;
@@ -30,8 +33,8 @@
   /* shape (Figma 15-2254, re-read 2026-10-04): the device is square; modules, pad, MINE / BP keys, start / progress panels
      4 · the hover pill 10 (a round end on 20 px) · the left column (bolt, re-analyze, cancel, level pill) 12 = round discs */
   --cs:round;--r-dev:0px;--r-mod:4px;--r-pill:10px;--r-key:12px;
-  /* sizes (Figma): 4 px gap and padding, left column 24, module 51 (35 px knobs), master 161, loudness 106, keys 51 */
-  --g:4px;--col:24px;--tile:51px;--kz:35px;--pad-s:161px;--ld-w:106px;--keys-w:51px;
+  /* sizes (Figma): 4 px gap and padding, left column 24, module 51 (31 px knobs + a 1 px edge = 33, Figma 15:325, 2026-10-04), master 161, loudness 106, keys 51 */
+  --g:4px;--col:24px;--tile:51px;--kz:31px;--pad-s:161px;--ld-w:106px;--keys-w:51px;
   /* motion: 160 small cues · 260 ease-out for touch responses · 460 ease-in-out for mode switches */
   /* the same numbers for scripts: MOTION in design.js */
   --m-fast:160ms;--m:260ms;--m-slow:460ms;--e-out:cubic-bezier(.2,.8,.2,1);--e-io:cubic-bezier(.45,0,.2,1);
@@ -117,18 +120,20 @@ body.mine .mk :is(.sp,.sup){pointer-events:auto}
      inactive = 40 % of the marks over the panel (--ghost): MINE ghost dots, a bypassed module's dots and name, the
                 pad's cross and words under BYPASS; a bypassed module itself = the panel at 60 % over the surface;
                 an unavailable level arrow = control_fg_off → --grey (else the same 40 %)
-     active   = selection → --ring: the 2 px ring inside a knob being turned, the pad being pressed, MINE / BP on
+     active   = selection → --ring: the 2 px ring inside a knob being turned, the pad being pressed, a key held down
+     key on   = MINE / BP latched on: the key lights in the accent (--accent, sketch #ff8bc5; Live sends no such colour,
+                so per preset like PEAK), its icon disc in --accent-fg with the mark punched out in the accent
      hover    = surface_highlight → --pill: a left key under the pointer
      on a module colour = the panel colour (--knob): module names, progress text over its fill
      progress fill = the first module's track colour (flow.js) · PEAK = --warn (Live sends no warning colour: per preset)
    The four presets approximate Live 12's built-in themes for the browser prototype ("dark" = the sketch's values); in
    the device the real values come from Live (live.colors), so custom Live themes work too. Switch: L = mode, T = theme
    within the mode, or ?mode=desk|live&theme=<name>. */
-[data-theme="desk-dark"]{--page:#111;--dev:#1d1d1d;--pill:#2f2f2f;--fg:#ededed;--off-line:#4a4a4a;--grey:#777;--knob:#000;--dot:#fff;--ghost:#444}
+[data-theme="desk-dark"]{--page:#111;--dev:#1d1d1d;--pill:#2f2f2f;--fg:#ededed;--off-line:#4a4a4a;--grey:#777;--knob:#000;--dot:#fff;--ghost:#444;--key-on-mark:var(--key)}
 [data-theme="light"]{--page:#d9d9d9;--dev:#c4c4c4;--pill:#b3b3b3;--fg:#111;--off-line:#8a8a8a;
-  --knob:#141414;--dot:#f2f2f2;--ring:#00e6f7;--warn:#c0006a}
+  --knob:#141414;--dot:#f2f2f2;--ring:#00e6f7;--warn:#c0006a;--accent-fg:#fff}
 [data-theme="mid-light"]{--page:#9e9e9e;--dev:#afafaf;--pill:#9b9b9b;--fg:#111;--off-line:#7a7a7a;
-  --knob:#141414;--dot:#f2f2f2;--ring:#00e6f7;--warn:#c0006a}
+  --knob:#141414;--dot:#f2f2f2;--ring:#00e6f7;--warn:#c0006a;--accent-fg:#fff}
 [data-theme="mid-dark"]{--page:#3e3e3e;--dev:#4a4a4a;--pill:#5c5c5c;--fg:#ececec;--off-line:#6a6a6a;
   --knob:#111;--dot:#ececec;--ring:#00e6f7;--warn:#ff8bc5}
 /* dark = Figma 28:3723: surface #2f3139, panels #121417, white text and marks, selection #00e6f7, PEAK #ff8bc5 */
@@ -140,6 +145,7 @@ body.mine .mk :is(.sp,.sup){pointer-events:auto}
   --dead:color-mix(in srgb,var(--knob) 30%,var(--dev));--off-line:color-mix(in srgb,var(--fg) 35%,var(--dev));--grey:color-mix(in srgb,var(--dot) 40%,var(--knob));
   --off:color-mix(in srgb,var(--knob) 60%,var(--dev));
   --key:var(--knob);--key-fg:var(--dot);--key-hov:var(--pill);--key-hov-fg:var(--fg);--name-pill:var(--knob);--name-pill-fg:var(--dot);
+  --key-on:var(--accent,var(--warn));--key-on-fg:var(--accent-fg,var(--knob));--key-on-mark:var(--key-on);
   --on-mod:var(--knob);--off-fg:color-mix(in srgb,var(--dot) 40%,var(--off));--pad-off:var(--knob);--pad-off-fg:var(--ghost)}
 
 /* ── ANALYZE flow (flow.js, product/flow.md; Figma "start" 15:2123 and "progress" 15:1860): the work layer covers
