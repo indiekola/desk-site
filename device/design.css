@@ -16,6 +16,12 @@
   --fg-2:color-mix(in srgb,var(--fg) 50%,var(--page));  /* secondary text: readable on the page in every theme */
   --ring:var(--bg);   /* the active ring inside knobs, pad and keys */
   --off:var(--pill);  /* a bypassed module (or everything under BYPASS) takes the label pill's grey, in every theme */
+  /* roles: what each element takes. Desk look (Figma 15-2254) below; the Live look (Figma 28:3723) remaps them further down.
+     key = MINE / BP keys off, left-column keys, bolt disc, level pill, progress panel · key-hov = a left key under the
+     pointer · name-pill = the hover pill on a module · on-mod = text on a module colour (names, progress text on its fill)
+     · off-fg = text on a bypassed module · pad-off = the pad under BYPASS (and its words) */
+  --key:var(--pill);--key-fg:var(--fg);--key-hov:var(--knob);--key-hov-fg:var(--dot);--name-pill:var(--dot);--name-pill-fg:var(--knob);
+  --on-mod:var(--ink);--off-fg:var(--fg);--pad-off:var(--off);--pad-off-fg:var(--fg);
   /* module colours (also in design.js for the scripts) */
   --c-master:#c8c8c8;--c-drums:#ffd200;--c-bass:#2b6cff;--c-vocal:#ff4800;--c-backing:#ffaad4;--c-guitars:#00b67a;--c-pad:#add5ff;--c-brass:#ff9b00;
   --c-lead:#ff6390;--c-fx:#54e3d0;
@@ -59,36 +65,29 @@ html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
 /* anything that tilts in 3D (tiltOn marks it with data-tz): its own layer and a transparent 1 px outline, so the
    browser antialiases the edges and rounded corners while it is transformed instead of drawing them jagged */
 [data-tz]{backface-visibility:hidden;outline:1px solid transparent}
-/* anything that tilts, zooms or is carried keeps its own layer: the browser moves the rendered layer instead of
+/* anything that tilts or is carried keeps its own layer: the browser moves the rendered layer instead of
    re-drawing it every frame, so text inside (key captions, module names, MASTER) glides instead of jumping a pixel */
-[data-tz],.hz,.sc .t,.mt{will-change:transform,scale,translate,rotate}
+[data-tz],.sc .t,.mt{will-change:transform,scale,translate,rotate}
 
 /* ── motion system (both views). One property per job, so nothing fights:
-   transform = press tilt (tiltOn) · scale = hover zoom · translate/rotate = drag · .arm rotate / .d scale = knob value.
-   Hover zoom (.hz): grows a touch under the mouse, back to 100 % while pressed or turned; never during another
-   gesture; amount per element via --hz (sized so nothing reaches a neighbour or an edge). */
-.hz{transition:scale var(--m-fast) var(--e-out),transform var(--m) var(--e-out)}
-@media (hover:hover) and (prefers-reduced-motion:no-preference){.hz:hover{scale:var(--hz,1.04)}}
-.hz:active,.hz.active,.hz:has(.active),body:is(.dragx,.turning,.dragging) .hz:not(.active):not(:has(.active)){scale:1}
-/* knob (.dz on the dial): only the disc, its dot and its ring zoom — the scale ticks around it stay put. The disc is
-   drawn by ::before so the dial element itself (which holds the ticks) never scales on hover. */
+   transform = press tilt (tiltOn) · translate/rotate = drag · .arm rotate / .d scale = knob value.
+   No hover zoom anywhere (founder, 2026-10-04): nothing grows or shrinks under the mouse; hover cues are the module's
+   pill, colour and the icon moves below. */
+/* knob (.dz on the dial): the disc is drawn by ::before so the dial element itself holds the ticks */
 .dz{background:none!important}
 .dz::before{content:"";position:absolute;inset:0;border-radius:50%;background:var(--knob)}
-.dz::before,.dz>.arm,.dz::after{transition:scale var(--m-fast) var(--e-out),opacity var(--m-fast) var(--e-out)}
-@media (hover:hover) and (prefers-reduced-motion:no-preference){.dz:hover::before,.dz:hover>.arm,.dz:hover::after{scale:var(--hz,1.06)}}
-:is(.active,.turning,.dragx,.dragging) .dz::before,:is(.active,.turning,.dragx,.dragging) .dz>.arm,:is(.active,.turning,.dragx,.dragging) .dz::after{scale:1}
-/* key icons on hover: MINE's lower-left ↔ upper-right ray grows a little (and stays while hovered) · BYPASS's bar stands up (when processing is on) ·
-   FULL's title bar slides down to the mirrored line (y 5.72 → 14.28) */
+.dz::before,.dz>.arm,.dz::after{transition:opacity var(--m-fast) var(--e-out)}
+/* key icons on hover: BYPASS's bar stands up (when processing is on) · FULL's title bar slides down to the mirrored
+   line (y 5.72 → 14.28). MINE's ray no longer grows (no scaling on hover). */
 .ray,.fl{transform-box:view-box;transform-origin:center}
 .ray,.fl{transition:transform var(--m) var(--e-out)}
 @media (hover:hover) and (prefers-reduced-motion:no-preference){
   .ky:not([aria-pressed="true"]):hover .bar{transform:none}
-  .ky:hover .ray{transform:scale(1.2)}
   .ky:hover .fl{transform:translateY(8.5556px)}
 }
 /* a knob's value while it changes: written in place of its MINE star in pure ink, swapped instantly (no fade) */
 .mk .v{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;font:400 var(--cap)/12px var(--font);letter-spacing:var(--track);
-  font-variant-numeric:tabular-nums;color:var(--ink);display:none}
+  font-variant-numeric:tabular-nums;color:var(--on-mod);display:none}
 .mk.sv svg{visibility:hidden}.mk.sv .v{display:block}
 /* Info View stand-in for the browser prototype (inside Live the text goes to Live's own Info View) */
 .infov{position:fixed;left:16px;bottom:16px;z-index:29;width:240px;min-height:72px;padding:8px 10px;background:var(--dev);color:var(--fg);
@@ -110,25 +109,38 @@ body.mine .mk :is(.sp,.sup){pointer-events:auto}
 /* Themes, in two modes.
    Desk mode (default): Desk's own palette and look — "desk-light" (the values above) and "desk-dark".
    Live mode ("system"): everything follows Ableton — the module colours come from the set's tracks and the interface
-   from Live's theme: device surface = Live's surface; knob, pad and key bodies = Live's display (LCD) background,
-   marks on them = Live's display foreground, active ring = Live's selection colour (live.colors: surface_bg,
-   lcd_bg, lcd_control_fg, selection) — the dark device displays keep the crisp contrast of Desk's black. The four presets approximate Live 12's
-   built-in themes for the browser prototype; in the device the real values come from Live (live.colors), so custom
-   Live themes work too. Switch: L = mode, T = theme within the mode, or ?mode=desk|live&theme=<name>. */
+   from Live's theme. Two layers only, as in the founder's Live sketch (Figma 28:3723 "ableton immaterial"):
+     surface  = surface_bg → --dev, --page: the device and everything drawn straight on it (loudness block)
+     panels   = lcd_bg → --knob: knob bodies, the pad, MINE / BP keys (off and on), the left column's keys, bolt disc
+                and level pill, start and progress panels, the hover pill on a module
+     marks on panels = lcd_control_fg → --dot · text on the surface = control_fg → --fg
+     inactive = 40 % of the marks over the panel (--ghost): MINE ghost dots, a bypassed module's dots and name, the
+                pad's cross and words under BYPASS; a bypassed module itself = the panel at 60 % over the surface;
+                an unavailable level arrow = control_fg_off → --grey (else the same 40 %)
+     active   = selection → --ring: the 2 px ring inside a knob being turned, the pad being pressed, MINE / BP on
+     hover    = surface_highlight → --pill: a left key under the pointer
+     on a module colour = the panel colour (--knob): module names, progress text over its fill
+     progress fill = the first module's track colour (flow.js) · PEAK = --warn (Live sends no warning colour: per preset)
+   The four presets approximate Live 12's built-in themes for the browser prototype ("dark" = the sketch's values); in
+   the device the real values come from Live (live.colors), so custom Live themes work too. Switch: L = mode, T = theme
+   within the mode, or ?mode=desk|live&theme=<name>. */
 [data-theme="desk-dark"]{--page:#111;--dev:#1d1d1d;--pill:#2f2f2f;--fg:#ededed;--off-line:#4a4a4a;--grey:#777;--knob:#000;--dot:#fff;--ghost:#444}
 [data-theme="light"]{--page:#d9d9d9;--dev:#c4c4c4;--pill:#b3b3b3;--fg:#111;--off-line:#8a8a8a;
-  --knob:#141414;--dot:#f2f2f2;--ring:#ffa52c}
+  --knob:#141414;--dot:#f2f2f2;--ring:#00e6f7;--warn:#c0006a}
 [data-theme="mid-light"]{--page:#9e9e9e;--dev:#afafaf;--pill:#9b9b9b;--fg:#111;--off-line:#7a7a7a;
-  --knob:#141414;--dot:#f2f2f2;--ring:#ffa52c}
-[data-theme="mid-dark"]{--page:#3e3e3e;--dev:#4a4a4a;--pill:#5c5c5c;--fg:#ececec;--off-line:#6a6a6a;--grey:#8a8a8a;
-  --knob:#111;--dot:#ececec;--ring:#ffa52c}
-[data-theme="dark"]{--page:#1e1e1e;--dev:#2b2b2b;--pill:#3c3c3c;--fg:#e6e6e6;--off-line:#555;--grey:#7a7a7a;
-  --knob:#0e0e0e;--dot:#e8e8e8;--ring:#ffa52c}
+  --knob:#141414;--dot:#f2f2f2;--ring:#00e6f7;--warn:#c0006a}
+[data-theme="mid-dark"]{--page:#3e3e3e;--dev:#4a4a4a;--pill:#5c5c5c;--fg:#ececec;--off-line:#6a6a6a;
+  --knob:#111;--dot:#ececec;--ring:#00e6f7;--warn:#ff8bc5}
+/* dark = Figma 28:3723: surface #2f3139, panels #121417, white text and marks, selection #00e6f7, PEAK #ff8bc5 */
+[data-theme="dark"]{--page:#24262c;--dev:#2f3139;--pill:#3d4049;--fg:#fff;--off-line:#555;
+  --knob:#121417;--dot:#fff;--ring:#00e6f7;--warn:#ff8bc5}
 /* Live look: everything the theme does not send is derived from what it sends, so a custom Live theme (window.deskTheme)
-   moves every colour of the device except the module colours: ghost / bypassed dot = 40 % of the dot on the knob
-   (Figma #666 on black), a dead knob and the bypassed-module line from the knob and the surface. */
+   moves every colour of the device except the module colours and PEAK (see the role list above). */
 :is([data-theme="light"],[data-theme="mid-light"],[data-theme="mid-dark"],[data-theme="dark"]){--ghost:color-mix(in srgb,var(--dot) 40%,var(--knob));
-  --dead:color-mix(in srgb,var(--knob) 30%,var(--dev));--off-line:color-mix(in srgb,var(--fg) 35%,var(--dev));--grey:color-mix(in srgb,var(--fg) 45%,var(--pill))}
+  --dead:color-mix(in srgb,var(--knob) 30%,var(--dev));--off-line:color-mix(in srgb,var(--fg) 35%,var(--dev));--grey:color-mix(in srgb,var(--dot) 40%,var(--knob));
+  --off:color-mix(in srgb,var(--knob) 60%,var(--dev));
+  --key:var(--knob);--key-fg:var(--dot);--key-hov:var(--pill);--key-hov-fg:var(--fg);--name-pill:var(--knob);--name-pill-fg:var(--dot);
+  --on-mod:var(--knob);--off-fg:color-mix(in srgb,var(--dot) 40%,var(--off));--pad-off:var(--knob);--pad-off-fg:var(--ghost)}
 
 /* ── ANALYZE flow (flow.js, product/flow.md; Figma "start" 15:2123 and "progress" 15:1860): the work layer covers
    everything right of the left column. START = one black panel (4 px black border, radius 4) with the recording icon
@@ -149,12 +161,12 @@ body.mine .mk :is(.sp,.sup){pointer-events:auto}
    clip of the ink copy of the content (.over) so text on the module colour is Figma's black in every theme while text
    on the panel takes the theme's text colour. --p is registered so the fill and the clip ease together (260 ms). */
 @property --p{syntax:"<number>";inherits:true;initial-value:0}
-.prog{flex:1 1 auto;min-width:0;height:100%;position:relative;overflow:hidden;background:var(--pill);border-radius:var(--r-mod);corner-shape:var(--cs);
-  font:400 var(--cap)/12px var(--font);text-transform:uppercase;letter-spacing:var(--track);color:var(--fg);--p:0;transition:--p var(--m) var(--e-out)}
+.prog{flex:1 1 auto;min-width:0;height:100%;position:relative;overflow:hidden;background:var(--key);border-radius:var(--r-mod);corner-shape:var(--cs);
+  font:400 var(--cap)/12px var(--font);text-transform:uppercase;letter-spacing:var(--track);color:var(--key-fg);--p:0;transition:--p var(--m) var(--e-out)}
 .prog[hidden]{display:none}
 .prog .fill{position:absolute;left:0;top:0;bottom:0;width:calc(var(--p) * 1%);background:var(--c-drums);transition:background-color var(--m-slow) var(--e-io)}
 .prog .pc{position:absolute;inset:0;padding:8px 8px 4px;display:flex;flex-direction:column;justify-content:space-between}
-.prog .pc.over{color:var(--ink);clip-path:inset(0 calc(100% - var(--p) * 1%) 0 0);pointer-events:none}
+.prog .pc.over{color:var(--on-mod);clip-path:inset(0 calc(100% - var(--p) * 1%) 0 0);pointer-events:none}
 .prog .steps,.prog .foot{position:relative;display:flex;justify-content:space-between;align-items:center;white-space:nowrap}
 /* bottom row (Figma 15:2180): 32 px high, bottom-aligned. Left: the big module count (Spline Sans 27, line 32, lining
    figures), 8 px, then a 24 px column 4 px down: "modules" (Spline Sans 7.74 / 12, lower case) over the module marks
