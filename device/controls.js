@@ -16,6 +16,16 @@ const Desk = (() => {
   }
   function tiltOff(el) { if (el) el.style.transform = ""; }
 
+  // ── quiet focus: a mouse press focuses the control (arrow keys keep working) without the keyboard ring, which
+  // only Tab or a key press shows; the press itself shows the ring through .active. Chromium makes a scripted
+  // focus() :focus-visible, so the press ring stayed on after release. data-quiet hides the ring until a key.
+  // Not focus({focusVisible:false}): where Chromium reads it, a later arrow key does not bring the ring back.
+  function focusQuiet(el) { el.setAttribute("data-quiet", ""); el.focus({ preventScroll: true }); }
+  const QUIET_KEYS = new Set(["Shift", "Control", "Alt", "Meta", " "]);  // Space is Live's play key: no ring for it
+  // ?. : the unit tests load this file with a bare document stub
+  document.addEventListener?.("keydown", e => { if (!QUIET_KEYS.has(e.key)) document.activeElement?.removeAttribute?.("data-quiet"); }, true);
+  document.addEventListener?.("focusout", e => e.target.removeAttribute?.("data-quiet"), true);
+
   // ── knob drawing: the dot rides on a real child (.arm) turned with `rotate` (works in every engine)
   function angle(dial, deg) { const a = dial.querySelector(".arm"); if (a) a.style.rotate = deg + "deg"; }
   // iOS-style rubber band past an end: diminishing returns, the dial stretches a little, eases back on release
@@ -66,7 +76,7 @@ const Desk = (() => {
       el.classList.add("turning", "active"); document.body.classList.add("turning");
       y0 = e.clientY; raw0 = toRaw(o.get()); live = false;
       try { el.setPointerCapture(e.pointerId); } catch (_) {}
-      dial.focus({ preventScroll: true });
+      focusQuiet(dial);
       host = o.host?.() || null;
       if (host) { const r = dial.getBoundingClientRect(); kc = towards(host, r.left + r.width / 2, r.top + r.height / 2); tiltOn(host, kc[0], kc[1], deg, sc); }
       o.onStart?.();
@@ -188,7 +198,7 @@ const Desk = (() => {
       if (e.button || o.locked?.()) return;
       e.preventDefault(); dn = true;
       try { pad.setPointerCapture(e.pointerId); } catch (_) {}
-      pad.classList.add("active"); pad.focus({ preventScroll: true }); at(e); lean(e);
+      pad.classList.add("active"); focusQuiet(pad); at(e); lean(e);
     });
     pad.addEventListener("pointermove", e => { if (dn) { at(e); lean(e); } });
     ["pointerup", "pointercancel", "lostpointercapture"].forEach(v => pad.addEventListener(v, () => { if (dn) { dn = false; pad.classList.remove("active"); tiltOff(o.host?.()); } }));

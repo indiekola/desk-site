@@ -214,7 +214,7 @@ html::-webkit-scrollbar,html *::-webkit-scrollbar{display:none;width:0;height:0}
 :where(img,svg,a,video,canvas){-webkit-user-drag:none}
 /* focus: the browser's ring never shows; keyboard focus shows Desk's own ring (the knob ring, inside the control) */
 :where(:focus,:focus-visible){outline:none}
-.ring:focus-visible::after{opacity:1}
+.ring:focus-visible:not([data-quiet])::after{opacity:1}  /* data-quiet: focused by a mouse press (focusQuiet, controls.js) */
 /* the device inside Live (?embed): exactly the jweb, nothing scrolls; a narrower jweb scales the whole device (fitDevice) */
 .embed,.embed body{overflow:hidden;height:100%}
 
