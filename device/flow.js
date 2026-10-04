@@ -1,17 +1,30 @@
 // Desk by Volume Attack — the ANALYZE flow (product/flow.md), shared by the device views. It owns the step copy,
-// the work layer (the ANALYZE / CANCEL / RETRY key and the six-line log over the module area) and the bridge client
+// the work layer (the LET'S START / RETRY panel and the progress panel over the module area) and the bridge client
 // (POST /analyze, GET /analyze/status, POST /analyze/cancel). The page decides what happens around it: the empty
-// device, the reveal, READY. Needs design.js (ICON, colorsFor) and controls.js (Desk.info, Desk.infoState). Layout: product/figma/SPEC.md.
+// device, the reveal, READY. Needs design.js (ICON, colorsFor, MOTION) and controls.js (Desk.info, Desk.infoState). Layout: product/figma/SPEC.md.
 const Flow = (() => {
+  // The bridge runs six steps (tools/knobs/analyze.py: read · roles · plugins · master · build · mine); the device shows
+  // three (DECISIONS 2026-10-04 "ANALYZE simplified", product/analyze-simplify.md; Figma 15:1860): READ = read + plugins,
+  // DESIGN = roles, BUILD = master + build + mine. MASTER's "later" (measured on the next play) counts as finished, so
+  // the loudness never holds the BUILD mark (or READY) back.
   const STEPS = [
-    { id: "read", verb: "read", info: "Reading tracks, clips, devices and routing through the Live API. Nothing in the set changes." },
+    { id: "read", verb: "read", info: "Reading tracks, clips, devices and routing through the Live API, and which plugins show their settings to Live. Nothing in the set changes." },
     { id: "roles", verb: "roles", info: "Grouping tracks into modules by their job in the song (drums, bass, vocal…), by track and device names, on this computer." },
     { id: "plugins", verb: "plugins", info: "Checking which plugins show their settings to Live. One that hides them is left as it is; Desk uses Live's own devices instead." },
-    { id: "master", verb: "master", info: "Measuring the master's loudness while the song plays (6 s). Stopped? Press play in Live, or wait: Desk measures the next time you play." },
+    { id: "master", verb: "master", info: "Listening to the master's loudness while the song plays (this bridge waits up to 8 s). Stopped? Desk measures it the next time you play; the build goes on without it." },
     { id: "build", verb: "build", info: "Adding Live's own devices at the end of module tracks and setting levels, pan and sends. Your devices are not removed. CANCEL puts everything back; later, Undo in Live (Cmd/Ctrl+Z) takes the changes back.",
       plan: "Planning Live's own devices for the ends of module tracks, and their levels, pan and sends. This bridge only plans: nothing is written to the set until the plan gets a yes." },
     { id: "mine", verb: "mine", info: "Saving MINE: the sound built for this song. Every knob's centre returns here; BYPASS always plays your original." }];
-  // rough share of each step in the whole run, for the progress fill
+  const GROUPS = [
+    { id: "read", verb: "read", of: ["read", "plugins"] },
+    { id: "design", verb: "design", of: ["roles"] },
+    { id: "build", verb: "build", of: ["master", "build", "mine"] }];
+  const IDX = Object.fromEntries(STEPS.map((s, i) => [s.id, i]));
+  const groupOf = id => GROUPS.find(g => g.of.includes(id)) || GROUPS[0];
+  // A mark fills when its step is really done, but no sooner than MARK_GAP after the previous mark (the first one: after
+  // the panel showed). The work is never padded, only its display (analyze-simplify.md, recommendation 3).
+  const MARK_GAP = MOTION.base;
+  // rough share of each bridge step in the whole run, for the progress fill
   const WEIGHT = [1, 1, .5, 3, 3, .5], WSUM = WEIGHT.reduce((a, b) => a + b);
   const el = h => { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstChild; };
   const post = (u, b) => fetch(u, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b || {}) }).then(r => r.json().then(j => ({ ok: r.ok, ...j })));
@@ -32,16 +45,34 @@ const Flow = (() => {
   const marks = n => Array.from({ length: Math.min(n, MARKS_MAX) }, (_, i) => { const [o, d] = SHAPES[i % SHAPES.length];
     return `<svg viewBox="${o} 8 8" aria-hidden="true">${d}</svg>`; }).join("");
 
+  // the three marks the bridge's six steps add up to: a group is done when every step in it finished (done · skip =
+  // planned only · later = measured on the next play), failed when one failed; the first group that isn't done is the
+  // one working (while the run goes on); the groups after it wait, even if one of their steps already finished
+  function groupMarks(st) {
+    const by = id => (st.steps[IDX[id]] || {}).mark || "pending";
+    let open = false;
+    return GROUPS.map(g => {
+      const ms = g.of.map(by);
+      if (open) return "pending";
+      if (ms.includes("fail")) { open = true; return "fail"; }
+      if (ms.every(m => FINISHED.has(m))) return "done";
+      open = true;
+      return st.state === "running" ? "cur" : "pending";
+    });
+  }
+
   // The work layer covers everything right of the left column (Figma "start" and "progress"): a black START panel that
-  // is the one key, and a grey PROGRESS panel — steps on top, a fill in a module colour from the left, what the step
-  // found (bottom left) and the count (bottom right). CANCEL is the x key in the left column (the page owns it).
-  // Progress (Figma 15:1860, 2026-10-04): grey panel, radius 12, padding 8 / 8 / 4; six steps on top (12 px mark, 8,
-  // label); bottom row 32 high: left the big module count (Spline Sans 27) + "modules" over the module marks, right the
-  // big seconds + "sec". The content is drawn twice: in the theme's text colour on the panel, and in ink inside the
-  // fill (clipped to it), so every Live theme reads on both — Figma's black on the module colour, the theme's text on grey.
+  // is the one key, and a grey PROGRESS panel — three steps on top (space-between), a fill in a module colour from the
+  // left, what the run found (bottom left) and the count (bottom right). CANCEL is the x key in the left column (the
+  // page owns it).
+  // Progress (Figma 15:1860, 2026-10-04): grey panel, radius 4, padding 8 / 8 / 4; READ · DESIGN · BUILD on top (12 px
+  // mark, 8, label); bottom row 32 high: left the big module count (Spline Sans 27) + "modules" over the module marks,
+  // right the big seconds + "sec". The content is drawn twice: in the theme's text colour on the panel, and in ink
+  // inside the fill (clipped to it), so every Live theme reads on both — Figma's black on the module colour, the
+  // theme's text on grey.
   // Finished (Figma has no such frame, so its own language): every mark filled, the fill full, and when BUILD changed
   // the set the right number counts the changes instead of the seconds ("30 changes").
-  const CONTENT = `<div class="steps">${STEPS.map(s => `<span class="st" data-step="${s.id}">${MARK}<span class="vb">${s.verb}</span></span>`).join("")}</div>
+  const CONTENT = `<div class="steps">${GROUPS.map(g => `<span class="st" data-step="${g.id}">${MARK}<span class="vb">${g.verb}</span></span>`).join("")}</div>
     <div class="foot"><span class="found"></span>
       <span class="mods" hidden><b class="n"></b><span class="mu"><span class="u">modules</span><span class="mk"></span></span></span>
       <span class="count"><b class="n"></b><span class="u">sec</span></span></div>`;
@@ -53,22 +84,48 @@ const Flow = (() => {
       count: v.querySelector(".count"), mods: v.querySelector(".mods") }));
     const rows = views[0].rows, count = views[0].count;
     let shown = -1;
+    // paced marks: target = what the bridge says, marks = what the panel shows; lastAt = when the last mark filled
+    const pace = { run: null, target: GROUPS.map(() => "pending"), marks: GROUPS.map(() => "pending"), lastAt: 0, timer: 0, waiting: [], label: "" };
+    const settledNow = () => pace.marks.every((m, i) => m === pace.target[i]);
+    const paint = () => {
+      pace.marks.forEach((m, i) => views.forEach(v => { v.rows[i].className = "st " + m; }));
+      const k = pace.marks.findIndex(m => m !== "done");
+      count.setAttribute("aria-label", pace.label.replace("{k}", k < 0 ? GROUPS.length : k + 1));
+      if (settledNow()) pace.waiting.splice(0).forEach(r => r());
+    };
+    function step() {
+      clearTimeout(pace.timer);
+      const now = performance.now();
+      let blocked = false;
+      pace.marks = pace.target.map((m, i) => {
+        if (blocked) return "pending";
+        if (m === "done" && pace.marks[i] !== "done") {
+          const wait = pace.lastAt + MARK_GAP - now;
+          if (wait > 0) { blocked = true; pace.timer = setTimeout(step, wait); return "cur"; }
+          pace.lastAt = now;
+        }
+        return m;
+      });
+      paint();
+    }
+    const reset = () => { clearTimeout(pace.timer); pace.run = null; pace.target = GROUPS.map(() => "pending"); pace.marks = pace.target.slice();
+      pace.lastAt = performance.now(); pace.waiting.splice(0).forEach(r => r()); };
     const api = {
       el: w, key, prog, rows,
       // the START panel: icon + one line (LET'S START · RETRY · a short message)
       setKey(kind, label) {
-        key.dataset.kind = kind; prog.hidden = true; key.hidden = false;
+        key.dataset.kind = kind; prog.hidden = true; key.hidden = false;   // marks still pacing finish under it (a new run resets them)
         key.innerHTML = `${kind === "retry" ? ICON.refresh : ICON.recording}<span class="kl"></span>`;
-        key.querySelector(".kl").textContent = label || (kind === "retry" ? "retry" : "let\u2019s start");
+        key.querySelector(".kl").textContent = label || (kind === "retry" ? "retry" : "let’s start");
       },
+      // resolves once every mark the bridge reported done is shown (the page waits for it before the reveal)
+      settled() { return settledNow() ? Promise.resolve() : new Promise(r => pace.waiting.push(r)); },
       // draw one status from the bridge: marks, the fill (first module's colour once known), the finding and the count
       draw(st) {
+        if (prog.hidden || pace.run !== st.run) { reset(); pace.run = st.run; }
         key.hidden = true; prog.hidden = false;
         let last = "";
-        // a step is "finished" whatever its result (done · skip = planned only · later = measured on the next play):
-        // the mark fills, like Figma's done steps; only fail (square), cur (breathing) and pending (ring) differ
-        const mark = m => FINISHED.has(m) ? "done " + m : m;
-        st.steps.forEach((s, i) => { views.forEach(v => { v.rows[i].className = "st " + mark(s.mark); }); if (s.text && s.mark !== "pending") last = s.text; });
+        st.steps.forEach(s => { if (s.text && s.mark !== "pending") last = s.text; });
         const cur = st.step;
         if (cur != null && st.steps[cur].text) last = st.steps[cur].text;
         const at = cur != null ? cur : st.steps.filter(s => s.mark !== "pending").length - 1;
@@ -77,8 +134,8 @@ const Flow = (() => {
         prog.style.setProperty("--p", finished ? 100 : Math.min(100, done / WSUM * 100).toFixed(1));
         const m0 = st.modules && st.modules[0];   // the page may know the set's own colour for it (Live look: Flow.colorOf)
         fill.style.background = m0 ? (Flow.colorOf && Flow.colorOf(m0)) || colorsFor(["master", ...st.modules])[m0] : "var(--c-drums)";
-        // bottom row (Figma progress 15:2180): once ROLES knows the modules, a big count with a row of module marks
-        // (left); before that what the step found so far ("13/14 tracks"). Seconds since the start, big (right).
+        // bottom row (Figma progress 15:2180): once DESIGN knows the modules, a big count with a row of module marks
+        // (left); before that what READ found so far ("13/14 tracks"). Seconds since the start, big (right).
         // A finished run that applied BUILD counts the changes it made in the set on the right ("30 changes").
         const sm = finished && st.summary && st.summary.applied ? st.summary : null;
         const n = st.modules ? st.modules.length : 0, secs = Math.round(st.elapsed_s);
@@ -91,17 +148,21 @@ const Flow = (() => {
           v.count.classList.toggle("chg", !!sm);
         });
         shown = n;
-        count.setAttribute("aria-label", sm ? `done, ${sm.changes} change${sm.changes === 1 ? "" : "s"} applied to the set`
-          : `step ${Math.min(6, (cur ?? at) + 1)} of 6, ${secs} seconds`);
+        pace.label = sm ? `done, ${sm.changes} change${sm.changes === 1 ? "" : "s"} applied to the set`
+          : `step {k} of ${GROUPS.length}, ${secs} seconds`;
+        pace.target = groupMarks(st);
+        step();
       } };
     return api;
   }
 
-  // the Info View line for the state the device is in right now (shown whenever nothing is hovered)
+  // the Info View line for the state the device is in right now (shown whenever nothing is hovered): the visible step
+  // (n/3) and what the bridge is doing inside it
   function stepInfo(st, delta) {
     const i = st.step; if (i == null) return null;
+    const g = groupOf(STEPS[i].id);
     const text = st.build_mode !== "apply" && STEPS[i].plan || STEPS[i].info;
-    return [`${delta ? "Re-analyze" : "Analyze"} · ${i + 1}/6 ${STEPS[i].verb}`, text];
+    return [`${delta ? "Re-analyze" : "Analyze"} · ${GROUPS.indexOf(g) + 1}/${GROUPS.length} ${g.verb}`, text];
   }
 
   // poll the bridge while a run is going; onStatus gets every reading, the promise resolves with the last one
@@ -118,5 +179,5 @@ const Flow = (() => {
   const changes = () => fetch("/analyze/changes").then(r => r.json()).catch(() => ({ changed: false }));
   // "undo all": the bridge puts back every change BUILD made, from its journal (build.py Builder.undo_all)
   const undo = () => post("/undo");
-  return { STEPS, layer, stepInfo, follow, start, cancel, status, changes, undo, colorOf: null };
+  return { STEPS, GROUPS, groupOf, layer, stepInfo, follow, start, cancel, status, changes, undo, colorOf: null };
 })();

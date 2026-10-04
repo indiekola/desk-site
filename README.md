@@ -1,3 +1,3 @@
 # desk.volumeattack.ru
 
-Published copy; do not edit here. Built by `tools/site/build.py` in indiekola/desk (version ae6440efa8e3); see product/site.md there.
+Published copy; do not edit here. Built by `tools/site/build.py` in indiekola/desk (version 10ef6b4376a3); see product/site.md there.

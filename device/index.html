@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Desk · demo</title>
-<link rel="stylesheet" href="design.css?v=ae6440efa8e3">
+<link rel="stylesheet" href="design.css?v=10ef6b4376a3">
 <style>
 /* Desk device page — the strip is the real height of a Max for Live device in Live (169 px) */
 /* sizes, radii, type and motion tokens: design.css (from Figma, product/figma/SPEC.md) */
@@ -23,7 +23,7 @@ main{padding:28px;display:grid;gap:40px;grid-template-columns:minmax(0,1fr)}
 .dev .body{display:flex;gap:var(--g);padding:var(--g);align-items:stretch}
 /* knob */
 .kn{display:grid;justify-items:center;gap:4px;cursor:grab;touch-action:none;position:relative}
-.kn .d{border-radius:50%;background:var(--knob);box-shadow:0 0 0 1px var(--knob);position:relative;outline:none}  /* 35 px disc + 1 px edge in the knob colour (Figma: black; Live: the display colour) */
+.kn .d{border-radius:50%;background:var(--knob);box-shadow:0 0 0 1px var(--knob);position:relative;outline:none}  /* 31 px disc + 1 px edge in the knob colour (Figma 15:325: 33 px with its stroke; black; Live: the display colour); the dot Ø5, 9 px above the centre */
 .kn .d .arm{position:absolute;inset:0;pointer-events:none}
 /* Braun-clock ticks like the desk: start, centre (mine), end — just outside the dial */
 /* centre mark = MINE: the small MINE asterisk (Figma 601:452) at 7 px instead of the 12 o'clock tick, centred on the knob axis like the ticks; 4 px above the disc */
@@ -63,10 +63,22 @@ body.dragx,body.dragx *{cursor:grabbing!important}
 .k1{display:grid;gap:6px;align-content:center;justify-items:center}
 /* two keys (the full view is parked): off = the DESK pill's grey with ink marks, on = ink with light marks and the ring */
 .k1 .ky{width:34px;height:34px;border-radius:50%;background:var(--key);color:var(--key-fg);transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out)}
-.k1 .ky[aria-pressed="true"]{background:var(--knob);color:var(--dot)}
-/* on or being pressed: the knob ring, inside the key (1 px ink edge + 2 px white), fading in like the knobs */
-
-.k1 .ky{position:relative;--ring-r:calc(var(--r-mod) - 1px);--ring-cs:var(--cs)}.k1 .ky[aria-pressed="true"]::after,.k1 .ky:active::after{opacity:1}
+/* on (Figma 15:666 / 15:822, 2026-10-04 update): the key keeps its colour in the Desk look and its icon fills (MINE: a
+   disc with a check; BP: a disc with the upright bar); the Live look lights the key (--key-on, Figma 28:3723 pink).
+   The ring shows only while the key is held down (and on the reveal's flash), no longer while it is latched on. */
+.k1 .ky[aria-pressed="true"]{background:var(--key-on);color:var(--key-on-fg)}
+.k1 .ky{position:relative;--ring-r:calc(var(--r-mod) - 1px);--ring-cs:var(--cs)}.k1 .ky:active::after{opacity:1}
+/* MINE / BP icons, one SVG each so the states morph instead of swapping (motion kept: bar turns 260 ms, fills 160 ms):
+   .kc = the disc (hidden off · outlined = MINE while BP is on · filled = on), .ast = MINE's asterisk (shrinks into the
+   outlined disc under BP: 14 → 8 px, Figma 38:5155), .chk / .bar = the mark punched out of a filled disc */
+.k1 .ky .kc{fill:transparent;stroke:currentColor;opacity:0;transition:opacity var(--m-fast) var(--e-out),fill var(--m-fast) var(--e-out)}
+.k1 .ky .ast,.k1 .ky .chk{transform-box:view-box;transform-origin:center;transition:opacity var(--m-fast) var(--e-out),scale var(--m) var(--e-out),stroke var(--m-fast) var(--e-out)}
+.k1 .ky .chk{opacity:0;stroke:var(--key-on-mark)}
+.k1 .k-byp .kc,.k1 .ky[aria-pressed="true"] .kc{opacity:1}.k1 .ky[aria-pressed="true"] .kc{fill:currentColor}
+.k1 .k-mine[aria-pressed="true"] .ast{opacity:0}.k1 .k-mine[aria-pressed="true"] .chk{opacity:1}
+.k1 .k-byp[aria-pressed="true"] .bar{stroke:var(--key-on-mark)}
+body.alloff .k1 .k-mine:not([aria-pressed="true"]) .kc{opacity:1}body.alloff .k1 .k-mine .ast{scale:.5714}
+@media (prefers-reduced-motion:reduce){.k1 .ky :is(.kc,.ast,.chk){transition:none}}
 /* one type style inside the device (the key captions): Regular, uppercase, tracked, small.
    Only the loudness number keeps a bigger size so it reads at a glance. */
 .dev,.dev *{text-transform:uppercase;letter-spacing:var(--track)}
@@ -142,7 +154,7 @@ body.alloff .mv.v2 .t .nm{cursor:default;background:none}body.alloff .mv.v2 .t .
 /* while a module is carried, hover belongs to it alone: the others don't light up as the pointer passes them */
 body.dragx .tiles .t:not(.lift){pointer-events:none}
 .k1{display:grid!important;grid-template-rows:1fr 1fr;gap:3px!important;align-content:stretch!important;height:var(--pad-s);width:var(--keys-w);flex:none}  /* two keys of 79, 3 apart (Figma) */
-.k1 .ky{width:100%!important;height:100%!important;border-radius:var(--r-mod)!important;corner-shape:var(--cs);display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.k1 .ky{width:100%!important;height:100%!important;border-radius:var(--r-mod)!important;corner-shape:var(--cs);display:flex!important;flex-direction:column;align-items:center;justify-content:space-between;gap:4px}  /* label on top, icon at the bottom (Figma 15:73, 2026-10-04) */
 .k1 .ky{padding:8px}.k1 .ky .kl{font-size:var(--cap);line-height:12px;text-align:center}
 .k1 .ky svg{width:20px;height:20px}
 /* MINE / bypass switches: a slow ease-in-out so the change reads as one smooth move */
@@ -181,12 +193,12 @@ body.mine .kn,body.mine .pad,body.mine .fd{pointer-events:none}
 .side .lvk svg{width:16px;height:16px}
 .side .lvk button:not([aria-disabled="true"]):is(:hover,:focus-visible){color:var(--key-hov-fg);background:var(--key-hov)}
 .side .lvk button[aria-disabled="true"]{color:var(--grey);cursor:default}  /* no level there: #999 (Figma) */
-/* levels (pages): six module slots, so the device keeps one width. With more than one level the tiles are 126 high
-   (pitch 130) and the neighbours peek at the device edge (Figma 15:1716 / 27:2740 / 27:2926):
-     first  — shown level at y 4; the next level's names peek below (134–169, 35 px)
-     middle — shown level at y 21 (Figma 21.5, floored to a whole pixel); the previous level's tile bottoms peek above
-              (0–17) and the next level's names below (151–169)
-     last   — shown level at y 39; the previous level's tile bottoms peek above (0–35)
+/* levels (pages): six module slots, so the device keeps one width. With more than one level the tiles are 122 high
+   (pitch 126) and the neighbours peek at the device edge (Figma 15:1716 / 27:2740 / 27:2926, re-read 2026-10-04):
+     first  — shown level at y 4; the next level's names peek below (130–169)
+     middle — shown level at y 23 (Figma 23.5, floored to a whole pixel); the previous level's tile bottoms peek above
+              (0–19) and the next level's names below (149–169)
+     last   — shown level at y 43; the previous level's tile bottoms peek above (0–39)
    A click on a peeking strip goes to that level (.peek, over the strip). Levels slide 260 ms ease-out (instant with
    reduced motion); a module carried to another level stays under the pointer while they slide. */
 .lv .peek{position:absolute;left:0;right:0;z-index:4;display:none;appearance:none;border:0;padding:0;margin:0;background:none;cursor:pointer;outline:none}
@@ -194,7 +206,7 @@ body.mine .kn,body.mine .pad,body.mine .fd{pointer-events:none}
 body.dragx .lv .peek,body:not(.ready) .lv .peek{pointer-events:none}
 .sc .lv{flex:none;width:calc(6 * var(--tw) + 5 * var(--g));height:169px;margin:calc(-1 * var(--g)) 0;position:relative;z-index:2} /* no clip: the device edge clips the other levels */
 .lv .track{display:grid;grid-auto-rows:var(--th);row-gap:var(--g);--th:161px;transition:translate var(--m) var(--e-out)}
-.lv.multi .track{--th:126px}  /* levels: tiles 126 high, 4 apart (Figma 15:1716) */
+.lv.multi .track{--th:122px}  /* levels: tiles 122 high, 4 apart (Figma 15:1716, 2026-10-04: 31 px knobs, 24 under the name) */
 .lv .tiles{height:var(--th)}
 .sc .lv .t{height:100%}
 @media (prefers-reduced-motion:reduce){.lv .track{transition:none}}
@@ -229,12 +241,12 @@ if(/[?&]embed\b/.test(location.search))document.documentElement.classList.add("e
   <section class="v"><h2>Desk · device</h2><p>Modules in their colours with two meaning knobs each — drag a module by its name strip to reorder, tap the strip to bypass it (white = bypassed). A half or black dot next to a knob = its plugin is only partly or not supported (hover for details). The master is the square XY pad; loudness on the right; MINE · BYPASS · FULL keys: hold = hear it while held, click = switch on, click again = off. Pushing a knob past its end leans the module into the bottom corner on that side. Six modules per level: more wait on the levels above and below, whose edges peek at the top and bottom of the device — ↑ ↓ on the left, Page Up / Page Down or a click on a peeking strip switch levels, drag a module up or down to move it to another level.</p>
     <div class="scroll"><div class="dev" id="M2"></div></div></section>
 </main>
-<script src="demo.js?v=ae6440efa8e3"></script>
-<script src="design.js?v=ae6440efa8e3"></script>
-<script src="glyphs.js?v=ae6440efa8e3"></script>
-<script src="controls.js?v=ae6440efa8e3"></script>
+<script src="demo.js?v=10ef6b4376a3"></script>
+<script src="design.js?v=10ef6b4376a3"></script>
+<script src="glyphs.js?v=10ef6b4376a3"></script>
+<script src="controls.js?v=10ef6b4376a3"></script>
 <script>DeskDemo.attach();</script>
-<script src="flow.js?v=ae6440efa8e3"></script>
+<script src="flow.js?v=10ef6b4376a3"></script>
 <script>
 let LOOK={}; // module colours for this project: colorsFor() in design.js
 const st={knobs:{},list:[],strips:[],subs:{}};
@@ -262,7 +274,7 @@ function el(h){const t=document.createElement("template");t.innerHTML=h.trim();r
 // iOS-style rubber band: over = how far past the end (in knob travel), r = 0..1 with diminishing returns
 // knob: markup + drawing here, behaviour (detent, dead start, rubber end stops, tilt, wheel, glide) in controls.js
 function knob(id){const k=K(id);
-  const w=el(`<div class="kn"><div class="d ring dz" role="slider" tabindex="0" aria-label="${k.strip}: ${k.l} to ${k.r}" aria-valuemin="0" aria-valuemax="100" style="width:var(--ks);height:var(--ks);--r:-11px"><i class="ghost"></i><i class="arm"></i></div></div>`);
+  const w=el(`<div class="kn"><div class="d ring dz" role="slider" tabindex="0" aria-label="${k.strip}: ${k.l} to ${k.r}" aria-valuemin="0" aria-valuemax="100" style="width:var(--ks);height:var(--ks);--r:-9px"><i class="ghost"></i><i class="arm"></i></div></div>`);
   const d=w.querySelector(".d");
   const gh=d.querySelector(".ghost");
   sub(id,()=>{const x=vx(id);gh.style.rotate=(-135+st.knobs[id]*270)+"deg";if(!d.classList.contains("rubbing"))Desk.angle(d,-135+x*270);d.setAttribute("aria-valuenow",Math.round(x*100));d.setAttribute("aria-valuetext",word(k,x));});
@@ -308,8 +320,8 @@ function setMine(on){if(VIEW.mine===on||(on&&FLOW.state!=="ready"))return;VIEW.m
 function setBypassAll(on){if(VIEW.byp===on||(on&&FLOW.state!=="ready"))return;VIEW.byp=on;document.body.classList.toggle("alloff",on);document.querySelectorAll(".ky.k-byp").forEach(b=>b.setAttribute("aria-pressed",on));
   if(on){say("original tracks");queueKey(async()=>{for(const s of st.strips)await post("/strip_off",{strip:s});});}
   else{say("processed");queueKey(async()=>{for(const s of st.strips)if(!MOD_OFF.has(s))await post("/strip_on",{strip:s});});}}
-function keysFor(){const rel=el(`<button class="ky ring k-mine" type="button" aria-pressed="${VIEW.mine}">${PIC.rel}</button>`),
-  byp=el(`<button class="ky ring k-byp" type="button" aria-pressed="${VIEW.byp}">${PIC.byp}</button>`);
+function keysFor(){const rel=el(`<button class="ky ring k-mine" type="button" aria-pressed="${VIEW.mine}">${ICON.mineKey}</button>`),
+  byp=el(`<button class="ky ring k-byp" type="button" aria-pressed="${VIEW.byp}">${ICON.bpKey}</button>`);
   Desk.pressToggle(rel,()=>VIEW.mine,setMine);
   Desk.info(rel,()=>FLOW.state!=="ready"?["MINE","The sound Desk builds for this song. Available after ANALYZE."]:["MINE · the reference built for this track","Hold: hear MINE while held · click: switch on, click again: off · double-click: apply it (every knob to its centre)."]);
   Desk.info(byp,()=>FLOW.state!=="ready"?["Bypass","Your original tracks. Available after ANALYZE; until then you hear only your original."]:["Bypass · your original tracks",VIEW.byp?"On: you hear the set without Desk (the safety limiter stays). Click to switch it off."
@@ -443,7 +455,7 @@ function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="c
   sub("master_loud",draw);LOUD_DRAW=draw;
   if(FLOW.analyzed)Flow.status().then(fs=>{RUN_LUFS=fs.summary&&fs.summary.measured_lufs!=null?fs.summary.measured_lufs:RUN_LUFS;draw();}).catch(()=>{});
   const [lb,sb]=b.children;
-  Desk.info(lb,()=>{if(!FLOW.analyzed)return ["Loudness","Nothing measured yet: the master is measured during the analysis (step 4, while the song plays)."];
+  Desk.info(lb,()=>{if(!FLOW.analyzed)return ["Loudness","Nothing measured yet: the master is measured while the song plays (during the analysis, or the next time you play)."];
     const n=shortNow();return n.what?["Loudness · short-term",`${n.l.toFixed(1)} LUFS short-term (the last 3 s), measured on the master (EBU R128).`]:
       ["Loudness · from the pad",`About ${n.l.toFixed(1)} LUFS, estimated from the master pad's quiet ↔ loud position: the Desk device on the master measures it while the song plays.`];});
   Desk.info(sb,()=>{if(!FLOW.analyzed)return ["Spotify","Shown after the analysis."];const s=spotify(),m=METER,tp=m&&m.live?m.true_peak_db:null;
@@ -505,9 +517,9 @@ function buildDevice(id){const host=document.getElementById(id);host.className="
   L.layout=levels=>{L.levels=levels;lv.classList.toggle("multi",levels.length>1);side.classList.toggle("multi",levels.length>1);
     track.replaceChildren(...levels.map(l=>{const r=el(`<div class="tiles"></div>`);l.forEach((s,j)=>{T[s].style.order=j;r.append(T[s]);});return r;}));};
   // where the shown level sits in the 169 px window (Figma 15:1716 / 27:2740 / 27:2926): first 4 from the top, last 4
-  // from the bottom, a middle one centred between them (21.5 in Figma, floored to a whole pixel)
-  L.top=(i,n)=>{const g=G(),th=n>1?126:161,first=g,last=169-g-th;return n<2||i===0?first:i===n-1?last:Math.floor((first+last)/2);};
-  L.go=(i,anim=true)=>{const n=L.levels.length,g=G(),th=n>1?126:161;i=Math.max(0,Math.min(n-1,i));const moved=i!==L.cur;L.cur=i;
+  // from the bottom, a middle one centred between them (23.5 in Figma, floored to a whole pixel)
+  L.top=(i,n)=>{const g=G(),th=n>1?122:161,first=g,last=169-g-th;return n<2||i===0?first:i===n-1?last:Math.floor((first+last)/2);};
+  L.go=(i,anim=true)=>{const n=L.levels.length,g=G(),th=n>1?122:161;i=Math.max(0,Math.min(n-1,i));const moved=i!==L.cur;L.cur=i;
     const y=L.top(i,n);
     if(!anim)track.style.transition="none";track.style.translate=`0 ${y-i*(th+g)}px`;if(!anim){void track.offsetWidth;track.style.transition="";}
     pv.classList.toggle("on",i>0);pv.style.top="0px";pv.style.height=`${y}px`;
@@ -523,7 +535,7 @@ function buildDevice(id){const host=document.getElementById(id);host.className="
   if(K("master_air")&&K("master_loud"))mt.prepend(pad("master_air","master_loud"));
   else{const p=el(`<div class="pad"><i class="cx"></i><i class="cy"></i><span class="pk" style="left:50%;top:50%"></span></div>`);mt.prepend(p);
     Desk.info(p,()=>["Master","Warm ↔ airy, quiet ↔ loud. Appears with the modules after ANALYZE."]);}
-  const {rel,byp}=keysFor(),c=el(`<div class="k1"></div>`);[[rel,"mine"],[byp,"bp"]].forEach(([k,l])=>{k.append(el(`<span class="kl">${l}</span>`));c.append(k);});
+  const {rel,byp}=keysFor(),c=el(`<div class="k1"></div>`);[[rel,"mine"],[byp,"bp"]].forEach(([k,l])=>{k.prepend(el(`<span class="kl">${l}</span>`));c.append(k);});
   b.append(lv,mt,loudBlock(),c);
   // the ANALYZE work layer covers everything right of the left column (Figma start / progress)
   FLOW.layer=Flow.layer();b.append(FLOW.layer.el);FLOW.layer.el.hidden=FLOW.state==="ready"||FLOW.state==="reveal";flowKey();
@@ -560,8 +572,9 @@ function loadDesk(){return Promise.all([fetch("/knobs").then(r=>r.json()),fetch(
 // the key: ANALYZE (empty) · CANCEL (working) · RETRY (stopped on a step that can go on)
 function flowKey(){const F=FLOW.layer,k=F.key;
   if(FLOW.state==="analysing"){k.onclick=null;return;}   // the progress panel shows; the x key in the left column cancels
-  if(FLOW.state==="error"&&FLOW.err&&FLOW.err.retry){F.setKey("retry","retry \u00b7 from "+FLOW.err.step);k.onclick=()=>run(FLOW.err.step);
-    Desk.info(k,()=>["Retry",`Continues from ${FLOW.err.step.toUpperCase()}; the steps before it are kept.`+(FLOW.analyzed?" Esc returns to your desk.":"")]);}
+  // the bridge restarts from its own step (e.g. MASTER); the device names the visible step it belongs to (BUILD)
+  if(FLOW.state==="error"&&FLOW.err&&FLOW.err.retry){const g=Flow.groupOf(FLOW.err.step).verb;F.setKey("retry","retry \u00b7 from "+g);k.onclick=()=>run(FLOW.err.step);
+    Desk.info(k,()=>["Retry",`Continues from ${g.toUpperCase()}; the steps before it are kept.`+(FLOW.analyzed?" Esc returns to your desk.":"")]);}
   else{F.setKey("analyze",FLOW.msg||"");k.onclick=()=>run();
     Desk.info(k,()=>FLOW.state==="error"?[FLOW.err.title,FLOW.err.text]:INFO_EMPTY());}
   Desk.infoRefresh(k);}
@@ -594,7 +607,8 @@ function done(fs){
   if(fs.undo)FLOW.undo=fs.undo;
   if(fs.state==="done"){FLOW.analyzed=true;const hold=fs.summary&&fs.summary.applied?APPLIED_HOLD:0;
     if(hold)Desk.infoState("Analyze · done",`${fs.summary.changes} changes applied to the set. Every knob lands on MINE; Undo in Live (Cmd/Ctrl+Z) takes them back.`);
-    Promise.all([retrying(loadDesk),new Promise(r=>setTimeout(r,hold))]).then(reveal);return;}
+    // the reveal waits for the last mark to show (marks fill ≥ 260 ms apart), then holds the finished panel
+    Promise.all([retrying(loadDesk),FLOW.layer.settled().then(()=>new Promise(r=>setTimeout(r,hold)))]).then(reveal);return;}
   // the bridge restarted during the run (it forgets a run it did not finish): say so; a BUILD it had started is in
   // its journal: Live's own Undo takes it back
   if(fs.state==="idle"){const back=FLOW.undo.available;FLOW.msg="analysis interrupted";
@@ -609,7 +623,7 @@ function done(fs){
   const e=fs.error||{code:"error",step:"read",title:"Analysis stopped",text:""};say("analyze stopped: "+e.code);
   if(e.code==="notracks"){FLOW.msg="no tracks with clips yet";FLOW.err=null;setFlow("empty");Desk.infoState(e.title,e.text);return;}
   FLOW.err={...e,retry:["live","error"].includes(e.code)};
-  if(!FLOW.err.retry)FLOW.msg="stopped at "+(e.step||"read");   // never the plain LET'S START after a run: say it stopped
+  if(!FLOW.err.retry)FLOW.msg="stopped at "+Flow.groupOf(e.step||"read").verb;   // never the plain LET'S START after a run: say it stopped
   setFlow("error");Desk.infoState(e.title,e.text+(FLOW.analyzed?"\nEsc returns to your desk.":""));}
 // Esc only leaves an error for the desk. A running analysis stops on the cancel key alone: no key press, hover, scroll,
 // resize or reload of the page stops it (the founder, 2026-10-04: "analysis stops at any rustle").
