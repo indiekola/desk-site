@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Desk · demo</title>
-<link rel="stylesheet" href="design.css?v=7f2852ee2b19">
+<link rel="stylesheet" href="design.css?v=ef37f9994673">
 <style>
 /* Desk device page — the strip is the real height of a Max for Live device in Live (169 px) */
 /* sizes, radii, type and motion tokens: design.css (from Figma, product/figma/SPEC.md) */
@@ -241,12 +241,12 @@ if(/[?&]embed\b/.test(location.search))document.documentElement.classList.add("e
   <section class="v"><h2>Desk · device</h2><p>Modules in their colours with two meaning knobs each — drag a module by its name strip to reorder, tap the strip to bypass it (white = bypassed). A half or black dot next to a knob = its plugin is only partly or not supported (hover for details). The master is the square XY pad; loudness on the right; MINE · BYPASS · FULL keys: hold = hear it while held, click = switch on, click again = off. Pushing a knob past its end leans the module into the bottom corner on that side. Six modules per level: more wait on the levels above and below, whose edges peek at the top and bottom of the device — ↑ ↓ on the left, Page Up / Page Down or a click on a peeking strip switch levels, drag a module up or down to move it to another level.</p>
     <div class="scroll"><div class="dev" id="M2"></div></div></section>
 </main>
-<script src="demo.js?v=7f2852ee2b19"></script>
-<script src="design.js?v=7f2852ee2b19"></script>
-<script src="glyphs.js?v=7f2852ee2b19"></script>
-<script src="controls.js?v=7f2852ee2b19"></script>
+<script src="demo.js?v=ef37f9994673"></script>
+<script src="design.js?v=ef37f9994673"></script>
+<script src="glyphs.js?v=ef37f9994673"></script>
+<script src="controls.js?v=ef37f9994673"></script>
 <script>DeskDemo.attach();</script>
-<script src="flow.js?v=7f2852ee2b19"></script>
+<script src="flow.js?v=ef37f9994673"></script>
 <script>
 let LOOK={}; // module colours for this project: colorsFor() in design.js
 const st={knobs:{},list:[],strips:[],subs:{}};
@@ -256,8 +256,14 @@ const pending={};
 // bridge offline (stopped, restarting): a knob move that did not reach it is kept — one entry per knob, its latest
 // position — and sent once when /health answers again; nothing is lost and nothing is sent twice
 const UNSENT=new Set();
-function send(id){if(pending[id])return;pending[id]=1;setTimeout(()=>{pending[id]=0;
-  post("/knob",{id,x:st.knobs[id]}).then(()=>UNSENT.delete(id),()=>{UNSENT.add(id);offline();});},40);}
+// knob moves go out at most every 40 ms per knob (the latest position); flush() sends one now
+function send(id){if(pending[id])return;pending[id]=setTimeout(()=>flush(id),40);}
+function flush(id,end){clearTimeout(pending[id]);pending[id]=0;const b={id,x:st.knobs[id]};if(end)b.end=true;
+  post("/knob",b).then(()=>UNSENT.delete(id),()=>{UNSENT.add(id);offline();});}
+// the end of a gesture (pointer release, a key step or glide landing, the wheel at rest): what is still waiting goes
+// now and the last request says end: true, so Desk Core closes the gesture's undo step at once (30 ms) instead of
+// waiting 400 ms for silence (device/desk/README.md "Writes under G′"). The pad's two knobs = one gesture, one end.
+function endK(ids){ids.forEach((id,i)=>flush(id,i===ids.length-1));}
 function offline(){say("bridge offline");if(offline.t)return;
   const ping=()=>fetch("/health").then(r=>{if(!r.ok)throw new Error(r.status);offline.t=0;const ids=[...UNSENT];UNSENT.clear();ids.forEach(send);say("bridge back");})
     .catch(()=>{offline.t=setTimeout(ping,1000);});
@@ -266,7 +272,20 @@ function offline(){say("bridge offline");if(offline.t)return;
 const retrying=fn=>fn().catch(()=>{offline();return new Promise(r=>setTimeout(r,1000)).then(()=>retrying(fn));});
 // every view of the same knob redraws together
 function sub(id,fn){(st.subs[id]=st.subs[id]||[]).push(fn);fn();}
-function setK(id,x){st.knobs[id]=Math.max(0,Math.min(1,x));(st.subs[id]||[]).forEach(f=>f());send(id);}
+function setK(id,x){st.knobs[id]=Math.max(0,Math.min(1,x));TOUCHED[id]=performance.now();(st.subs[id]||[]).forEach(f=>f());send(id);}
+// ── state pushed by Desk Core (device mode: tools/knobs/bridge.js) after a change Desk did not write — Cmd+Z, redo,
+// automation, the user in Live. The page adopts it and redraws, and never POSTs in response (echo rule): adopt()
+// writes the page state only. A control the user holds (drag, wheel, key glide) is left alone; the latest pushed value
+// waits in DEFER and lands on release — unless the user moved that knob after the push (then theirs is the newer write).
+const HELD=new Set(),TOUCHED={},DEFER={};
+function adopt(id,x){if(typeof x!=="number"||!isFinite(x)||!(id in st.knobs))return;
+  if(pending[id]){clearTimeout(pending[id]);pending[id]=0;}UNSENT.delete(id);
+  st.knobs[id]=Math.max(0,Math.min(1,x));(st.subs[id]||[]).forEach(f=>f());}
+function holdK(ids){ids.forEach(id=>HELD.add(id));}
+function releaseK(ids,changed){ids.forEach(id=>HELD.delete(id));
+  const theirs=ids.filter(id=>DEFER[id]&&DEFER[id].t>(TOUCHED[id]||0));
+  ids.forEach(id=>{if(theirs.includes(id))adopt(id,DEFER[id].x);delete DEFER[id];});
+  const mine=ids.filter(id=>!theirs.includes(id));if(changed&&mine.length)endK(mine);}
 const K=id=>st.list.find(k=>k.id===id);
 const word=(k,x)=>x<.2?"very "+k.l:x<.42?"a bit "+k.l:x<=.58?"center":x<.8?"a bit "+k.r:"very "+k.r;
 const lufs=lufsEst; // shared estimate (design.js)
@@ -279,7 +298,8 @@ function knob(id){const k=K(id);
   const gh=d.querySelector(".ghost");
   sub(id,()=>{const x=vx(id);gh.style.rotate=(-135+st.knobs[id]*270)+"deg";if(!d.classList.contains("rubbing"))Desk.angle(d,-135+x*270);d.setAttribute("aria-valuenow",Math.round(x*100));d.setAttribute("aria-valuetext",word(k,x));});
   Desk.knob({el:w,dial:d,get:()=>st.knobs[id],set:x=>{setK(id,x);showWord(w.closest(".t")?.querySelector(".nm .tx"),k.strip,pole(k,x));},
-    host:()=>w.closest(".t"),locked:()=>VIEW.mine||FLOW.state!=="ready",badge:false});  // the mini view shows the pole word, not a number
+    host:()=>w.closest(".t"),locked:()=>VIEW.mine||FLOW.state!=="ready",badge:false,  // the mini view shows the pole word, not a number
+    onHold:()=>holdK([id]),onRelease:m=>releaseK([id],m)});
   Desk.info(w,()=>[`${k.strip} · ${k.l} ↔ ${k.r}`,VIEW.mine?"MINE is on: every knob rests on the reference built for this track. Switch MINE off to change it."
     :`Now ${Desk.rel(st.knobs[id])} (${word(k,st.knobs[id])}): −10 is ${k.l}, +10 is ${k.r}, 0 is MINE. Drag to turn · Shift-drag for fine steps · Shift + digits for an exact value (−10 … +10, Shift 0 = MINE) · double-click returns to MINE.`+((u=>u?"\n\n"+u:"")(unitsFor(id,st.knobs[id],()=>Desk.infoRefresh(w))))]);
   return w;}
@@ -287,7 +307,8 @@ function knob(id){const k=K(id);
 function pad(ax,ay){const p=el(`<div class="pad ring" role="slider" tabindex="0" aria-label="master: warm to airy, quiet to loud"><i class="cx"></i><i class="cy"></i><span class="ax w">warm</span><span class="ax a">airy</span><span class="ax l">loud</span><span class="ax q">quiet</span><span class="pg"></span><span class="pk"></span></div>`);
   const xy=Desk.xyPad({pad:p,puck:p.querySelector(".pk"),inset:13,get:()=>[vx(ax),vx(ay)],
     set:(x,y)=>{setK(ax,x);setK(ay,y);},
-    host:()=>p.closest(".mt"),locked:()=>VIEW.mine||FLOW.state!=="ready"});
+    host:()=>p.closest(".mt"),locked:()=>VIEW.mine||FLOW.state!=="ready",
+    onHold:()=>holdK([ax,ay]),onRelease:m=>releaseK([ax,ay],m)});
   const pg=p.querySelector(".pg"),ghost=()=>{pg.style.left=`calc(13px + (100% - 26px) * ${st.knobs[ax].toFixed(4)})`;pg.style.top=`calc(13px + (100% - 26px) * ${(1-st.knobs[ay]).toFixed(4)})`;};
   sub(ax,xy.draw);sub(ay,xy.draw);sub(ax,ghost);sub(ay,ghost);
   Desk.info(p,()=>["Master · warm ↔ airy · quiet ↔ loud",VIEW.mine?"MINE is on: the master rests on the reference built for this track."
@@ -313,11 +334,14 @@ function glide(){document.body.classList.add("glide");clearTimeout(glide.t);glid
 let keyQ=Promise.resolve();
 // MINE / BYPASS / module commands run in order; one that fails (bridge offline) must not stop the ones after it
 const queueKey=fn=>(keyQ=keyQ.then(fn).catch(()=>offline()));
-function setMine(on){if(VIEW.mine===on||(on&&FLOW.state!=="ready"))return;VIEW.mine=on;document.body.classList.toggle("mine",on);
-  document.querySelectorAll(".ky.k-mine").forEach(b=>b.setAttribute("aria-pressed",on));glide();redrawAll();
+// the keys' look alone (no request): setMine / setBypassAll use it, and so does a state push that ended MINE or BYPASS
+function mineView(on){VIEW.mine=on;document.body.classList.toggle("mine",on);
+  document.querySelectorAll(".ky.k-mine").forEach(b=>b.setAttribute("aria-pressed",on));glide();redrawAll();}
+function bypView(on){VIEW.byp=on;document.body.classList.toggle("alloff",on);document.querySelectorAll(".ky.k-byp").forEach(b=>b.setAttribute("aria-pressed",on));}
+function setMine(on){if(VIEW.mine===on||(on&&FLOW.state!=="ready"))return;mineView(on);
   if(on){say("mine · the reference mix · knobs locked");queueKey(()=>post("/reset",{}));}
-  else{say("your mix");queueKey(()=>Promise.all(st.list.map(k=>post("/knob",{id:k.id,x:st.knobs[k.id]}))));}}
-function setBypassAll(on){if(VIEW.byp===on||(on&&FLOW.state!=="ready"))return;VIEW.byp=on;document.body.classList.toggle("alloff",on);document.querySelectorAll(".ky.k-byp").forEach(b=>b.setAttribute("aria-pressed",on));
+  else{say("your mix");queueKey(()=>Promise.all(st.list.map((k,i,a)=>post("/knob",i===a.length-1?{id:k.id,x:st.knobs[k.id],end:true}:{id:k.id,x:st.knobs[k.id]}))));}}
+function setBypassAll(on){if(VIEW.byp===on||(on&&FLOW.state!=="ready"))return;bypView(on);
   if(on){say("original tracks");queueKey(async()=>{for(const s of st.strips)await post("/strip_off",{strip:s});});}
   else{say("processed");queueKey(async()=>{for(const s of st.strips)if(!MOD_OFF.has(s))await post("/strip_on",{strip:s});});}}
 function keysFor(){const rel=el(`<button class="ky ring k-mine" type="button" aria-pressed="${VIEW.mine}">${ICON.mineKey}</button>`),
@@ -397,7 +421,7 @@ function reorderable(L,onDone){const lv=L.lv;
       if(Math.hypot(px-sx,py-sy)>4){live=true;x=pre;vx=0;document.body.classList.add("dragx");document.querySelectorAll(".tip").forEach(x=>x.remove());raf=requestAnimationFrame(tick);}
       else t.style.translate=`${pre.toFixed(2)}px 0`;};
     const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up);cancelAnimationFrame(raf);
-      if(!live){t.classList.remove("lift");cr.end();const f=t.style.translate;t.style.translate="";if(f&&f!=="0px 0px")t.animate([{translate:f},{translate:"0 0"}],{duration:RMQ?0:MOTION.fast,easing:MOTION.out});return;}
+      if(!live){t.classList.remove("lift");cr.end();if(DEFER_ORDER)adoptOrder(DEFER_ORDER);const f=t.style.translate;t.style.translate="";if(f&&f!=="0px 0px")t.animate([{translate:f},{translate:"0 0"}],{duration:RMQ?0:MOTION.fast,easing:MOTION.out});return;}
       const from=t.style.translate,fr=t.style.rotate;t.style.translate="";t.style.rotate="";t.classList.remove("lift");document.body.classList.remove("dragx");
       h.dataset.dragged="1";setTimeout(()=>delete h.dataset.dragged,0);
       t.animate([{translate:from||"0 0",rotate:fr||"0deg"},{translate:"0 0",rotate:"0deg"}],{duration:RMQ?0:MOTION.base,easing:MOTION.out});cr.end();
@@ -468,6 +492,33 @@ function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="c
 // support is per knob (each knob moves its own devices); demo: the bridge reports levels from Live
 // module bypass state lives in one place so BYPASS (all) can restore exactly the modules that weren't off on their own
 const MOD_OFF=new Set();
+// the tiles show MOD_OFF (after a load, a rebuild or a state push)
+function drawOff(){document.querySelectorAll("#M2 .t[data-s]").forEach(t=>{const off=MOD_OFF.has(t.dataset.s);t.classList.toggle("off",off);
+  t.querySelector(".nm")?.setAttribute("aria-pressed",off);});}
+// Desk Core in this page (the Desk device: tools/knobs/bridge.js answers fetch). The module order then lives in the set
+// (POST /order, read back from /library and the state push); the bridge build (server.py) keeps it per browser.
+const CORE=!!window.deskBridge;
+let DEFER_ORDER=null;   // an order pushed while a module is carried: applied when it is put down, unless the drop sets one
+function adoptOrder(order){const cur=mods(),known=order.filter(s=>cur.includes(s)),next=[...known,...cur.filter(s=>!known.includes(s))];
+  if(document.body.classList.contains("dragx")){DEFER_ORDER=order;return;}DEFER_ORDER=null;
+  st.strips=[...next,...st.strips.filter(s=>!next.includes(s))];
+  if(!L.read||next.join("\n")===L.read().flat().join("\n"))return;
+  const levels=Desk.levelsFrom(next,null,CAP);L.layout(levels);L.go(L.cur,false);try{localStorage.setItem("nc.levels",JSON.stringify(levels));}catch(e){}}
+function adoptBypassed(list){const off=new Set(list.filter(s=>mods().includes(s)));
+  // BYPASS (all) stays on while every module is still off; anything less means it no longer holds
+  if(VIEW.byp){if(off.size===mods().length)return;bypView(false);}
+  MOD_OFF.clear();off.forEach(s=>MOD_OFF.add(s));drawOff();}
+// {op: "state", b: {knobs, bypassed}, order} (desk_core.js pushState; {knobs, bypassed, order} accepted too)
+function onState(o){const s=(o&&o.b)||o;if(!s||typeof s!=="object")return;const now=performance.now();
+  if(s.knobs&&typeof s.knobs==="object"){let take=true;
+    // MINE on: the page keeps your mix to come back to; every knob on its centre is MINE itself, anything else
+    // (MINE undone in Live) means MINE no longer plays: the key goes off, nothing is sent
+    if(VIEW.mine){if(Object.values(s.knobs).every(x=>Math.abs(x-.5)<.005))take=false;else mineView(false);}
+    if(take)for(const id in s.knobs){if(HELD.has(id))DEFER[id]={x:s.knobs[id],t:now};else adopt(id,s.knobs[id]);}}
+  if(Array.isArray(s.bypassed))adoptBypassed(s.bypassed);
+  const order=o.order||s.order;if(Array.isArray(order))adoptOrder(order);
+  say("synced with Live");}
+if(CORE)window.deskBridge.on("state",onState);
 let LIVECOL=null;  // the bridge's /colors (Live track colours per module), when it answers
 // the progress fill takes the same colour as the module's tile: the set's track colour in the Live look
 Flow.colorOf=s=>{const lc=colorsMode()==="live"&&LIVECOL?.modules?.[s];return lc&&lc.color?deskTone(lc.color):null;};
@@ -479,6 +530,8 @@ addEventListener("keydown",e=>{if((e.key!=="PageUp"&&e.key!=="PageDown")||e.meta
 function buildDevice(id){const host=document.getElementById(id);host.className="dev sc m mv v2";host.style.width=host.style.minWidth="";
   const b=frame(id),side=host.querySelector(".side"),title=side.querySelector(".logo-d"),lvk=side.querySelector(".lvk"),[up,dn]=lvk.children,T={};
   let saved=null;try{saved=JSON.parse(localStorage.getItem("nc.levels")||localStorage.getItem("nc.board")||"null");}catch(e){}
+  // in the device the set's order (/library) wins: the browser's layout only keeps how it splits into levels
+  if(CORE&&Desk.levelsFrom(mods(),saved,CAP).flat().join("\n")!==mods().join("\n"))saved=null;
   const list=Desk.levelsFrom(mods(),saved,CAP).flat();
   LOOK=colorsFor(["master",...list]);
   Desk.info(title,()=>["Desk by Volume Attack",FLOW.analyzed?"Meaning knobs built for this set: each module is a group of tracks, each knob a sound you can steer. The centre of every knob is MINE.":"Not analyzed yet: click LET’S START."]);
@@ -486,10 +539,10 @@ function buildDevice(id){const host=document.getElementById(id);host.className="
   Desk.info(lvk,()=>{const n=L.levels.length;return ["Levels",n<2?`All ${list.length} modules fit on one level. With more than ${CAP}, the others wait on levels below this one.`
     :`Level ${L.cur+1} of ${n}.${L.cur===0?" This is the first level.":L.cur===n-1?" This is the last level.":""} ↑ ↓, Page Up / Page Down or a click on the strip peeking at the top or bottom switch levels · drag a module by its name up or down to move it to another level.`];});
   list.forEach(s=>{const ks=st.list.filter(k=>k.strip===s),lc=colorsMode()==="live"&&LIVECOL?.modules?.[s],col=(lc&&lc.color&&deskTone(lc.color))||LOOK[s],
-      t=el(`<div class="t" data-s="${s}" style="background:${col}"><div class="in"></div></div>`),inn=t.querySelector(".in");
+      t=el(`<div class="t${MOD_OFF.has(s)?" off":""}" data-s="${s}" style="background:${col}"><div class="in"></div></div>`),inn=t.querySelector(".in");
 
     // the name strip: drag to move, tap to bypass (grip and bypass marks show on hover)
-    const nm=el(`<div class="nm" role="button" tabindex="0" aria-pressed="false"><i class="gr" aria-hidden="true">${ICON.drag}</i><span class="tx">${s}</span><i class="bi" aria-hidden="true">${ICON["bypass-sml"]}</i></div>`);
+    const nm=el(`<div class="nm" role="button" tabindex="0" aria-pressed="${MOD_OFF.has(s)}"><i class="gr" aria-hidden="true">${ICON.drag}</i><span class="tx">${s}</span><i class="bi" aria-hidden="true">${ICON["bypass-sml"]}</i></div>`);
     inn.append(nm);
     Desk.info(nm,()=>[`${s} module`,VIEW.byp?"Everything is bypassed: switch BYPASS off to change single modules."
       :MOD_OFF.has(s)?"Bypassed: you hear these tracks without Desk. Tap or ⊘ to bring the processing back · drag to reorder."
@@ -530,7 +583,10 @@ function buildDevice(id){const host=document.getElementById(id);host.className="
     Desk.infoRefresh(lvk);if(moved&&anim)say(`level ${i+1} of ${n}`);try{localStorage.setItem("nc.level",i);}catch(e){}};
   up.onclick=()=>L.go(L.cur-1);dn.onclick=()=>L.go(L.cur+1);
   L.layout(Desk.levelsFrom(mods(),saved,CAP));
-  reorderable(L,levels=>{try{localStorage.setItem("nc.levels",JSON.stringify(levels));}catch(e){}say("order saved");});
+  reorderable(L,levels=>{try{localStorage.setItem("nc.levels",JSON.stringify(levels));}catch(e){}DEFER_ORDER=null;
+    if(!CORE){say("order saved");return;}
+    const flat=levels.flat();st.strips=[...flat,...st.strips.filter(s=>!flat.includes(s))];
+    queueKey(()=>post("/order",{strips:flat}).then(r=>say(r.ok?"order saved":"order not saved")));});
   const mt=el(`<div class="mt"></div>`);
   if(K("master_air")&&K("master_loud"))mt.prepend(pad("master_air","master_loud"));
   else{const p=el(`<div class="pad"><i class="cx"></i><i class="cy"></i><span class="pk" style="left:50%;top:50%"></span></div>`);mt.prepend(p);
@@ -568,7 +624,9 @@ const INFO_EMPTY=()=>["Desk · not analyzed yet","ANALYZE reads this set, groups
    "\nThis bridge only plans BUILD: nothing is written to the set. CANCEL stops at any point.")];
 function loadDesk(){return Promise.all([fetch("/knobs").then(r=>r.json()),fetch("/library").then(r=>r.json()),fetch("/state").then(r=>r.json()),
   fetch("/colors").then(r=>r.ok?r.json():null).catch(()=>null)]).then(([knobs,lib,state,cols])=>{LIVECOL=cols;
-  st.list=knobs;st.subs={};knobs.forEach(k=>st.knobs[k.id]=state.knobs[k.id]??.5);st.strips=lib.modules.map(m=>m.strip);MOD_OFF.clear();});}
+  st.list=knobs;st.subs={};knobs.forEach(k=>st.knobs[k.id]=state.knobs[k.id]??.5);st.strips=lib.modules.map(m=>m.strip);
+  // modules bypassed in the set (server.py BYPASSED, Desk Core: their Desk devices are off) show bypassed from the start
+  MOD_OFF.clear();(state.bypassed||[]).forEach(s=>{if(mods().includes(s))MOD_OFF.add(s);});});}
 // the key: ANALYZE (empty) · CANCEL (working) · RETRY (stopped on a step that can go on)
 function flowKey(){const F=FLOW.layer,k=F.key;
   if(FLOW.state==="analysing"){k.onclick=null;return;}   // the progress panel shows; the x key in the left column cancels
