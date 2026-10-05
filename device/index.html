@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Desk · demo</title>
-<link rel="stylesheet" href="design.css?v=c82250ef3753">
+<link rel="stylesheet" href="design.css?v=ce05195705a0">
 <style>
 /* Desk device page — the strip is the real height of a Max for Live device in Live (169 px) */
 /* sizes, radii, type and motion tokens: design.css (from Figma, product/figma/SPEC.md) */
@@ -240,6 +240,36 @@ body.revealing .kn .d .arm{transition:rotate var(--m-slow) var(--e-io)}
 .k1 .ky[aria-pressed="true"] .pend{background:var(--key-on-fg)}
 .k1 .ky.pending .pend{opacity:1;scale:1}
 @media (prefers-reduced-motion:reduce){.k1 .ky .pend{transition:none}}
+/* GENRE row + picker (the loudness target's genre: Desk Core's loudness block genre / genre_from / genre_guess, POST
+   /genre). Not in Figma 15-2254 yet (2026-10-05): default = one more 12 px row of the loudness block (key ← → value,
+   above the status line, so LOUDNESS, VS MINE / PEAK and SPOTIFY keep their places) and, on click, a panel of six keys
+   over the loudness block in the left column's key style (--key, radius 4; hover = --key-hov like the level arrows;
+   the picked one carries the MINE-dot mark, 5 px). A guess the set is not sure of ends in "?". */
+.ld .gn{appearance:none;border:0;background:none;color:inherit;font:inherit;font-size:var(--cap);line-height:12px;padding:0;margin:0;width:100%;text-align:left;cursor:pointer;outline:none;--ring-r:var(--r-mod)}
+.ld .gn::before{content:"";position:absolute;inset:-2px -4px;border-radius:var(--r-mod);corner-shape:var(--cs);background:var(--key-hov);opacity:0;transition:opacity var(--m-fast) var(--e-out)}
+.ld .gn>span{position:relative;transition:color var(--m-fast) var(--e-out)}
+.ld .gn .v{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ld .gn:is(:hover,:focus-visible,[aria-expanded="true"])::before{opacity:1}.ld .gn:is(:hover,:focus-visible,[aria-expanded="true"])>span{color:var(--key-hov-fg)}
+.ld .gn[hidden]{display:none}
+body:not(.ready) .ld .gn{pointer-events:none}
+.ld .gp{position:absolute;inset:0;z-index:5;display:grid;grid-template-rows:repeat(6,22px);gap:4px;padding:4px;background:var(--key);color:var(--key-fg);
+  border-radius:var(--r-mod);corner-shape:var(--cs);opacity:0;pointer-events:none;transition:opacity var(--m-fast) var(--e-out)}
+.ld .gp.on{opacity:1;pointer-events:auto}
+.ld .gp button{appearance:none;border:0;padding:0 8px;margin:0;background:none;color:inherit;font:inherit;font-size:var(--cap);line-height:12px;display:flex;align-items:center;
+  justify-content:space-between;gap:4px;border-radius:var(--r-mod);corner-shape:var(--cs);cursor:pointer;outline:none;white-space:nowrap;
+  transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out)}
+.ld .gp button:is(:hover,:focus-visible){background:var(--key-hov);color:var(--key-hov-fg)}
+.ld .gp button i{width:5px;height:5px;border-radius:50%;background:currentColor;flex:none;opacity:0}
+.ld .gp button[aria-checked="true"] i{opacity:1}
+@media (prefers-reduced-motion:reduce){.ld .gp,.ld .gn::before{transition:none}}
+/* a knob its meaning dial drives (Desk Core held: automation, MIDI or the dial in Live), like Live's automated look:
+   a 5 px LED at the knob's top left (the support dot keeps the top right), in --auto (design.css). Not in Figma yet
+   (2026-10-05). The knob follows the pushes; a drag takes it over (the core releases the dial, the LED goes out). */
+.mv .kw .au{position:absolute;left:-3px;top:-3px;width:5px;height:5px;border-radius:50%;background:var(--auto);box-shadow:0 0 0 1px var(--auto-edge);
+  opacity:0;scale:.4;pointer-events:none;transition:opacity var(--m) var(--e-out),scale var(--m) var(--e-out)}
+.mv .kw.held .au{opacity:1;scale:1}
+.t.off .kw .au,body.alloff .kw .au{background:var(--ghost)}
+@media (prefers-reduced-motion:reduce){.mv .kw .au{transition:none}}
 </style>
 </head>
 <body>
@@ -250,12 +280,12 @@ if(/[?&]embed\b/.test(location.search))document.documentElement.classList.add("e
   <section class="v"><h2>Desk · device</h2><p>Modules in their colours with two meaning knobs each — drag a module by its name strip to reorder, tap the strip to bypass it (white = bypassed). A half or black dot next to a knob = its plugin is only partly or not supported (hover for details). The master is the square XY pad; loudness on the right; MINE · BYPASS · FULL keys: hold = hear it while held, click = switch on, click again = off. Pushing a knob past its end leans the module into the bottom corner on that side. Six modules per level: more wait on the levels above and below, whose edges peek at the top and bottom of the device — ↑ ↓ on the left, Page Up / Page Down or a click on a peeking strip switch levels, drag a module up or down to move it to another level.</p>
     <div class="scroll"><div class="dev" id="M2"></div></div></section>
 </main>
-<script src="demo.js?v=c82250ef3753"></script>
-<script src="design.js?v=c82250ef3753"></script>
-<script src="glyphs.js?v=c82250ef3753"></script>
-<script src="controls.js?v=c82250ef3753"></script>
+<script src="demo.js?v=ce05195705a0"></script>
+<script src="design.js?v=ce05195705a0"></script>
+<script src="glyphs.js?v=ce05195705a0"></script>
+<script src="controls.js?v=ce05195705a0"></script>
 <script>DeskDemo.attach();</script>
-<script src="flow.js?v=c82250ef3753"></script>
+<script src="flow.js?v=ce05195705a0"></script>
 <script>
 let LOOK={}; // module colours for this project: colorsFor() in design.js
 const st={knobs:{},list:[],strips:[],subs:{}};
@@ -304,7 +334,7 @@ const HELD=new Set(),TOUCHED={},DEFER={};
 function adopt(id,x){if(typeof x!=="number"||!isFinite(x)||!(id in st.knobs))return;
   DIRTY.delete(id);UNSENT.delete(id);
   st.knobs[id]=Math.max(0,Math.min(1,x));(st.subs[id]||[]).forEach(f=>f());}
-function holdK(ids){ids.forEach(id=>HELD.add(id));}
+function holdK(ids){ids.forEach(id=>HELD.add(id));if(ids.some(id=>DIAL_HELD.has(id))){ids.forEach(id=>DIAL_HELD.delete(id));drawHeld();}}
 function releaseK(ids,changed){ids.forEach(id=>HELD.delete(id));
   const theirs=ids.filter(id=>DEFER[id]&&DEFER[id].t>(TOUCHED[id]||0));
   ids.forEach(id=>{if(theirs.includes(id))adopt(id,DEFER[id].x);delete DEFER[id];});
@@ -323,9 +353,23 @@ function knob(id){const k=K(id);
   Desk.knob({el:w,dial:d,get:()=>st.knobs[id],set:x=>{setK(id,x);showWord(w.closest(".t")?.querySelector(".nm .tx"),k.strip,pole(k,x));},
     host:()=>w.closest(".t"),locked:()=>VIEW.mine||FLOW.state!=="ready",badge:false,  // the mini view shows the pole word, not a number
     onHold:()=>holdK([id]),onRelease:m=>releaseK([id],m)});
-  Desk.info(w,()=>[`${k.strip} · ${k.l} ↔ ${k.r}`,VIEW.mine?"MINE is on: every knob rests on the reference built for this track. Switch MINE off to change it."
-    :`Now ${Desk.rel(st.knobs[id])} (${word(k,st.knobs[id])}): −10 is ${k.l}, +10 is ${k.r}, 0 is MINE. Drag to turn · Shift-drag for fine steps · Shift + digits for an exact value (−10 … +10, Shift 0 = MINE) · double-click returns to MINE.`+((u=>u?"\n\n"+u:"")(unitsFor(id,st.knobs[id],()=>Desk.infoRefresh(w))))]);
+  Desk.info(w,()=>[`${k.strip} · ${k.l} ↔ ${k.r}`+(heldNow(id)?" · automated":""),(heldNow(id)?dialHeldLine(k)+"\n":"")+(VIEW.mine?"MINE is on: every knob rests on the reference built for this track. Switch MINE off to change it."
+    :`Now ${Desk.rel(st.knobs[id])} (${word(k,st.knobs[id])}): −10 is ${k.l}, +10 is ${k.r}, 0 is MINE. Drag to turn · Shift-drag for fine steps · Shift + digits for an exact value (−10 … +10, Shift 0 = MINE) · double-click returns to MINE.`+((u=>u?"\n\n"+u:"")(unitsFor(id,st.knobs[id],()=>Desk.infoRefresh(w)))))+dialLine(k)]);
   return w;}
+// Meaning dials (Desk Core step 5, device/desk/README.md "Meaning dials"): /knobs gives each knob its dial slot (dial: 1…24,
+// null = none), /state and the {op: "state"} push list the knobs their dial drives now (held: automation, MIDI, the dial
+// in Live). Such a knob shows Live's automated look (the LED, .kw.held) and follows the pushes; a drag still works and
+// takes it over (the core releases the dial on Desk's write). Desk never writes the dials.
+const DIAL_HELD=new Set();
+const pad2=n=>(n<10?"0":"")+n;
+// the dial's Short Name in Live, as the core names it (desk_state.js dialName): "drums_tone_tilt" -> "Drums Tone Tilt"
+const dialName=id=>String(id).split(/[_\s]+/).filter(Boolean).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" ");
+const heldNow=id=>DIAL_HELD.has(id)&&!HELD.has(id);
+const dialLine=k=>k&&k.dial?`\n\nAutomate or MIDI-map: Desk Dial ${pad2(k.dial)} (${dialName(k.id)}).`:"";
+const dialHeldLine=k=>`Desk Dial ${pad2(k.dial||0)} drives this knob now (automation or MIDI). Drag it to take it over: the dial takes it back on its next move.`;
+function drawHeld(){document.querySelectorAll("#M2 .kw[data-k]").forEach(w=>{const on=heldNow(w.dataset.k);
+  if(w.classList.contains("held")!==on){w.classList.toggle("held",on);const d=w.querySelector(".kn");if(d)Desk.infoRefresh(d);}});}
+function adoptHeld(list){if(!Array.isArray(list))return;DIAL_HELD.clear();list.forEach(id=>DIAL_HELD.add(String(id)));drawHeld();}
 // master XY pad: x = master_air (warm ↔ airy), y = master_loud (quiet ↔ loud); the puck's edge stays 4 px inside the pad
 // (inset 4 + radius 6). The axis words are the design's own pole words; an axis the design has no knob for (null) has
 // no words and its puck coordinate rests on the centre line.
@@ -477,7 +521,47 @@ function adoptLoud(fs){if(!fs||typeof fs!=="object")return;const l=fs.loudness&&
   if(l)RUN_LUFS=typeof l.measured_lufs==="number"?l.measured_lufs:null;   // the core's block is the truth (a changed master drops it)
   else if(fs.summary&&typeof fs.summary.measured_lufs==="number")RUN_LUFS=fs.summary.measured_lufs;
   if(l)setMinePending(!!l.mine_pending);
+  if(l)adoptGenre(l);
   LOUD_DRAW&&LOUD_DRAW();document.querySelectorAll("#M2 .ld .bot").forEach(r=>Desk.infoRefresh(r));}
+// GENRE: the genre MINE's loudness target follows (handoff/claude-engine-genre-target.md). /state, the {op: "state"} push
+// carry genre (the one the target uses, or null), genre_from (named = picked by the user
+// or named in measured.json · set = the set's own sure guess · null) and genre_guess (the design's guess: {genre,
+// confidence none|low|medium|high, also, tempo, tempo_note, target_short_term_lufs, why, …}) and target (LUFS short-term)
+// come only in /analyze/status .loudness. POST /genre {genre: id|null} -> {ok, genre, genre_from, target, genre_guess,
+// mine_pending, mine_db} picks one of GENRES (any other id is a 400: no target) or clears the pick (the design's own
+// genre again); 501 with no design. It changes only MINE's loudness target (the MINE dot may appear), never the set.
+// GN.has = the bridge carries genre_from at all (server.py does not): only then the GENRE row and its picker show.
+const GENRES=["pop","house","techno","drum & bass","social video"];
+const GENRE_SHORT={"drum & bass":"d&b","social video":"social"};   // the 12 px row fits 16 captions: GENRE + the short name
+const GN={has:false,genre:null,from:null,guess:null,target:null};
+function adoptGenre(o){if(!o||typeof o!=="object"||!("genre_from" in o))return;GN.has=true;
+  const was=GN.genre;GN.genre=typeof o.genre==="string"&&o.genre?o.genre:null;GN.from=GN.genre?(o.genre_from||null):null;
+  if(o.genre_guess&&typeof o.genre_guess==="object")GN.guess=o.genre_guess;
+  if("target" in o)GN.target=typeof o.target==="number"?o.target:null;else if(was!==GN.genre)GN.target=null;   // /state has no target: kept while the genre is the same
+  GENRE_DRAW&&GENRE_DRAW();}
+let GENRE_DRAW=null;
+// what the row says: {name, sure} — the genre in use (sure), else the set's guess (high = sure, low / medium = "?"),
+// else null (nothing points to a genre)
+function genreShown(){if(GN.genre)return {name:GN.genre,sure:true};const g=GN.guess;
+  if(g&&g.genre&&g.confidence==="high")return {name:g.genre,sure:true};
+  if(g&&g.genre&&(g.confidence==="low"||g.confidence==="medium"))return {name:g.genre,sure:false};return null;}
+const genreTarget=()=>GN.target!=null?GN.target:GN.from==="set"&&GN.guess&&typeof GN.guess.target_short_term_lufs==="number"?GN.guess.target_short_term_lufs:null;
+function genreInfo(){const s=genreShown(),g=GN.guess||{},t=genreTarget(),fl=l=>(l<0?"−":"")+Math.abs(l).toFixed(0);
+  const pick="\nClick to pick the genre. It only sets the loudness MINE aims the song's loud sections at: nothing in the set changes until you press MINE.";
+  if(!s)return ["Genre",(g.why?`Nothing in the set points to a genre (${g.why}).`:"No genre: MINE keeps the loudness it was built with.")+pick];
+  const tempo=!s.sure&&typeof g.tempo==="number"?` (${g.tempo} BPM)`:"";
+  const title=`Genre · ${s.name}${s.sure?"":"?"}${tempo}`;
+  const aim=t!=null?` MINE aims the loud sections at ${fl(t)} LUFS short-term.`:"";
+  if(GN.from==="named")return [title,`Picked: ${s.name}.${aim}`+pick];
+  if(GN.from==="set")return [title,`Read from the set: ${g.why||"its track names, tempo and roles"}.${aim}`+pick];
+  if(s.sure)return [title,`Read from the set (${g.why||"its track names, tempo and roles"}), but this genre has no loudness target yet: MINE keeps its loudness.`+pick];
+  return [title,`A guess from the set, ${g.confidence} confidence: ${g.why||""}${g.tempo_note&&g.tempo_note!==g.tempo+" BPM"?` · ${g.tempo_note}`:""}. A guess sets no loudness target.`+pick];}
+function pickGenre(id){const prev={...GN};GN.genre=id;GN.from=id?"named":null;GN.target=null;GENRE_DRAW&&GENRE_DRAW();
+  return post("/genre",{genre:id}).then(r=>r.ok?r.json():Promise.reject(r.status)).then(j=>{
+      // {ok, genre, genre_from, target, genre_guess, mine_pending, mine_db}: none (null) gives the design's own genre back
+      adoptGenre({...j,genre_from:j&&j.genre_from||null});if(j&&typeof j.mine_pending==="boolean")setMinePending(j.mine_pending);
+      say(GN.genre?"genre · "+GN.genre:"genre · none");Flow.status().then(adoptLoud).catch(()=>{});})
+    .catch(()=>{Object.assign(GN,prev);GENRE_DRAW&&GENRE_DRAW();say("genre not changed");});}
 // the dot on MINE: /state and the {op: "state"} push carry mine_pending, /analyze/status .loudness too; MINE (POST /reset)
 // applies it in the core, which then clears it
 function setMinePending(on){MINE_PENDING=!!on;document.querySelectorAll(".ky.k-mine").forEach(b=>{b.classList.toggle("pending",MINE_PENDING);Desk.infoRefresh(b);});}
@@ -501,9 +585,11 @@ const padOff=()=>VIEW.mine||!K("master_loud")?0:lufs(vx("master_loud"))-lufs(.5)
 // empty line, so the block never changes height. SPOTIFY: how much Spotify turns the song down (see spotify() below).
 const SPOTIFY_MIN_S=10,STATUS_EVERY=2000;
 function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="cap">loudness</span><b class="lv-n"></b></div>`+
-    `<div class="bot"><div class="row stl"><span class="sl s-mine"><span class="k">vs mine</span><span class="v"></span></span>`+
+    `<div class="bot"><button class="row gn" type="button" aria-haspopup="menu" aria-expanded="false" hidden><span class="k">genre</span><span class="v gn-n"></span></button>`+
+      `<div class="row stl"><span class="sl s-mine"><span class="k">vs mine</span><span class="v"></span></span>`+
       `<span class="sl s-peak"><span class="k">peak</span><span class="v"></span></span></div>`+
-    `<div class="row"><span class="k">spotify</span><span class="v sp-n"></span></div></div></div>`),
+    `<div class="row"><span class="k">spotify</span><span class="v sp-n"></span></div></div>`+
+    `<div class="gp" role="menu" aria-label="genre"></div></div>`),
     v=b.querySelector(".lv-n"),sp=b.querySelector(".sp-n"),stl=b.querySelector(".stl"),
     mineV=b.querySelector(".s-mine .v"),peakV=b.querySelector(".s-peak .v");
   const fmtL=l=>(l<0?"−":"")+Math.abs(l).toFixed(1),trim=t=>t.replace(/\.0$/,"");
@@ -538,6 +624,7 @@ function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="c
     tweenText(v,last,n.l,fmtL);last=n.l;};
   sub("master_loud",draw);LOUD_DRAW=draw;
   if(FLOW.analyzed)Flow.status().then(adoptLoud).catch(()=>{});
+  genreRow(b);
   const [lb,sb]=b.children;
   Desk.info(lb,()=>{if(!FLOW.analyzed)return ["Loudness","Nothing measured yet: the master is measured while the song plays (during the analysis, or the next time you play)."];
     const n=shortNow();if(!n)return ["Loudness · press play","Nothing measured yet: press play in Live and the Desk device on the master measures it (EBU R128 short-term, the last 3 s). This design has no master quiet ↔ loud knob to estimate it from."];
@@ -552,6 +639,28 @@ function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="c
     return ["Spotify"+(s.from==="meter"?"":measuring()?` · measuring · ${measN()} s`:LOUD&&LOUD.state==="measured"?" · measured":""),(s.down<.05?"Spotify does not turn it down: it is at or under −14 LUFS.":`Spotify turns it down by ${s.down.toFixed(1)} dB${s.down>1?": extra loudness buys nothing there":""}.`)+
       ` From ${s.l.toFixed(1)} LUFS integrated, ${where} (−14 LUFS reference).`+mine+peak];});
   return b;}
+// the GENRE row and its picker (see GENRE above): click / Enter opens six keys over the loudness block; a click picks,
+// Esc, a click elsewhere or the row again closes; ↑ ↓ move between the keys
+function genreRow(b){const row=b.querySelector(".gn"),val=row.querySelector(".gn-n"),gp=b.querySelector(".gp");
+  const ids=[...GENRES,null],lbl=id=>id||"none";
+  gp.innerHTML=ids.map(id=>`<button type="button" role="menuitemradio" tabindex="-1" data-g="${id||""}"><span>${lbl(id)}</span><i></i></button>`).join("");
+  const keys=[...gp.children];
+  const draw=()=>{row.hidden=!GN.has||!FLOW.analyzed;const s=genreShown();
+    val.textContent=s?(GENRE_SHORT[s.name]||s.name)+(s.sure?"":"?"):"—";val.classList.toggle("none",!s);
+    keys.forEach(k=>k.setAttribute("aria-checked",String((k.dataset.g||null)===GN.genre)));Desk.infoRefresh(row);};
+  const isOpen=()=>gp.classList.contains("on");
+  const outside=e=>{if(!gp.contains(e.target)&&!row.contains(e.target))close(false);};
+  function close(focus){if(!isOpen())return;gp.classList.remove("on");row.setAttribute("aria-expanded","false");removeEventListener("pointerdown",outside,true);if(focus)row.focus();}
+  const open=()=>{if(FLOW.state!=="ready")return;gp.classList.add("on");row.setAttribute("aria-expanded","true");addEventListener("pointerdown",outside,true);
+    (keys.find(k=>k.getAttribute("aria-checked")==="true")||keys[0]).focus();};
+  row.addEventListener("click",()=>isOpen()?close(true):open());
+  keys.forEach((k,i)=>{const id=k.dataset.g||null;
+    k.addEventListener("click",()=>{close(true);if(id!==GN.genre||(id&&GN.from!=="named"))pickGenre(id);});
+    Desk.info(k,()=>id?[`Genre · ${id}`,`MINE aims the song's loud sections at the usual loudness of ${id}${GN.genre===id?" (in use now)":""}. Nothing in the set changes until you press MINE.`]
+      :["Genre · none","No genre: no loudness target, so MINE keeps the loudness it was built with."]);
+    k.addEventListener("keydown",e=>{if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();keys[(i+(e.key==="ArrowDown"?1:keys.length-1))%keys.length].focus();}});});
+  gp.addEventListener("keydown",e=>{if(e.key==="Escape"){e.stopPropagation();close(true);}});
+  Desk.info(row,genreInfo);GENRE_DRAW=draw;draw();}
 // support is per knob (each knob moves its own devices); demo: the bridge reports levels from Live
 // module bypass state lives in one place so BYPASS (all) can restore exactly the modules that weren't off on their own
 const MOD_OFF=new Set();
@@ -580,6 +689,7 @@ function onState(o){const s=(o&&o.b)||o;if(!s||typeof s!=="object")return;const 
     if(take)for(const id in s.knobs){if(HELD.has(id))DEFER[id]={x:s.knobs[id],t:now};else adopt(id,s.knobs[id]);}}
   if(Array.isArray(s.bypassed))adoptBypassed(s.bypassed);
   if(typeof s.mine_pending==="boolean")setMinePending(s.mine_pending);
+  adoptHeld(s.held);adoptGenre(s);
   const order=o.order||s.order;if(Array.isArray(order))adoptOrder(order);
   say("synced with Live");}
 if(CORE)window.deskBridge.on("state",onState);
@@ -611,7 +721,7 @@ function buildDevice(id){const host=document.getElementById(id);host.className="
     Desk.info(nm,()=>[`${s} module`,VIEW.byp?"Everything is bypassed: switch BYPASS off to change single modules."
       :MOD_OFF.has(s)?"Bypassed: you hear these tracks without Desk. Tap or ⊘ to bring the processing back · drag to reorder."
       :"Drag to reorder · tap or ⊘ to bypass this module (hold ⊘ to hear it without processing only while held)."]);
-    ks.forEach(k=>{const w=el(`<div class="kw"></div>`),lv=k.support||"full";w.append(knob(k.id));
+    ks.forEach(k=>{const w=el(`<div class="kw${heldNow(k.id)?" held":""}" data-k="${k.id}"><i class="au" aria-hidden="true"></i></div>`),lv=k.support||"full";w.append(knob(k.id));
       if(lv!=="full"){const sp=el(`<span class="sp ${lv}"></span>`);w.append(sp);tipFor(sp,k.devices||[]);
         Desk.info(sp,()=>["Plugin support",lv==="none"?"This knob can't reach one of its plugins yet. Hover the dot for what to do.":"One of this knob's plugins gives Live bare numbers, so Desk moves it within safe limits. Nothing to do."]);}
       if(lv==="none")w.classList.add("dead");inn.append(w);});
@@ -691,7 +801,8 @@ function loadDesk(){return Promise.all([fetch("/knobs").then(r=>r.json()),fetch(
   fetch("/colors").then(r=>r.ok?r.json():null).catch(()=>null)]).then(([knobs,lib,state,cols])=>{LIVECOL=cols;
   st.list=knobs;st.subs={};knobs.forEach(k=>st.knobs[k.id]=state.knobs[k.id]??.5);st.strips=lib.modules.map(m=>m.strip);
   // modules bypassed in the set (server.py BYPASSED, Desk Core: their Desk devices are off) show bypassed from the start
-  MOD_OFF.clear();(state.bypassed||[]).forEach(s=>{if(mods().includes(s))MOD_OFF.add(s);});MINE_PENDING=!!state.mine_pending;});}
+  MOD_OFF.clear();(state.bypassed||[]).forEach(s=>{if(mods().includes(s))MOD_OFF.add(s);});MINE_PENDING=!!state.mine_pending;
+  DIAL_HELD.clear();(Array.isArray(state.held)?state.held:[]).forEach(id=>DIAL_HELD.add(String(id)));adoptGenre(state);});}
 // the key: ANALYZE (empty) · CANCEL (working) · RETRY (stopped on a step that can go on)
 function flowKey(){const F=FLOW.layer,k=F.key;
   if(FLOW.state==="analysing"){k.onclick=null;return;}   // the progress panel shows; the x key in the left column cancels
