@@ -27,6 +27,10 @@
   /* key-dot = the "something new" dot on MINE (mine_pending; not in Figma yet): the key's ink in the Desk look (no accent
      there), the accent in the Live look; on a lit key, key-on-fg */
   --key-dot:var(--key-fg);
+  /* auto = the LED on a knob its meaning dial drives (automation / MIDI; not in Figma yet): Desk look a white dot with
+     an ink edge on the module colour; Live look the selection colour Live sends (Live's own red automation LED is not
+     among the colours live.colors gives), edge = the panel */
+  --auto:var(--dot);--auto-edge:var(--knob);
   --on-mod:var(--ink);--off-fg:var(--fg);--pad-off:var(--off);--pad-off-fg:var(--fg);
   /* module colours (also in design.js for the scripts) */
   --c-master:#c8c8c8;--c-drums:#ffd200;--c-bass:#2b6cff;--c-vocal:#ff4800;--c-backing:#ffaad4;--c-guitars:#00b67a;--c-pad:#add5ff;--c-brass:#ff9b00;
@@ -149,6 +153,7 @@ body.mine .mk :is(.sp,.sup){pointer-events:auto}
   --off:color-mix(in srgb,var(--knob) 60%,var(--dev));
   --key:var(--knob);--key-fg:var(--dot);--key-hov:var(--pill);--key-hov-fg:var(--fg);--name-pill:var(--knob);--name-pill-fg:var(--dot);
   --key-on:var(--accent,var(--warn));--key-on-fg:var(--accent-fg,var(--knob));--key-on-mark:var(--key-on);--key-dot:var(--key-on);
+  --auto:var(--ring);--auto-edge:var(--knob);
   --on-mod:var(--knob);--off-fg:color-mix(in srgb,var(--dot) 40%,var(--off));--pad-off:var(--knob);--pad-off-fg:var(--ghost)}
 
 /* ── ANALYZE flow (flow.js, product/flow.md; Figma "start" 15:2123 and "progress" 15:1860): the work layer covers
