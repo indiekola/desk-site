@@ -123,7 +123,7 @@ body.mine .mk :is(.sp,.sup){pointer-events:auto}
      active   = selection → --ring: the 2 px ring inside a knob being turned, the pad being pressed, a key held down
      key on   = MINE / BP latched on: the key lights in the accent (--accent, sketch #ff8bc5; Live sends no such colour,
                 so per preset like PEAK), its icon disc in --accent-fg with the mark punched out in the accent
-     hover    = surface_highlight → --pill: a left key under the pointer
+     hover    = derived: surface_bg 8 % toward control_fg (surface_highlight if sent) → --pill: a left key under the pointer
      on a module colour = the panel colour (--knob): module names, progress text over its fill
      progress fill = the first module's track colour (flow.js) · PEAK = --warn (Live sends no warning colour: per preset)
    The four presets approximate Live 12's built-in themes for the browser prototype ("dark" = the sketch's values); in

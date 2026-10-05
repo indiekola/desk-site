@@ -50,9 +50,12 @@ const Desk = (() => {
   let lastBuzz = 0;
   const buzz = ms => { const t = performance.now(); if (t - lastBuzz > 80 && navigator.vibrate && navigator.userActivation?.hasBeenActive !== false) { navigator.vibrate(ms); lastBuzz = t; } };
 
-  /* knob({ el, dial, get, set, host?, tilt?, locked?, onSnap?, onStart?, badge? })  badge: false = never show the value (it replaces the MINE star while changing)
+  /* knob({ el, dial, get, set, host?, tilt?, locked?, onSnap?, onStart?, onHold?, onRelease?, badge? })  badge: false = never show the value (it replaces the MINE star while changing)
      el: pointer target · dial: the black disc · get()/set(x): value 0..1 · host(): element that tilts (module)
-     tilt: {deg, scale} · locked(): true while MINE holds the knobs · onSnap(): landed on centre */
+     tilt: {deg, scale} · locked(): true while MINE holds the knobs · onSnap(): landed on centre
+     onHold() / onRelease(changed): one gesture begins / ends — a pointer drag (down → up), a wheel turn (ends 140 ms
+     after the last notch), a key step or double-click glide (ends when the glide lands). changed = set() ran in it.
+     The page closes its undo step on release and keeps pushed state off a control while it is held. */
   function knob(o) {
     const { el, dial } = o, deg = o.tilt?.deg ?? 4, sc = o.tilt?.scale ?? .975;
     const base = () => -135 + o.get() * 270;
@@ -60,19 +63,23 @@ const Desk = (() => {
       if (x === .5 && prev !== .5) { o.onSnap?.(); buzz(8); }
       if ((x === 0 || x === 1) && prev !== x) buzz(12);
     };
+    // one gesture at a time: a drag that interrupts a glide continues the same hold; release reports whether it moved
+    let held = false, moved = false;
+    const hold = () => { if (held) return; held = true; moved = false; o.onHold?.(); };
+    const release = () => { if (!held) return; held = false; o.onRelease?.(moved); };
     // glide for double-click and keys (no easing while dragging: the knob must stay under the finger)
     let tw = 0;
     const glide = to => {
-      cancelAnimationFrame(tw);
+      cancelAnimationFrame(tw); hold();
       const from = o.get(), t0 = performance.now(), D = RM ? 0 : 260;
       const step = now => { const p = D ? Math.min(1, (now - t0) / D) : 1, e = 1 - Math.pow(1 - p, 3); o.set(from + (to - from) * e);
-        if (p < 1) tw = requestAnimationFrame(step); else feel(to, from); };
+        if (p < 1) tw = requestAnimationFrame(step); else { feel(to, from); if (y0 === null) release(); } };
       tw = requestAnimationFrame(step);
     };
     let y0 = null, raw0 = 0, live = false, host = null, kc = [0, 0];
     el.addEventListener("pointerdown", e => {
       if (e.button || o.locked?.()) return;
-      e.preventDefault(); cancelAnimationFrame(tw);
+      e.preventDefault(); cancelAnimationFrame(tw); hold();
       el.classList.add("turning", "active"); document.body.classList.add("turning");
       y0 = e.clientY; raw0 = toRaw(o.get()); live = false;
       try { el.setPointerCapture(e.pointerId); } catch (_) {}
@@ -99,20 +106,21 @@ const Desk = (() => {
       y0 = null; el.classList.remove("turning", "active"); document.body.classList.remove("turning");
       tiltOff(host); host = null;
       if (dial.classList.contains("rubbing")) rubberRelease(dial, base());
+      release();
     };
     ["pointerup", "pointercancel", "lostpointercapture"].forEach(v => el.addEventListener(v, end));
     // wheel / trackpad: same detent; overscroll past an end stretches and eases back when the gesture stops
     let wo = 0, wt = 0;
     el.addEventListener("wheel", e => {
       if (o.locked?.()) return;
-      e.preventDefault();
+      e.preventDefault(); hold();
       const d = (Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : -e.deltaX) * (e.deltaMode === 1 ? 16 : 1), prev = o.get();
       const rawU = toRaw(prev) + wo - d / (e.shiftKey ? 2500 : 500), raw = Math.max(toRaw(0), Math.min(toRaw(1), rawU)), x = toX(raw);
       if (x !== prev) { o.set(x); feel(x, prev); }
       wo = rawU - raw;
       if (wo) { dial.classList.add("rubbing"); rubberShow(dial, base(), wo); }
       clearTimeout(wt);
-      wt = setTimeout(() => { if (wo) { wo = 0; rubberRelease(dial, base()); } }, 140);
+      wt = setTimeout(() => { if (wo) { wo = 0; rubberRelease(dial, base()); } if (y0 === null) release(); }, 140);
     }, { passive: false });
     el.addEventListener("dblclick", () => { if (!o.locked?.()) glide(.5); });
     dial.addEventListener("keydown", e => {
@@ -123,7 +131,7 @@ const Desk = (() => {
       glide(Math.abs(t - .5) < .026 || (x - .5) * (t - .5) < 0 ? .5 : clamp(t)); // keys stop on centre when they cross it
     });
     const api = { glide, el, dial, locked: () => !!o.locked?.(), get: o.get };
-    const set0 = o.set; o.set = x => { set0(x); infoRefresh(el); if (o.badge !== false) showTyped(api, x); };  // value in place of the star (off in the mini view)
+    const set0 = o.set; o.set = x => { moved = true; set0(x); infoRefresh(el); if (o.badge !== false) showTyped(api, x); };  // value in place of the star (off in the mini view)
     KNOBS.push(api);
     return api;
   }
@@ -181,8 +189,9 @@ const Desk = (() => {
     if (r.x !== null) k.glide(r.x);
   });
 
-  /* xyPad({ pad, puck, inset, get, set, host?, tilt?, locked? })
-     get(): [x, y] · set(x, y) · inset: px from the pad edge to the puck centre (3 px ring + 4 px safe zone + puck radius) · .active while pressed */
+  /* xyPad({ pad, puck, inset, get, set, host?, tilt?, locked?, onHold?, onRelease? })
+     get(): [x, y] · set(x, y) · inset: px from the pad edge to the puck centre (3 px ring + 4 px safe zone + puck radius) · .active while pressed
+     onHold() / onRelease(changed): as knob() — a pointer drag, or one arrow key / double-click (a gesture of its own) */
   function xyPad(o) {
     const { pad, puck, inset } = o;
     const draw = () => {
@@ -194,21 +203,22 @@ const Desk = (() => {
     const deg = o.tilt?.deg ?? 5, sc = o.tilt?.scale ?? .98;  // a big card (full view) leans less
     const lean = e => { const h = o.host?.(); if (h) { const [nx, ny] = towards(h, e.clientX, e.clientY); tiltOn(h, nx, ny, deg, sc); } };
     let dn = false;
+    const once = fn => { o.onHold?.(); fn(); o.onRelease?.(true); };
     pad.addEventListener("pointerdown", e => {
       if (e.button || o.locked?.()) return;
-      e.preventDefault(); dn = true;
+      e.preventDefault(); dn = true; o.onHold?.();
       try { pad.setPointerCapture(e.pointerId); } catch (_) {}
       pad.classList.add("active"); focusQuiet(pad); at(e); lean(e);
     });
     pad.addEventListener("pointermove", e => { if (dn) { at(e); lean(e); } });
-    ["pointerup", "pointercancel", "lostpointercapture"].forEach(v => pad.addEventListener(v, () => { if (dn) { dn = false; pad.classList.remove("active"); tiltOff(o.host?.()); } }));
-    pad.addEventListener("dblclick", () => { if (!o.locked?.()) o.set(.5, .5); });
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach(v => pad.addEventListener(v, () => { if (dn) { dn = false; pad.classList.remove("active"); tiltOff(o.host?.()); o.onRelease?.(true); } }));
+    pad.addEventListener("dblclick", () => { if (!o.locked?.()) once(() => o.set(.5, .5)); });
     pad.addEventListener("keydown", e => {
       if (o.locked?.()) return;
       const s = e.shiftKey ? .01 : .05, d = { ArrowLeft: [-s, 0], ArrowRight: [s, 0], ArrowUp: [0, s], ArrowDown: [0, -s] }[e.key];
       if (!d) return;
       e.preventDefault();
-      const [x, y] = o.get(); o.set(clamp(x + d[0]), clamp(y + d[1]));
+      const [x, y] = o.get(); once(() => o.set(clamp(x + d[0]), clamp(y + d[1])));
     });
     return { draw };
   }
