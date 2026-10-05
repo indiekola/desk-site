@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Desk · demo</title>
-<link rel="stylesheet" href="design.css?v=a44ef6e69a8e">
+<link rel="stylesheet" href="design.css?v=c82250ef3753">
 <style>
 /* Desk device page — the strip is the real height of a Max for Live device in Live (169 px) */
 /* sizes, radii, type and motion tokens: design.css (from Figma, product/figma/SPEC.md) */
@@ -231,6 +231,15 @@ body.unbuilt :is(.cx,.cy){opacity:.35}body.unbuilt .pad .pk{opacity:0}
 body.revealing .pad .pk{opacity:0}.pad .pk{transition:background-color var(--m) var(--e-out),opacity var(--m-fast) var(--e-out)}
 body.revealing .kn .d .arm{transition:rotate var(--m-slow) var(--e-io)}
 .k1 .ky.flash::after{opacity:1;transition:opacity var(--m-slow) var(--e-io)}
+/* MINE has something new (Desk Core mine_pending: the loudness measured after ANALYZE moved MINE's master loudness;
+   pressing MINE applies it). Not in Figma 15-2254 yet (2026-10-05): default = the re-analyze key's 5 px dot, 4 px in
+   from the key's top right, in --key-dot (design.css: the accent MINE lights in, in the Live look; the key's ink in the
+   Desk look); on a lit key, the key's on-colour ink. Same 260 ms in/out as the re-analyze dot. */
+.k1 .ky .pend{position:absolute;right:4px;top:4px;width:5px;height:5px;border-radius:50%;background:var(--key-dot);opacity:0;scale:.4;pointer-events:none;
+  transition:opacity var(--m) var(--e-out),scale var(--m) var(--e-out)}
+.k1 .ky[aria-pressed="true"] .pend{background:var(--key-on-fg)}
+.k1 .ky.pending .pend{opacity:1;scale:1}
+@media (prefers-reduced-motion:reduce){.k1 .ky .pend{transition:none}}
 </style>
 </head>
 <body>
@@ -241,12 +250,12 @@ if(/[?&]embed\b/.test(location.search))document.documentElement.classList.add("e
   <section class="v"><h2>Desk · device</h2><p>Modules in their colours with two meaning knobs each — drag a module by its name strip to reorder, tap the strip to bypass it (white = bypassed). A half or black dot next to a knob = its plugin is only partly or not supported (hover for details). The master is the square XY pad; loudness on the right; MINE · BYPASS · FULL keys: hold = hear it while held, click = switch on, click again = off. Pushing a knob past its end leans the module into the bottom corner on that side. Six modules per level: more wait on the levels above and below, whose edges peek at the top and bottom of the device — ↑ ↓ on the left, Page Up / Page Down or a click on a peeking strip switch levels, drag a module up or down to move it to another level.</p>
     <div class="scroll"><div class="dev" id="M2"></div></div></section>
 </main>
-<script src="demo.js?v=a44ef6e69a8e"></script>
-<script src="design.js?v=a44ef6e69a8e"></script>
-<script src="glyphs.js?v=a44ef6e69a8e"></script>
-<script src="controls.js?v=a44ef6e69a8e"></script>
+<script src="demo.js?v=c82250ef3753"></script>
+<script src="design.js?v=c82250ef3753"></script>
+<script src="glyphs.js?v=c82250ef3753"></script>
+<script src="controls.js?v=c82250ef3753"></script>
 <script>DeskDemo.attach();</script>
-<script src="flow.js?v=a44ef6e69a8e"></script>
+<script src="flow.js?v=c82250ef3753"></script>
 <script>
 let LOOK={}; // module colours for this project: colorsFor() in design.js
 const st={knobs:{},list:[],strips:[],subs:{}};
@@ -358,20 +367,22 @@ function mineView(on){VIEW.mine=on;document.body.classList.toggle("mine",on);
   document.querySelectorAll(".ky.k-mine").forEach(b=>b.setAttribute("aria-pressed",on));glide();redrawAll();}
 function bypView(on){VIEW.byp=on;document.body.classList.toggle("alloff",on);document.querySelectorAll(".ky.k-byp").forEach(b=>b.setAttribute("aria-pressed",on));}
 function setMine(on){if(VIEW.mine===on||(on&&FLOW.state!=="ready"))return;mineView(on);
-  if(on){say("mine · the reference mix · knobs locked");queueKey(()=>post("/reset",{}));}
+  if(on){say("mine · the reference mix · knobs locked");queueKey(postReset);}
   else{say("your mix");queueKey(()=>Promise.all(st.list.map((k,i,a)=>post("/knob",i===a.length-1?{id:k.id,x:st.knobs[k.id],end:true}:{id:k.id,x:st.knobs[k.id]}))));}}
 function setBypassAll(on){if(VIEW.byp===on||(on&&FLOW.state!=="ready"))return;bypView(on);
   if(on){say("original tracks");queueKey(async()=>{for(const s of st.strips)await post("/strip_off",{strip:s});});}
   else{say("processed");queueKey(async()=>{for(const s of st.strips)if(!MOD_OFF.has(s))await post("/strip_on",{strip:s});});}}
-function keysFor(){const rel=el(`<button class="ky ring k-mine" type="button" aria-pressed="${VIEW.mine}">${ICON.mineKey}</button>`),
+function keysFor(){const rel=el(`<button class="ky ring k-mine${MINE_PENDING?" pending":""}" type="button" aria-pressed="${VIEW.mine}">${ICON.mineKey}<i class="pend" aria-hidden="true"></i></button>`),
   byp=el(`<button class="ky ring k-byp" type="button" aria-pressed="${VIEW.byp}">${ICON.bpKey}</button>`);
   Desk.pressToggle(rel,()=>VIEW.mine,setMine);
-  Desk.info(rel,()=>FLOW.state!=="ready"?["MINE","The sound Desk builds for this song. Available after ANALYZE."]:["MINE · the reference built for this track","Hold: hear MINE while held · click: switch on, click again: off · double-click: apply it (every knob to its centre)."]);
+  Desk.info(rel,()=>{const how="Hold: hear MINE while held · click: switch on, click again: off · double-click: apply it (every knob to its centre).";
+    if(FLOW.state!=="ready")return ["MINE","The sound Desk builds for this song. Available after ANALYZE."];
+    return MINE_PENDING?["MINE · new loudness",(LOUD&&LOUD.info?LOUD.info:"Loudness measured: MINE has a new master loudness. Press MINE to apply.")+"\n"+how]:["MINE · the reference built for this track",how];});
   Desk.info(byp,()=>FLOW.state!=="ready"?["Bypass","Your original tracks. Available after ANALYZE; until then you hear only your original."]:["Bypass · your original tracks",VIEW.byp?"On: you hear the set without Desk (the safety limiter stays). Click to switch it off."
     :"Hold: hear the set without Desk while held · click: switch on, click again: off. The safety limiter stays on."]);
   // double-click MINE = apply it: every knob moves to its centre for good (the two clicks before it toggle on/off)
   rel.addEventListener("dblclick",()=>{setMine(false);st.list.forEach(k=>st.knobs[k.id]=.5);glide();redrawAll();
-    queueKey(()=>post("/reset",{}));say("mine applied · every knob at its centre");});Desk.pressToggle(byp,()=>VIEW.byp,setBypassAll);
+    queueKey(postReset);say("mine applied · every knob at its centre");});Desk.pressToggle(byp,()=>VIEW.byp,setBypassAll);
   [rel,byp].forEach(Desk.pressable);return {rel,byp};}
 // drag a tile by its name: sideways it reorders inside its level (lift, follow, neighbours glide via the order property);
 // pulled up or down past 32 px toward another level and held there 260 ms, the levels slide and the tile moves over
@@ -456,10 +467,30 @@ function tweenText(node,from,to,fmt){if(RMQ||!document.body.classList.contains("
 // the pad is the fallback when the device is absent, stopped or has no value yet (silence, < 400 ms since reset).
 // Integrated wins (it's what normalisation uses); short-term covers the first seconds after a reset.
 let METER=null,LOUD_DRAW=null;  // the loudness block on screen (rebuilt with the device) redraws on each reading
-let RUN_LUFS=null;   // the master loudness ANALYZE measured (its summary.measured_lufs; null = not measured, e.g. stopped)
+let RUN_LUFS=null;   // the set's measured master loudness (summary.measured_lufs; null = not measured, e.g. stopped)
+// Background loudness (Desk Core, device/desk/README.md "Loudness after ANALYZE"): GET /analyze/status .loudness =
+// {state: none|waiting|measuring|measured, measuring_s, min_s, measured_lufs, gated_s, mine_pending, info, …}. The core
+// measures the next play after ANALYZE; the page reads it while ready (pollLoud) so a value measured after the page
+// loaded shows without a reload. A bridge without the block (server.py) leaves LOUD null: summary.measured_lufs only.
+let LOUD=null,MINE_PENDING=false;
+function adoptLoud(fs){if(!fs||typeof fs!=="object")return;const l=fs.loudness&&typeof fs.loudness==="object"?fs.loudness:null;LOUD=l;
+  if(l)RUN_LUFS=typeof l.measured_lufs==="number"?l.measured_lufs:null;   // the core's block is the truth (a changed master drops it)
+  else if(fs.summary&&typeof fs.summary.measured_lufs==="number")RUN_LUFS=fs.summary.measured_lufs;
+  if(l)setMinePending(!!l.mine_pending);
+  LOUD_DRAW&&LOUD_DRAW();document.querySelectorAll("#M2 .ld .bot").forEach(r=>Desk.infoRefresh(r));}
+// the dot on MINE: /state and the {op: "state"} push carry mine_pending, /analyze/status .loudness too; MINE (POST /reset)
+// applies it in the core, which then clears it
+function setMinePending(on){MINE_PENDING=!!on;document.querySelectorAll(".ky.k-mine").forEach(b=>{b.classList.toggle("pending",MINE_PENDING);Desk.infoRefresh(b);});}
+const postReset=()=>post("/reset",{}).then(r=>{Flow.status().then(adoptLoud).catch(()=>{});return r;});
+// while ready: every second while the song plays or the core measures (the count moves), else every 5 s; the meter
+// coming alive (play pressed) asks at once instead of waiting out the 5 s
+let loudT=0,loudBusy=false;
+function pollLoud(){clearTimeout(loudT);if(loudBusy)return;const go=FLOW.state==="ready"&&FLOW.analyzed&&!document.hidden;loudBusy=go;
+  (go?Flow.status().then(adoptLoud).catch(()=>{}):Promise.resolve()).then(()=>{loudBusy=false;
+    loudT=setTimeout(pollLoud,LOUD&&LOUD.state==="measuring"||METER&&METER.live?1000:5000);});}
 function measured(){const m=METER;if(!m||!m.live)return null;
   return m.integrated!=null?{l:m.integrated,cap:"lufs int.",what:"integrated"}:m.short_term!=null?{l:m.short_term,cap:"lufs short",what:"short-term"}:null;}
-function pollMeter(){fetch("/meter").then(r=>r.ok?r.json():null).catch(()=>null).then(m=>{METER=m;LOUD_DRAW&&LOUD_DRAW();setTimeout(pollMeter,m&&m.live?500:1000);});}  // the device posts at 10 Hz; 1 s while it's away
+function pollMeter(){fetch("/meter").then(r=>r.ok?r.json():null).catch(()=>null).then(m=>{const woke=m&&m.live&&!(METER&&METER.live);METER=m;LOUD_DRAW&&LOUD_DRAW();if(woke)pollLoud();setTimeout(pollMeter,m&&m.live?500:1000);});}  // the device posts at 10 Hz; 1 s while it's away
 const fmtDb=d=>(d>0?"+":"−")+Math.abs(d).toFixed(1);
 // how far the pad's quiet ↔ loud sits from MINE, in dB of the estimate; 0 when MINE is on or the design has no such knob
 const padOff=()=>VIEW.mine||!K("master_loud")?0:lufs(vx("master_loud"))-lufs(.5);
@@ -487,7 +518,12 @@ function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="c
   const spotify=()=>{const m=METER&&METER.live?METER:null;
     const i=m&&m.integrated!=null&&(m.gated_s??0)>=SPOTIFY_MIN_S?{l:m.integrated,from:"meter"}:RUN_LUFS!=null?{l:RUN_LUFS,from:"analysis"}:null;
     return i&&{...i,down:Math.max(0,i.l-STREAM_REF)};};
-  const spText=s=>s?(s.down<.05?"0":"−"+s.down.toFixed(1))+'<span class="u">dB</span>':'<span class="none">play</span>';
+  // nothing measured yet: "play" (the core measures on play), then the gated seconds counting to SPOTIFY_MIN_S while it
+  // measures ("4/10 s", Desk Core's loudness.measuring_s), then the value
+  const minS=()=>LOUD&&LOUD.min_s>0?LOUD.min_s:SPOTIFY_MIN_S,measN=()=>Math.min(minS(),Math.floor(LOUD&&LOUD.measuring_s>0?LOUD.measuring_s:0));
+  const measuring=()=>!!LOUD&&LOUD.state==="measuring";
+  const spText=s=>s?(s.down<.05?"0":"−"+s.down.toFixed(1))+'<span class="u">dB</span>':
+    measuring()?`<span class="none">${measN()}/${minS()}<span class="u">s</span></span>`:'<span class="none">play</span>';
   // which of the two status items shows now: "", "mine", "peak" (both: the one whose turn it is)
   const status=()=>{const off=padOff(),tp=METER&&METER.live?METER.true_peak_db:null;
     const hasMine=Math.abs(off)>=.05,hasPeak=tp!=null&&tp>-1;
@@ -501,7 +537,7 @@ function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="c
     if(last!=null&&Math.abs(n.l-last)<.05)return;if(last==null)last=n.l;
     tweenText(v,last,n.l,fmtL);last=n.l;};
   sub("master_loud",draw);LOUD_DRAW=draw;
-  if(FLOW.analyzed)Flow.status().then(fs=>{RUN_LUFS=fs.summary&&fs.summary.measured_lufs!=null?fs.summary.measured_lufs:RUN_LUFS;draw();}).catch(()=>{});
+  if(FLOW.analyzed)Flow.status().then(adoptLoud).catch(()=>{});
   const [lb,sb]=b.children;
   Desk.info(lb,()=>{if(!FLOW.analyzed)return ["Loudness","Nothing measured yet: the master is measured while the song plays (during the analysis, or the next time you play)."];
     const n=shortNow();if(!n)return ["Loudness · press play","Nothing measured yet: press play in Live and the Desk device on the master measures it (EBU R128 short-term, the last 3 s). This design has no master quiet ↔ loud knob to estimate it from."];
@@ -510,9 +546,11 @@ function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="c
   Desk.info(sb,()=>{if(!FLOW.analyzed)return ["Spotify","Shown after the analysis."];const s=spotify(),m=METER,tp=m&&m.live?m.true_peak_db:null;
     const peak=tp!=null&&tp>-1?` True peak ${fmtDb(tp)} dBTP since the last play: above −1 dBTP, it may distort after encoding.`:"";
     const off=padOff(),mine=Math.abs(off)>=.05?` The pad is ${fmtDb(off)} dB from MINE.`:"";
-    if(!s)return ["Spotify · press play",`Spotify plays everything at −14 LUFS and turns louder songs down. Press play in Live: once the Desk device has measured ${SPOTIFY_MIN_S} s of the song, this shows how much.`+mine+peak];
-    return ["Spotify",(s.down<.05?"Spotify does not turn it down: it is at or under −14 LUFS.":`Spotify turns it down by ${s.down.toFixed(1)} dB${s.down>1?": extra loudness buys nothing there":""}.`)+
-      ` From ${s.l.toFixed(1)} LUFS integrated, ${s.from==="meter"?"measured on the master over this run":"measured on the master during the analysis"} (−14 LUFS reference).`+mine+peak];});
+    if(!s&&measuring())return [`Spotify · measuring · ${measN()} s`,`Measuring the master while the song plays: ${measN()} of ${minS()} s so far. Then this shows how much Spotify turns the song down (−14 LUFS reference).`+mine+peak];
+    if(!s)return ["Spotify · measures on play",`Spotify plays everything at −14 LUFS and turns louder songs down. Press play in Live: once the Desk device has measured ${minS()} s of the song, this shows how much.`+mine+peak];
+    const where=s.from==="meter"?"measured on the master over this run":LOUD&&LOUD.gated_s>0?`measured on the master while the song played (${Math.round(LOUD.gated_s)} s)`:"measured on the master during the analysis";
+    return ["Spotify"+(s.from==="meter"?"":measuring()?` · measuring · ${measN()} s`:LOUD&&LOUD.state==="measured"?" · measured":""),(s.down<.05?"Spotify does not turn it down: it is at or under −14 LUFS.":`Spotify turns it down by ${s.down.toFixed(1)} dB${s.down>1?": extra loudness buys nothing there":""}.`)+
+      ` From ${s.l.toFixed(1)} LUFS integrated, ${where} (−14 LUFS reference).`+mine+peak];});
   return b;}
 // support is per knob (each knob moves its own devices); demo: the bridge reports levels from Live
 // module bypass state lives in one place so BYPASS (all) can restore exactly the modules that weren't off on their own
@@ -541,6 +579,7 @@ function onState(o){const s=(o&&o.b)||o;if(!s||typeof s!=="object")return;const 
     if(VIEW.mine){if(Object.values(s.knobs).every(x=>Math.abs(x-.5)<.005))take=false;else mineView(false);}
     if(take)for(const id in s.knobs){if(HELD.has(id))DEFER[id]={x:s.knobs[id],t:now};else adopt(id,s.knobs[id]);}}
   if(Array.isArray(s.bypassed))adoptBypassed(s.bypassed);
+  if(typeof s.mine_pending==="boolean")setMinePending(s.mine_pending);
   const order=o.order||s.order;if(Array.isArray(order))adoptOrder(order);
   say("synced with Live");}
 if(CORE)window.deskBridge.on("state",onState);
@@ -652,7 +691,7 @@ function loadDesk(){return Promise.all([fetch("/knobs").then(r=>r.json()),fetch(
   fetch("/colors").then(r=>r.ok?r.json():null).catch(()=>null)]).then(([knobs,lib,state,cols])=>{LIVECOL=cols;
   st.list=knobs;st.subs={};knobs.forEach(k=>st.knobs[k.id]=state.knobs[k.id]??.5);st.strips=lib.modules.map(m=>m.strip);
   // modules bypassed in the set (server.py BYPASSED, Desk Core: their Desk devices are off) show bypassed from the start
-  MOD_OFF.clear();(state.bypassed||[]).forEach(s=>{if(mods().includes(s))MOD_OFF.add(s);});});}
+  MOD_OFF.clear();(state.bypassed||[]).forEach(s=>{if(mods().includes(s))MOD_OFF.add(s);});MINE_PENDING=!!state.mine_pending;});}
 // the key: ANALYZE (empty) · CANCEL (working) · RETRY (stopped on a step that can go on)
 function flowKey(){const F=FLOW.layer,k=F.key;
   if(FLOW.state==="analysing"){k.onclick=null;return;}   // the progress panel shows; the x key in the left column cancels
@@ -752,6 +791,7 @@ function readyInfo(){Flow.status().then(fs=>{const sm=fs.summary||{},extra=[];
   Desk.infoState("Ready · every knob on MINE",`${mods().length} modules. Turn anything; double-click a knob or hold MINE to come back.`+(extra.length?"\n"+extra.join("\n"):""));
   setTimeout(()=>{if(FLOW.state==="ready")Desk.infoState("","");},8000);}).catch(()=>{});}
 setTimeout(pollChanges,1000);  // first look soon after load, then every 10 s
+setTimeout(pollLoud,1000);     // the measured loudness and MINE's dot while ready (1 s while playing, else 5 s)
 
 // startup: what the bridge holds decides the state — no design yet = EMPTY, an analysis running = follow it
 Flow.status().then(fs=>{FLOW.analyzed=!!fs.analyzed;FLOW.buildMode=fs.build_mode;if(fs.undo)FLOW.undo=fs.undo;
