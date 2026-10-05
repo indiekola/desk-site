@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Desk · demo</title>
-<link rel="stylesheet" href="design.css?v=ef37f9994673">
+<link rel="stylesheet" href="design.css?v=a44ef6e69a8e">
 <style>
 /* Desk device page — the strip is the real height of a Max for Live device in Live (169 px) */
 /* sizes, radii, type and motion tokens: design.css (from Figma, product/figma/SPEC.md) */
@@ -241,29 +241,43 @@ if(/[?&]embed\b/.test(location.search))document.documentElement.classList.add("e
   <section class="v"><h2>Desk · device</h2><p>Modules in their colours with two meaning knobs each — drag a module by its name strip to reorder, tap the strip to bypass it (white = bypassed). A half or black dot next to a knob = its plugin is only partly or not supported (hover for details). The master is the square XY pad; loudness on the right; MINE · BYPASS · FULL keys: hold = hear it while held, click = switch on, click again = off. Pushing a knob past its end leans the module into the bottom corner on that side. Six modules per level: more wait on the levels above and below, whose edges peek at the top and bottom of the device — ↑ ↓ on the left, Page Up / Page Down or a click on a peeking strip switch levels, drag a module up or down to move it to another level.</p>
     <div class="scroll"><div class="dev" id="M2"></div></div></section>
 </main>
-<script src="demo.js?v=ef37f9994673"></script>
-<script src="design.js?v=ef37f9994673"></script>
-<script src="glyphs.js?v=ef37f9994673"></script>
-<script src="controls.js?v=ef37f9994673"></script>
+<script src="demo.js?v=a44ef6e69a8e"></script>
+<script src="design.js?v=a44ef6e69a8e"></script>
+<script src="glyphs.js?v=a44ef6e69a8e"></script>
+<script src="controls.js?v=a44ef6e69a8e"></script>
 <script>DeskDemo.attach();</script>
-<script src="flow.js?v=ef37f9994673"></script>
+<script src="flow.js?v=a44ef6e69a8e"></script>
 <script>
 let LOOK={}; // module colours for this project: colorsFor() in design.js
 const st={knobs:{},list:[],strips:[],subs:{}};
 const say=t=>document.getElementById("status").textContent=t;
 const post=(u,b)=>fetch(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});  // JSON: the bridge guard (guard.py) needs it
-const pending={};
 // bridge offline (stopped, restarting): a knob move that did not reach it is kept — one entry per knob, its latest
 // position — and sent once when /health answers again; nothing is lost and nothing is sent twice
 const UNSENT=new Set();
-// knob moves go out at most every 40 ms per knob (the latest position); flush() sends one now
-function send(id){if(pending[id])return;pending[id]=setTimeout(()=>flush(id),40);}
-function flush(id,end){clearTimeout(pending[id]);pending[id]=0;const b={id,x:st.knobs[id]};if(end)b.end=true;
-  post("/knob",b).then(()=>UNSENT.delete(id),()=>{UNSENT.add(id);offline();});}
-// the end of a gesture (pointer release, a key step or glide landing, the wheel at rest): what is still waiting goes
-// now and the last request says end: true, so Desk Core closes the gesture's undo step at once (30 ms) instead of
-// waiting 400 ms for silence (device/desk/README.md "Writes under G′"). The pad's two knobs = one gesture, one end.
-function endK(ids){ids.forEach((id,i)=>flush(id,i===ids.length-1));}
+// knob moves are coalesced so a drag never floods Desk Core (Live lagged at 42–54 POST /knob per gesture): a moved knob
+// is only marked DIRTY; once per animation frame each dirty knob with no request in FLIGHT sends its latest position.
+// So at most one request per knob in flight and one per frame; values that went stale meanwhile are never sent (latest
+// wins). FLIGHT: knob id -> the promise of its request (or of its gesture's end).
+const DIRTY=new Set(),FLIGHT=new Map();let FRAME=0;
+function send(id){DIRTY.add(id);frameSend();}
+function frameSend(){if(FRAME||!DIRTY.size)return;FRAME=requestAnimationFrame(()=>{FRAME=0;[...DIRTY].forEach(id=>{if(!FLIGHT.has(id))flush(id);});});}
+// while a gesture holds the control (pointer down, wheel turning, key or double-click glide) every move says hold: true,
+// so Desk Core keeps the gesture's undo step open even while the pointer rests (no 400 ms idle close).
+// mode: "end" | "hold" | undefined (= hold while the knob is held). Resolves when the request has an answer.
+function flush(id,mode){DIRTY.delete(id);const b={id,x:st.knobs[id]};
+  if(mode==="end")b.end=true;else if(mode==="hold"||HELD.has(id))b.hold=true;
+  const p=post("/knob",b).then(()=>UNSENT.delete(id),()=>{UNSENT.add(id);offline();});
+  FLIGHT.set(id,p);p.then(()=>{if(FLIGHT.get(id)===p)FLIGHT.delete(id);frameSend();});return p;}
+// the end of a gesture (pointer release, a key step or glide landing, the wheel at rest): once the gesture's requests
+// in flight have answered, each knob sends its final position and the very last request says end: true (and no hold),
+// so Desk Core closes the gesture's undo step at once (30 ms) (device/desk/README.md "Writes under G′"). The pad's two
+// knobs = one gesture: hold on the first, end on the last, sent after it.
+function endK(ids){const wait=Promise.all(ids.map(id=>FLIGHT.get(id)));
+  const done=wait.then(()=>ids.slice(0,-1).reduce((q,id)=>q.then(()=>flush(id,"hold")),Promise.resolve()))
+    .then(()=>flush(ids[ids.length-1],"end"));
+  ids.forEach(id=>{DIRTY.delete(id);FLIGHT.set(id,done);});
+  done.then(()=>{ids.forEach(id=>{if(FLIGHT.get(id)===done)FLIGHT.delete(id);});frameSend();});}
 function offline(){say("bridge offline");if(offline.t)return;
   const ping=()=>fetch("/health").then(r=>{if(!r.ok)throw new Error(r.status);offline.t=0;const ids=[...UNSENT];UNSENT.clear();ids.forEach(send);say("bridge back");})
     .catch(()=>{offline.t=setTimeout(ping,1000);});
@@ -279,7 +293,7 @@ function setK(id,x){st.knobs[id]=Math.max(0,Math.min(1,x));TOUCHED[id]=performan
 // waits in DEFER and lands on release — unless the user moved that knob after the push (then theirs is the newer write).
 const HELD=new Set(),TOUCHED={},DEFER={};
 function adopt(id,x){if(typeof x!=="number"||!isFinite(x)||!(id in st.knobs))return;
-  if(pending[id]){clearTimeout(pending[id]);pending[id]=0;}UNSENT.delete(id);
+  DIRTY.delete(id);UNSENT.delete(id);
   st.knobs[id]=Math.max(0,Math.min(1,x));(st.subs[id]||[]).forEach(f=>f());}
 function holdK(ids){ids.forEach(id=>HELD.add(id));}
 function releaseK(ids,changed){ids.forEach(id=>HELD.delete(id));
@@ -303,16 +317,21 @@ function knob(id){const k=K(id);
   Desk.info(w,()=>[`${k.strip} · ${k.l} ↔ ${k.r}`,VIEW.mine?"MINE is on: every knob rests on the reference built for this track. Switch MINE off to change it."
     :`Now ${Desk.rel(st.knobs[id])} (${word(k,st.knobs[id])}): −10 is ${k.l}, +10 is ${k.r}, 0 is MINE. Drag to turn · Shift-drag for fine steps · Shift + digits for an exact value (−10 … +10, Shift 0 = MINE) · double-click returns to MINE.`+((u=>u?"\n\n"+u:"")(unitsFor(id,st.knobs[id],()=>Desk.infoRefresh(w))))]);
   return w;}
-// master XY pad: x = warm↔airy, y = quiet↔loud; the puck's edge stays 4 px inside the pad (inset 4 + radius 6)
-function pad(ax,ay){const p=el(`<div class="pad ring" role="slider" tabindex="0" aria-label="master: warm to airy, quiet to loud"><i class="cx"></i><i class="cy"></i><span class="ax w">warm</span><span class="ax a">airy</span><span class="ax l">loud</span><span class="ax q">quiet</span><span class="pg"></span><span class="pk"></span></div>`);
-  const xy=Desk.xyPad({pad:p,puck:p.querySelector(".pk"),inset:13,get:()=>[vx(ax),vx(ay)],
-    set:(x,y)=>{setK(ax,x);setK(ay,y);},
+// master XY pad: x = master_air (warm ↔ airy), y = master_loud (quiet ↔ loud); the puck's edge stays 4 px inside the pad
+// (inset 4 + radius 6). The axis words are the design's own pole words; an axis the design has no knob for (null) has
+// no words and its puck coordinate rests on the centre line.
+function pad(ax,ay){const kx=ax&&K(ax),ky=ay&&K(ay),axes=[kx,ky].filter(Boolean),
+    words=(kx?`<span class="ax w">${kx.l}</span><span class="ax a">${kx.r}</span>`:"")+(ky?`<span class="ax l">${ky.r}</span><span class="ax q">${ky.l}</span>`:"");
+  const p=el(`<div class="pad ring" role="slider" tabindex="0" aria-label="master: ${axes.map(k=>`${k.l} to ${k.r}`).join(", ")}"><i class="cx"></i><i class="cy"></i>${words}<span class="pg"></span><span class="pk"></span></div>`);
+  const ids=[kx&&ax,ky&&ay].filter(Boolean),at=id=>id?st.knobs[id]:.5;
+  const xy=Desk.xyPad({pad:p,puck:p.querySelector(".pk"),inset:13,get:()=>[kx?vx(ax):.5,ky?vx(ay):.5],
+    set:(x,y)=>{if(kx)setK(ax,x);if(ky)setK(ay,y);},
     host:()=>p.closest(".mt"),locked:()=>VIEW.mine||FLOW.state!=="ready",
-    onHold:()=>holdK([ax,ay]),onRelease:m=>releaseK([ax,ay],m)});
-  const pg=p.querySelector(".pg"),ghost=()=>{pg.style.left=`calc(13px + (100% - 26px) * ${st.knobs[ax].toFixed(4)})`;pg.style.top=`calc(13px + (100% - 26px) * ${(1-st.knobs[ay]).toFixed(4)})`;};
-  sub(ax,xy.draw);sub(ay,xy.draw);sub(ax,ghost);sub(ay,ghost);
-  Desk.info(p,()=>["Master · warm ↔ airy · quiet ↔ loud",VIEW.mine?"MINE is on: the master rests on the reference built for this track."
-    :`Now ${word(K(ax),st.knobs[ax])}, ${word(K(ay),st.knobs[ay])}. Drag the dot · arrow keys move it, Shift for fine steps · double-click returns to MINE.`]);
+    onHold:()=>holdK(ids),onRelease:m=>releaseK(ids,m)});
+  const pg=p.querySelector(".pg"),ghost=()=>{pg.style.left=`calc(13px + (100% - 26px) * ${at(kx&&ax).toFixed(4)})`;pg.style.top=`calc(13px + (100% - 26px) * ${(1-at(ky&&ay)).toFixed(4)})`;};
+  ids.forEach(id=>{sub(id,xy.draw);sub(id,ghost);});
+  Desk.info(p,()=>["Master · "+axes.map(k=>`${k.l} ↔ ${k.r}`).join(" · "),VIEW.mine?"MINE is on: the master rests on the reference built for this track."
+    :`Now ${axes.map(k=>word(k,st.knobs[k.id])).join(", ")}. Drag the dot · arrow keys move it, Shift for fine steps · double-click returns to MINE.`]);
   return p;}
 function frame(id){const f=document.getElementById(id);
   f.innerHTML=`<div class="side"><i class="logo-d" role="img" aria-label="Desk by Volume Attack">${ICON.bolt}</i><div class="low">`+
@@ -442,6 +461,8 @@ function measured(){const m=METER;if(!m||!m.live)return null;
   return m.integrated!=null?{l:m.integrated,cap:"lufs int.",what:"integrated"}:m.short_term!=null?{l:m.short_term,cap:"lufs short",what:"short-term"}:null;}
 function pollMeter(){fetch("/meter").then(r=>r.ok?r.json():null).catch(()=>null).then(m=>{METER=m;LOUD_DRAW&&LOUD_DRAW();setTimeout(pollMeter,m&&m.live?500:1000);});}  // the device posts at 10 Hz; 1 s while it's away
 const fmtDb=d=>(d>0?"+":"−")+Math.abs(d).toFixed(1);
+// how far the pad's quiet ↔ loud sits from MINE, in dB of the estimate; 0 when MINE is on or the design has no such knob
+const padOff=()=>VIEW.mine||!K("master_loud")?0:lufs(vx("master_loud"))-lufs(.5);
 // Loudness block (Figma 16:2482, 2026-10-04): LOUDNESS + short-term LUFS (27 px, one decimal; the Desk meter while it
 // plays, the pad's estimate otherwise); then one STATUS line and SPOTIFY. The status line holds "VS MINE ±X" (pad off
 // its centre) and "PEAK −X.X" (true peak since the last play above −1 dBTP, warning colour): one shows alone; both
@@ -456,8 +477,10 @@ function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="c
     mineV=b.querySelector(".s-mine .v"),peakV=b.querySelector(".s-peak .v");
   const fmtL=l=>(l<0?"−":"")+Math.abs(l).toFixed(1),trim=t=>t.replace(/\.0$/,"");
   let last=null,turn="mine";
+  // the Desk meter's short-term while it plays; else the pad's estimate — only when the design has a master quiet ↔ loud
+  // knob (a design without one, e.g. a master with no device to steer, has no estimate); else null = nothing to show
   const shortNow=()=>{const m=METER&&METER.live?METER:null;
-    return m&&m.short_term!=null?{l:m.short_term,what:"measured"}:{l:lufs(vx("master_loud")),what:null};};
+    return m&&m.short_term!=null?{l:m.short_term,what:"measured"}:K("master_loud")?{l:lufs(vx("master_loud")),what:null}:null;};
   // SPOTIFY (founder, 2026-10-04): how much Spotify turns the song down at −14 LUFS = max(0, integrated + 14) dB, shown
   // the Figma way ("−3.9 dB", "0 dB"). Integrated from the Desk meter once it has 10 s gated (this run), else the
   // loudness ANALYZE measured on the master (its summary); nothing measured = "play" (Info View: press play in Live).
@@ -466,7 +489,7 @@ function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="c
     return i&&{...i,down:Math.max(0,i.l-STREAM_REF)};};
   const spText=s=>s?(s.down<.05?"0":"−"+s.down.toFixed(1))+'<span class="u">dB</span>':'<span class="none">play</span>';
   // which of the two status items shows now: "", "mine", "peak" (both: the one whose turn it is)
-  const status=()=>{const off=VIEW.mine?0:lufs(vx("master_loud"))-lufs(.5),tp=METER&&METER.live?METER.true_peak_db:null;
+  const status=()=>{const off=padOff(),tp=METER&&METER.live?METER.true_peak_db:null;
     const hasMine=Math.abs(off)>=.05,hasPeak=tp!=null&&tp>-1;
     mineV.textContent=hasMine?trim(fmtDb(off)):"";peakV.textContent=hasPeak?fmtDb(tp):"";
     stl.dataset.both=hasMine&&hasPeak?"1":"";
@@ -474,17 +497,19 @@ function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="c
   setInterval(()=>{turn=turn==="mine"?"peak":"mine";if(stl.dataset.both)status();},STATUS_EVERY);
   const draw=()=>{if(!FLOW.analyzed||FLOW.state==="reveal"&&!FLOW.loudOn){v.innerHTML='<span class="none">—</span>';sp.innerHTML="";stl.dataset.show="";last=null;return;}
     status();const s=spText(spotify());if(sp.innerHTML!==s)sp.innerHTML=s;
-    const n=shortNow();if(last!=null&&Math.abs(n.l-last)<.05)return;if(last==null)last=n.l;
+    const n=shortNow();if(!n){cancelAnimationFrame(v._tw);v.innerHTML='<span class="none">—</span>';last=null;return;}  // nothing measured, no estimate
+    if(last!=null&&Math.abs(n.l-last)<.05)return;if(last==null)last=n.l;
     tweenText(v,last,n.l,fmtL);last=n.l;};
   sub("master_loud",draw);LOUD_DRAW=draw;
   if(FLOW.analyzed)Flow.status().then(fs=>{RUN_LUFS=fs.summary&&fs.summary.measured_lufs!=null?fs.summary.measured_lufs:RUN_LUFS;draw();}).catch(()=>{});
   const [lb,sb]=b.children;
   Desk.info(lb,()=>{if(!FLOW.analyzed)return ["Loudness","Nothing measured yet: the master is measured while the song plays (during the analysis, or the next time you play)."];
-    const n=shortNow();return n.what?["Loudness · short-term",`${n.l.toFixed(1)} LUFS short-term (the last 3 s), measured on the master (EBU R128).`]:
+    const n=shortNow();if(!n)return ["Loudness · press play","Nothing measured yet: press play in Live and the Desk device on the master measures it (EBU R128 short-term, the last 3 s). This design has no master quiet ↔ loud knob to estimate it from."];
+    return n.what?["Loudness · short-term",`${n.l.toFixed(1)} LUFS short-term (the last 3 s), measured on the master (EBU R128).`]:
       ["Loudness · from the pad",`About ${n.l.toFixed(1)} LUFS, estimated from the master pad's quiet ↔ loud position: the Desk device on the master measures it while the song plays.`];});
   Desk.info(sb,()=>{if(!FLOW.analyzed)return ["Spotify","Shown after the analysis."];const s=spotify(),m=METER,tp=m&&m.live?m.true_peak_db:null;
     const peak=tp!=null&&tp>-1?` True peak ${fmtDb(tp)} dBTP since the last play: above −1 dBTP, it may distort after encoding.`:"";
-    const off=VIEW.mine?0:lufs(vx("master_loud"))-lufs(.5),mine=Math.abs(off)>=.05?` The pad is ${fmtDb(off)} dB from MINE.`:"";
+    const off=padOff(),mine=Math.abs(off)>=.05?` The pad is ${fmtDb(off)} dB from MINE.`:"";
     if(!s)return ["Spotify · press play",`Spotify plays everything at −14 LUFS and turns louder songs down. Press play in Live: once the Desk device has measured ${SPOTIFY_MIN_S} s of the song, this shows how much.`+mine+peak];
     return ["Spotify",(s.down<.05?"Spotify does not turn it down: it is at or under −14 LUFS.":`Spotify turns it down by ${s.down.toFixed(1)} dB${s.down>1?": extra loudness buys nothing there":""}.`)+
       ` From ${s.l.toFixed(1)} LUFS integrated, ${s.from==="meter"?"measured on the master over this run":"measured on the master during the analysis"} (−14 LUFS reference).`+mine+peak];});
@@ -588,9 +613,10 @@ function buildDevice(id){const host=document.getElementById(id);host.className="
     const flat=levels.flat();st.strips=[...flat,...st.strips.filter(s=>!flat.includes(s))];
     queueKey(()=>post("/order",{strips:flat}).then(r=>say(r.ok?"order saved":"order not saved")));});
   const mt=el(`<div class="mt"></div>`);
-  if(K("master_air")&&K("master_loud"))mt.prepend(pad("master_air","master_loud"));
+  if(K("master_air")||K("master_loud"))mt.prepend(pad("master_air","master_loud"));
   else{const p=el(`<div class="pad"><i class="cx"></i><i class="cy"></i><span class="pk" style="left:50%;top:50%"></span></div>`);mt.prepend(p);
-    Desk.info(p,()=>["Master","Warm ↔ airy, quiet ↔ loud. Appears with the modules after ANALYZE."]);}
+    Desk.info(p,()=>FLOW.analyzed?["Master","The design built for this set has no master knob (warm ↔ airy, quiet ↔ loud), so the pad has nothing to move."]
+      :["Master","Warm ↔ airy, quiet ↔ loud. Appears with the modules after ANALYZE."]);}
   const {rel,byp}=keysFor(),c=el(`<div class="k1"></div>`);[[rel,"mine"],[byp,"bp"]].forEach(([k,l])=>{k.prepend(el(`<span class="kl">${l}</span>`));c.append(k);});
   b.append(lv,mt,loudBlock(),c);
   // the ANALYZE work layer covers everything right of the left column (Figma start / progress)
