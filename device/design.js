@@ -110,12 +110,19 @@ function setTheme(t){if(!MODES[MODE].includes(t))t=MODES[MODE][0];document.docum
 // window.deskTheme({surface_bg:"#rrggbb", …}) (jweb executejavascript) or as a message {type:"desk-theme", colors:{…}}.
 // The nearest preset (by the surface's lightness) sets everything Live doesn't send; the colours Live sends override
 // it as CSS variables. Only in the Live look: the Desk look ignores them (and keeps them for when L switches back).
-const LIVE_VARS={surface_bg:["--dev","--page"],lcd_bg:["--knob"],lcd_control_fg:["--dot"],selection:["--ring"],control_fg:["--fg"],control_fg_off:["--grey"],surface_highlight:["--pill"]};
+// LIVE_VARS = exactly the names the device asks live.colors for (device/desk checks this). The hover (--pill) has no
+// colour name in Live 12 ("surface_highlight" is unknown to live.colors in 12.4.6), so the page derives it: the surface
+// 8 % toward the text (dark sketch: #2f3139 -> #3d4049). A surface_highlight still sent (tests, a later Live) wins.
+const LIVE_VARS={surface_bg:["--dev","--page"],lcd_bg:["--knob"],lcd_control_fg:["--dot"],selection:["--ring"],control_fg:["--fg"],control_fg_off:["--grey"]};
+const LIVE_OPT={surface_highlight:["--pill"]};
+const PILL_MIX="color-mix(in srgb,var(--dev) 92%,var(--fg))";
 const LIVE_PRESET_DEV={light:"#c4c4c4","mid-light":"#afafaf","mid-dark":"#4a4a4a",dark:"#2b2b2b"};
 let LIVE_THEME=null;
-function applyLive(){const r=document.documentElement.style;Object.values(LIVE_VARS).flat().forEach(v=>r.removeProperty(v));
+function applyLive(){const r=document.documentElement.style,hex=v=>/^#[0-9a-f]{6}$/i.test(v||"");
+  [...Object.values(LIVE_VARS),...Object.values(LIVE_OPT)].flat().forEach(v=>r.removeProperty(v));
   if(MODE!=="live"||!LIVE_THEME)return;
-  for(const k in LIVE_THEME){const v=LIVE_THEME[k];if(LIVE_VARS[k]&&/^#[0-9a-f]{6}$/i.test(v))LIVE_VARS[k].forEach(n=>r.setProperty(n,v));}}
+  for(const k in LIVE_THEME){const v=LIVE_THEME[k],to=LIVE_VARS[k]||LIVE_OPT[k];if(to&&hex(v))to.forEach(n=>r.setProperty(n,v));}
+  if(!hex(LIVE_THEME.surface_highlight)&&hex(LIVE_THEME.surface_bg))r.setProperty("--pill",PILL_MIX);}
 function liveTheme(colors){if(!colors||typeof colors!=="object")return;LIVE_THEME=colors;
   const s=colors.surface_bg;if(MODE==="live"&&/^#[0-9a-f]{6}$/i.test(s||"")){const L=lum(s);
     const near=Object.keys(LIVE_PRESET_DEV).reduce((a,b)=>Math.abs(lum(LIVE_PRESET_DEV[b])-L)<Math.abs(lum(LIVE_PRESET_DEV[a])-L)?b:a);
