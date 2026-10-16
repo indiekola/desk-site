@@ -4,29 +4,74 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Desk by Volume Attack</title>
-<meta name="description" content="Desk by Volume Attack: a Max for Live device in development. It reads your Ableton set, groups the tracks into modules and gives each module two knobs in plain words, built on Live's own devices.">
+<meta name="description" content="Desk by Volume Attack: a device for Ableton Live, in development. It sorts your tracks into groups and gives each group two knobs in plain words, using Live\'s own devices.">
+<link rel="alternate" hreflang="x-default" href="https://desk.volumeattack.ru/">
+<link rel="alternate" hreflang="en" href="https://desk.volumeattack.ru/?lang=en">
+<link rel="alternate" hreflang="ru" href="https://desk.volumeattack.ru/?lang=ru">
+<link rel="alternate" hreflang="es" href="https://desk.volumeattack.ru/?lang=es">
+<link rel="alternate" hreflang="pt-BR" href="https://desk.volumeattack.ru/?lang=pt">
+<link rel="alternate" hreflang="de" href="https://desk.volumeattack.ru/?lang=de">
+<link rel="alternate" hreflang="fr" href="https://desk.volumeattack.ru/?lang=fr">
+<link rel="alternate" hreflang="ja" href="https://desk.volumeattack.ru/?lang=ja">
+<link rel="alternate" hreflang="zh-Hans" href="https://desk.volumeattack.ru/?lang=zh">
+<link rel="alternate" hreflang="ko" href="https://desk.volumeattack.ru/?lang=ko">
+<script>
+// language first, before anything is painted: ?lang= (the hreflang links) → the visitor's saved choice → navigator.languages → English
+var DESK_LANGS=["en","ru","es","pt","de","fr","ja","zh","ko"];
+function deskPick(){
+  var q=null,saved=null,i,l,p;
+  try{q=new URLSearchParams(location.search).get("lang");}catch(e){}
+  if(q&&DESK_LANGS.indexOf(q)>=0)return q;
+  try{saved=localStorage.getItem("desk-lang");}catch(e){}
+  if(saved&&DESK_LANGS.indexOf(saved)>=0)return saved;
+  var want=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||""]);
+  for(i=0;i<want.length;i++){
+    l=String(want[i]).toLowerCase();p=l.split("-")[0];
+    if(p==="zh"&&/-(hant|tw|hk|mo)\b/.test(l))continue;   // Traditional Chinese is not offered: look at the next language
+    if(DESK_LANGS.indexOf(p)>=0)return p;
+  }
+  return "en";
+}
+var DESK_LANG=deskPick();
+document.documentElement.lang=({pt:"pt-BR",zh:"zh-Hans"})[DESK_LANG]||DESK_LANG;
+if(DESK_LANG!=="en")document.documentElement.setAttribute("data-pending","");   // hides the English text until it is swapped (no flash, no shift)
+</script>
+
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%23000'/%3E%3Cpath d='M126 86.7H96L118.5 0 60 105.3H90L67.5 192Z' fill='%23fff' transform='translate(24 24) scale(.75)'/%3E%3C/svg%3E">
 <!-- Source of the public site. Publish with tools/site/build.py (product/site.md); the markers [{"s":"pad","l":"close","r":"spacious"},{"s":"pad","l":"warm","r":"airy"},{"s":"drums","l":"dark","r":"bright"},{"s":"drums","l":"tucked","r":"upfront"},{"s":"vocal","l":"tucked","r":"upfront"},{"s":"vocal","l":"close","r":"spacious"},{"s":"lead","l":"close","r":"spacious"},{"s":"lead","l":"steady","r":"wobbly"},{"s":"fx","l":"warm","r":"airy"},{"s":"fx","l":"tucked","r":"upfront"},{"s":"bass","l":"heavy","r":"clear"},{"s":"bass","l":"dark","r":"bright"},{"s":"master","l":"warm","r":"airy"},{"s":"master","l":"quiet","r":"loud"}] and
-     ce05195705a0 are filled in by the build. Copy rule (founder, 2026-10-04): only what exists in main today and was verified,
+     b96d458fa9ed are filled in by the build. Copy rule (decided 2026-10-04): only what exists in main today and was verified,
      by tests or in Live. No dates, prices, plans, "coming soon", quality claims or numbers that were not measured. -->
 <style>
-@font-face{font-family:"Spline Sans Mono";src:url("fonts-ofl/SplineSansMono.ttf?v=ce05195705a0") format("truetype");font-weight:300 700;font-display:swap}
-@font-face{font-family:"Spline Sans";src:url("fonts-ofl/SplineSans.ttf?v=ce05195705a0") format("truetype");font-weight:300 700;font-display:swap}
+@font-face{font-family:"Spline Sans Mono";src:url("fonts-ofl/SplineSansMono.ttf?v=b96d458fa9ed") format("truetype");font-weight:300 700;font-display:swap}
+@font-face{font-family:"Spline Sans";src:url("fonts-ofl/SplineSans.ttf?v=b96d458fa9ed") format("truetype");font-weight:300 700;font-display:swap}
 :root{
-  --bg:#fff;--ink:#000;--grey:#767676;--line:#000;--soft:#f2f2f2;
+  --bg:#fff;--ink:#000;--grey:#6b6b6b;--line:#000;--soft:#f2f2f2;--acc:#ff4800;
   --font:"Spline Sans Mono",ui-monospace,SFMono-Regular,Menlo,monospace;--font-num:"Spline Sans",system-ui,sans-serif;
   --m-fast:160ms;--m:260ms;--m-slow:460ms;--e-out:cubic-bezier(.2,.8,.2,1);--e-io:cubic-bezier(.45,0,.2,1);
   color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111;--ink:#fff;--grey:#9a9a9a;--line:#fff;--soft:#1d1d1d;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#111;--ink:#fff;--grey:#9a9a9a;--line:#fff;--soft:#1d1d1d;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root{--bg:#111;--ink:#fff;--grey:#a0a0a0;--line:#fff;--soft:#1d1d1d;color-scheme:dark}}
+/* the English text is the markup; another language is swapped in before the first paint (script in <head> sets data-pending) */
+html[data-pending] body{visibility:hidden}
+/* Spline Sans has no Cyrillic or CJK: those scripts use the system's UI fonts, same size and weight */
+:lang(ru){--font:"Spline Sans Mono",ui-monospace,Menlo,"PT Mono","Roboto Mono",monospace;--font-num:"Spline Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+:lang(ja){--font:"Spline Sans Mono",ui-monospace,"Hiragino Sans","Yu Gothic UI","Noto Sans CJK JP","IPAGothic",monospace;--font-num:"Spline Sans","Hiragino Sans","Yu Gothic UI","Noto Sans CJK JP","IPAGothic",system-ui,sans-serif}
+:lang(zh){--font:"Spline Sans Mono",ui-monospace,"PingFang SC","Microsoft YaHei UI","Noto Sans CJK SC","WenQuanYi Zen Hei",monospace;--font-num:"Spline Sans","PingFang SC","Microsoft YaHei UI","Noto Sans CJK SC","WenQuanYi Zen Hei",system-ui,sans-serif}
+:lang(ko){--font:"Spline Sans Mono",ui-monospace,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR","WenQuanYi Zen Hei",monospace;--font-num:"Spline Sans","Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR","WenQuanYi Zen Hei",system-ui,sans-serif}
+:lang(ja) .cap,:lang(zh) .cap,:lang(ko) .cap{font-size:11px;line-height:14px}
+:lang(ja) h1,:lang(zh) h1,:lang(ko) h1{font-size:clamp(28px,4.6vw,48px);line-height:1.2;letter-spacing:0;text-wrap:balance;line-break:strict;word-break:keep-all}
+:lang(ja) .lede,:lang(zh) .lede,:lang(ko) .lede{line-break:strict}
 *{box-sizing:border-box;font-weight:400}
+/* Swiss / Bauhaus (DSK-30): text, headings and UI are the proportional sans; the mono is only for captions, numbers, keys and tags */
 html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-size-adjust:100%;scroll-padding-top:56px}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.6 var(--font);overflow-x:hidden;transition:background-color var(--m-slow) var(--e-io),color var(--m-slow) var(--e-io)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--font-num);overflow-x:hidden;transition:background-color var(--m-slow) var(--e-io),color var(--m-slow) var(--e-io)}
 a{color:inherit}
-p{margin:0 0 12px}
-h1,h2,h3{margin:0;font-weight:400;font-family:var(--font-num)}
-.cap{font-size:10px;line-height:12px;text-transform:uppercase}
+p{margin:0 0 16px}
+h1,h2,h3{margin:0;font-weight:600;font-family:var(--font-num)}
+.cap,.proof b,.hints li span:first-child,.infov,footer,.mark{font-family:var(--font)}
+.cap{font-size:10px;line-height:12px;text-transform:uppercase;letter-spacing:.02em}
+.sh>.cap::before,.cols>div>.cap::before{content:"";display:block;width:12px;height:12px;background:var(--acc);margin-bottom:12px}
+.cols>div>.cap::before{width:8px;height:8px;margin-bottom:8px}
 .g{color:var(--grey)}
 .wrap{max-width:1120px;margin:0 auto;padding:0 32px}
 .logo{width:16px;height:16px;flex:none;display:block}
@@ -38,14 +83,26 @@ h1,h2,h3{margin:0;font-weight:400;font-family:var(--font-num)}
 .top nav{display:flex;gap:16px;margin-left:auto}
 .top nav a{text-decoration:none;opacity:.6;transition:opacity var(--m-fast) var(--e-out)}
 .top nav a:hover,.top nav a:focus-visible{opacity:1}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;gap:2px}
-.seg button{appearance:none;border:0;background:none;color:var(--ink);border-radius:999px;padding:4px 10px;font:400 10px/12px var(--font);text-transform:uppercase;cursor:pointer;transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out)}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+/* language picker: a pill of the old toggle's size; the list opens under it */
+.lang{position:relative;display:inline-flex}
+.lang-b{appearance:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:none;color:var(--ink);border-radius:999px;padding:6px 10px 6px 12px;font:400 10px/12px var(--font);text-transform:uppercase;cursor:pointer;transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out);-webkit-tap-highlight-color:transparent}
+.lang-b:hover,.lang-b[aria-expanded="true"]{background:var(--ink);color:var(--bg)}
+.lang-b svg{width:8px;height:8px;flex:none;transition:transform var(--m-fast) var(--e-out)}
+.lang-b[aria-expanded="true"] svg{transform:rotate(180deg)}
+.lang-l{position:absolute;right:0;top:calc(100% + 8px);z-index:30;margin:0;padding:4px;list-style:none;min-width:176px;background:var(--bg);border:1px solid var(--line);border-radius:12px;opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity var(--m-fast) var(--e-out),transform var(--m-fast) var(--e-out),visibility 0s linear var(--m-fast)}
+.lang.open .lang-l{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+.lang-l li{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:6px 8px;border-radius:8px;font:400 13px/20px var(--font-num);cursor:pointer;-webkit-user-select:none;user-select:none}
+.lang-l li span{font:400 10px/12px var(--font);text-transform:uppercase;color:var(--grey)}
+.lang-l li:hover,.lang-l li.cur{background:var(--soft)}
+.lang-l li[aria-selected="true"]::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--ink);order:3}
+.lang-b:focus-visible,.lang-l:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
+.lang-l:focus{outline:0}
+.lang-l:focus-visible li.cur{outline:1px solid var(--ink);outline-offset:-1px}
 
 /* hero */
-.hero{padding-top:56px;padding-bottom:48px}
-.hero h1{font-size:clamp(32px,5.4vw,56px);line-height:1.05;letter-spacing:-.03em;margin:16px 0}
-.lede{max-width:62ch;font-size:15px}
+.hero{padding-top:72px;padding-bottom:64px}
+.hero h1{font-size:clamp(40px,8vw,96px);line-height:.98;letter-spacing:-.04em;font-weight:700;margin:24px 0 32px}
+.lede{max-width:56ch;font-size:20px;line-height:1.5}
 .stage{margin:40px 0 0}
 .stage>.cap{margin-bottom:12px}
 /* the device: the real device page (device/index.html) in a frame of the device's own size and corners */
@@ -54,44 +111,49 @@ h1,h2,h3{margin:0;font-weight:400;font-family:var(--font-num)}
 .under{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;margin-top:16px;align-items:start}
 .hints{display:grid;gap:4px;margin:0;padding:0;list-style:none}
 .hints li{display:flex;gap:8px}
-.hints li span:first-child{min-width:128px;flex:none}
+.hints li span:first-child{min-width:128px;flex:none;max-width:40%}
+.hints li span.g{font:400 13px/18px var(--font-num);text-transform:none;letter-spacing:0}
+.hints li{align-items:baseline;border-top:1px solid var(--line);padding:6px 0}
+.hints{gap:0}
 /* the device's own help text (what it writes about the control under the pointer) */
-.infov{background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 12px;min-height:124px;font:400 10px/14px var(--font)}
+.infov{background:var(--ink);color:var(--bg);border-radius:4px;padding:10px 12px;min-height:124px;font:400 10px/14px var(--font)}
 .infov b{display:block;font-weight:400;text-transform:uppercase;margin-bottom:6px}
 .infov p{margin:0;white-space:pre-line;font-variant-numeric:tabular-nums}
 
 /* sections */
-.sec{border-top:1px solid var(--line);padding:56px 0}
-.sh{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;margin-bottom:32px}
-.sh h2{font-size:clamp(24px,3vw,32px);line-height:1.15;letter-spacing:-.02em;margin-bottom:12px;max-width:26ch}
-.sh p{max-width:64ch}
+.sec{border-top:1px solid var(--line);padding:72px 0}
+.sh{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;margin-bottom:48px}
+.sh h2{font-size:clamp(28px,4.4vw,56px);line-height:1.04;letter-spacing:-.035em;font-weight:700;margin-bottom:24px;max-width:18ch}
+.sh p{max-width:60ch;font-size:18px;line-height:1.55}
 .cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
-.cols h3{font-size:17px;margin:8px 0}
-.cols p{font-size:13px}
-.proof{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:32px}
-.proof div{padding:16px 12px;border-left:1px solid var(--line)}
+.cols h3{font-size:22px;line-height:1.2;letter-spacing:-.015em;margin:8px 0 12px}
+.cols p{font-size:16px;max-width:36ch}
+.proof{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:0;border-top:4px solid var(--ink);border-bottom:1px solid var(--line);margin-bottom:48px}
+.proof div{padding:16px 16px 20px 0;border-left:0}
 .proof div:first-child{border-left:0}
 .proof .cap{display:block}
-.proof b{display:block;font:400 32px/32px var(--font-num);font-feature-settings:"lnum" 1;letter-spacing:-.02em;margin-bottom:8px}
+.proof b{display:block;font:700 64px/64px var(--font-num);font-feature-settings:"lnum" 1;letter-spacing:-.04em;margin-bottom:8px}
 .words{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-bottom:32px}
-.w{border-radius:12px;padding:8px 12px 12px;color:#000}
+.w{border-radius:4px;padding:12px 12px 16px;color:#000}
 .w .cap{display:block;margin-bottom:8px}
-.w div{font-size:13px;line-height:20px}
+.w div{font-size:15px;line-height:22px;font-weight:500}
 .req{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px}
-.req div{border-bottom:1px solid var(--line);padding:12px 0}
-.req div p{margin:0;font-size:13px}
+.req div{border-bottom:1px solid var(--line);padding:16px 0 20px}
+.req div p{margin:0;font-size:16px}
 footer{border-top:1px solid var(--line);padding:24px 0 40px}
 footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 @media (max-width:900px){
   .top nav{display:none}
-  .seg.theme{margin-left:auto}
+  .lang{margin-left:auto}
   .under{grid-template-columns:minmax(0,1fr)}
   .sh{grid-template-columns:minmax(0,1fr);gap:8px}
   .cols{grid-template-columns:minmax(0,1fr)}
   .proof{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .proof div:nth-child(odd){border-left:0}
   .proof div:nth-child(n+3){border-top:1px solid var(--line)}
+  .proof b{font-size:48px;line-height:48px}
+  .lede{font-size:18px}
+  .sh p{font-size:17px}
   .words{grid-template-columns:repeat(2,minmax(0,1fr))}
   .req{grid-template-columns:minmax(0,1fr)}
 }
@@ -99,111 +161,517 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   .wrap{padding:0 16px}
   .hints li span:first-child{min-width:104px}
 }
+/* sticker (DSK-30, option A «Dial»): one round accent badge on the hero's top right edge; tilted, it straightens on hover / focus; a tap goes to the demo and lights its MINE key */
+.hero{position:relative}
+.stk{appearance:none;position:absolute;right:32px;top:40px;z-index:5;width:152px;height:152px;border-radius:50%;border:0;background:var(--acc);color:#000;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;cursor:pointer;transform:rotate(-12deg);transition:transform var(--m) var(--e-out);-webkit-tap-highlight-color:transparent;font-family:var(--font-num)}
+.stk b{font:700 28px/28px var(--font-num);letter-spacing:-.02em}
+.stk span{font:400 12px/15px var(--font-num);max-width:104px}
+.stk:hover,.stk:focus-visible{transform:rotate(0)}
+.stk:focus-visible{outline:1px solid var(--ink);outline-offset:4px}
+.fit{position:relative}
+.hl{position:absolute;pointer-events:none;border:1px solid var(--acc);border-radius:4px;box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 35%,transparent);opacity:0;transition:opacity var(--m-fast) var(--e-out)}
+.hl.on{opacity:1}
+@media (max-width:900px){.stk{position:relative;right:auto;top:auto;margin:16px 0 -8px auto;width:96px;height:96px;gap:2px}.stk b{font-size:20px;line-height:20px}.stk span{font-size:10px;line-height:12px;max-width:72px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:0s!important}}
 </style>
+<!-- Vercel Web Analytics: cookieless page views, served by Vercel at /_vercel/insights/script.js (404 off Vercel, harmless) -->
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 <header class="top"><div class="wrap">
   <a class="mark" href="#top"><svg class="logo" viewBox="0 0 192 192" aria-hidden="true"><path d="M126 86.7097H95.9992L118.499 0L60 105.29H89.9986L67.4991 192L126 86.7097Z" fill="currentColor"/></svg><span>Desk <span class="g">by Volume Attack</span></span></a>
-  <nav aria-label="Sections"><a href="#project">Project</a><a href="#meaning">Meaning</a><a href="#mine">Mine</a><a href="#status">Status</a></nav>
-  <div class="seg theme" role="group" aria-label="Page theme"><button type="button" data-theme-set="light">Light</button><button type="button" data-theme-set="dark">Dark</button></div>
+  <nav aria-label="Sections" data-i="nav.aria" data-a="aria-label"><a href="#project" data-i="nav.project">Project</a><a href="#meaning" data-i="nav.meaning">Meaning</a><a href="#mine" data-i="nav.mine">Mix</a><a href="#status" data-i="nav.status">Status</a></nav>
+  <div class="lang" id="lang">
+    <button type="button" class="lang-b" id="lang-b" aria-haspopup="listbox" aria-expanded="false" aria-controls="lang-l" aria-label="Language"><span id="lang-c">EN</span><svg viewBox="0 0 8 8" aria-hidden="true"><path d="M1 2.5 4 5.5 7 2.5" fill="none" stroke="currentColor" stroke-width="1"/></svg></button>
+    <ul class="lang-l" id="lang-l" role="listbox" tabindex="-1" aria-label="Language"></ul>
+  </div>
 </div></header>
 
 <main id="top">
 <section class="hero wrap" aria-labelledby="h1">
-  <p class="cap">Max for Live device for Ableton Live 12 · in development</p>
-  <h1 id="h1">Turn meaning,<br>not knobs.</h1>
-  <p class="lede">Desk reads your Live set, groups the tracks into modules by their job in the song and gives each module two knobs in plain words: <i>tucked ↔ upfront</i>, <i>heavy ↔ clear</i>. The centre of every knob is MINE: the mix Desk built for this track. Everything it moves is a stock Live device you can open.</p>
+  <p class="cap" data-i="hero.cap">For Ableton Live 12 with Max for Live · in development</p>
+  <button type="button" class="stk" id="stk" data-i="stk.a" data-a="aria-label" aria-label="MINE, the middle of every knob. Go to the demo."><b aria-hidden="true">MINE</b><span aria-hidden="true" data-i="stk.t">The middle of every knob</span></button>
+  <h1 id="h1" data-i="hero.h1">Turn meaning,<br>not knobs.</h1>
+  <p class="lede" data-i="hero.lede">Desk looks at your Ableton project and sorts the tracks by what they do in the song: drums, bass, vocal, and so on. Each group gets two knobs with plain words at the ends, like <i>tucked ↔ upfront</i> or <i>heavy ↔ clear</i>. Turn a knob and Desk moves the Live devices behind it. The middle of every knob is MINE: the mix Desk set up for your track.</p>
 
   <figure class="stage" aria-labelledby="cap-dev">
-    <p class="cap g" id="cap-dev">The device as it is today, in Desk's own colours. Demo data: one real analysis of our promo track. Nothing here talks to Live.</p>
-    <div class="fit" id="fit"><iframe class="devf" id="devf" src="device/index.html?embed&amp;mode=desk&amp;v=ce05195705a0" title="Desk device, interactive demo" scrolling="no"></iframe></div>
+    <p class="cap g" id="cap-dev" data-i="stage.cap">This is the device as it looks today. The demo replays one real analysis of our own track. It is not connected to Live. The device's own labels are in English.</p>
+    <div class="fit" id="fit"><i class="hl" id="hl" aria-hidden="true"></i><iframe class="devf" id="devf" src="device/index.html?embed&amp;mode=desk&amp;v=b96d458fa9ed" title="Desk device, interactive demo" data-i="stage.frame" data-a="title" scrolling="no"></iframe></div>
     <div class="under">
       <ul class="hints cap">
-        <li><span>Drag a knob</span><span class="g">up or down to turn it; Shift for fine steps</span></li>
-        <li><span>Master pad</span><span class="g">drag the dot: warm ↔ airy, quiet ↔ loud</span></li>
-        <li><span>Double-click</span><span class="g">back to MINE</span></li>
-        <li><span>Shift + digits</span><span class="g">type a value: Shift 4 = +4, Shift 0 = MINE</span></li>
-        <li><span>Module name</span><span class="g">tap to bypass that module; drag to reorder</span></li>
-        <li><span>MINE · BP</span><span class="g">hold to hear while held, click to switch on and off</span></li>
-        <li><span>Round key, left</span><span class="g">re-analyze: replays the recorded analysis, 4× faster</span></li>
+        <li><span data-i="h1.k">Drag a knob</span><span class="g" data-i="h1.v">up or down to turn it; hold Shift for small steps</span></li>
+        <li><span data-i="h2.k">Master pad</span><span class="g" data-i="h2.v">drag the dot: warm ↔ airy, quiet ↔ loud</span></li>
+        <li><span data-i="h3.k">Double-click</span><span class="g" data-i="h3.v">back to MINE</span></li>
+        <li><span data-i="h4.k">Shift + digits</span><span class="g" data-i="h4.v">type a value: Shift 4 = +4, Shift 0 = back to MINE</span></li>
+        <li><span data-i="h5.k">Group name</span><span class="g" data-i="h5.v">click to switch that group off; drag to change the order</span></li>
+        <li><span>MINE · BP</span><span class="g" data-i="h6.v">hold to listen while you hold, click to switch on and off</span></li>
+        <li><span data-i="h7.k">Round key, left</span><span class="g" data-i="h7.v">analyse again (the demo replays the recording, 4× faster)</span></li>
       </ul>
-      <div class="infov" aria-live="polite"><b id="iv-t">Desk</b><p id="iv-p">Point at anything on the device: this is the help text it writes for each control.</p></div>
+      <div class="infov" aria-live="polite"><b id="iv-t">Desk</b><p id="iv-p" data-i="info.def">Point at anything on the device: this is the help text it writes for each control.</p></div>
     </div>
   </figure>
 </section>
 
 <section class="sec" id="project" aria-labelledby="h-project"><div class="wrap">
-  <div class="sh"><p class="cap">01 · In your project</p><div><h2 id="h-project">Not a file. Your set.</h2>
-    <p>Desk works on the tracks of your set, inside Live: no bouncing, no uploads. ANALYZE reads the tracks, groups them into modules, checks the master and builds the knobs on Live's own devices.</p></div></div>
-  <div class="proof" aria-label="One analysis of our promo track, recorded 2026-10-03">
-    <div><b>11</b><span class="cap g">tracks read</span></div>
-    <div><b>6</b><span class="cap g">modules + master</span></div>
-    <div><b>14</b><span class="cap g">meaning knobs</span></div>
-    <div><b>0</b><span class="cap g">third-party plugins</span></div>
-    <div><b>29.7</b><span class="cap g">seconds, the whole analysis</span></div>
+  <div class="sh"><p class="cap" data-i="s1.cap">01 · In your project</p><div><h2 id="h-project" data-i="s1.h">Not a file. Your project.</h2>
+    <p data-i="s1.p">Desk works inside Live, on the tracks you already have. You don't export or upload anything. Press ANALYZE and Desk reads the tracks, groups them, adds knobs for the master, and sets everything up on Live's own devices.</p></div></div>
+  <div class="proof" aria-label="One analysis of our own track, recorded 3 Oct 2026" data-i="proof.aria" data-a="aria-label">
+    <div><b>11</b><span class="cap g" data-i="proof.1">tracks read</span></div>
+    <div><b>6</b><span class="cap g" data-i="proof.2">groups + master</span></div>
+    <div><b>14</b><span class="cap g" data-i="proof.3">knobs</span></div>
+    <div><b>0</b><span class="cap g" data-i="proof.4">plugins from other makers (in this set)</span></div>
   </div>
   <div class="cols">
-    <div><p class="cap">01</p><h3>Modules by job</h3><p>Tracks are grouped by what they do in the song. Six modules fit on one level; more go on levels below, one key away.</p></div>
-    <div><p class="cap">02</p><h3>Live's own devices</h3><p>EQ Eight, Saturator, Limiter, Utility, track volume and sends. Every move Desk makes is on a device you can open, read and change.</p></div>
-    <div><p class="cap">03</p><h3>Your devices stay</h3><p>Desk adds its devices at the end of a track and sets values. It never removes a device of yours.</p></div>
+    <div><p class="cap">01</p><h3 data-i="c1.h">Groups by job</h3><p data-i="c1.p">Tracks are grouped by what they do in the song. The device shows six groups at a time; more are one key away.</p></div>
+    <div><p class="cap">02</p><h3 data-i="c2.h">Live's own devices</h3><p data-i="c2.p">EQ Eight, Saturator, Limiter, Utility, Drum Buss, track volume and sends. Every move happens on a device you can open, read and change.</p></div>
+    <div><p class="cap">03</p><h3 data-i="c3.h">Your devices stay</h3><p data-i="c3.p">Desk adds its own devices at the end of a track and changes values such as volume and sends. It never removes a device you put there. One Cmd+Z takes the whole analysis back.</p></div>
   </div>
 </div></section>
 
 <section class="sec" id="meaning" aria-labelledby="h-meaning"><div class="wrap">
-  <div class="sh"><p class="cap">02 · Meaning</p><div><h2 id="h-meaning">Turn the meaning. Desk turns the devices.</h2>
-    <p>These are the knobs Desk built for our promo track. Each one reads from −10 to +10 around MINE, and its help text lists the devices it moves in their own units: dB, Hz, %.</p></div></div>
+  <div class="sh"><p class="cap" data-i="s2.cap">02 · Meaning</p><div><h2 id="h-meaning" data-i="s2.h">Turn the meaning. Desk turns the devices.</h2>
+    <p data-i="s2.p">These are the knobs Desk made for our own track. Each goes from −10 to +10 around MINE. Point at a knob and its help text lists what it moves, in dB, Hz and %.</p></div></div>
   <div class="words" id="words"></div>
 </div></section>
 
 <section class="sec" id="mine" aria-labelledby="h-mine"><div class="wrap">
-  <div class="sh"><p class="cap">03 · Your mix is the centre</p><div><h2 id="h-mine">MINE is one click away.</h2>
-    <p>The centre of every knob is MINE, the mix Desk built for this track. BP (bypass) is your original. The keys work on the demo at the top of the page.</p></div></div>
+  <div class="sh"><p class="cap" data-i="s3.cap">03 · Your mix stays in reach</p><div><h2 id="h-mine" data-i="s3.h">One click back to MINE.</h2>
+    <p data-i="s3.p">MINE is the mix Desk built for your track, and the middle of every knob. BP (bypass) plays your original. Try both keys in the demo at the top.</p></div></div>
   <div class="cols">
-    <div><p class="cap">Mine</p><h3>Hear MINE</h3><p>Hold MINE to hear Desk's mix while held; click to switch it on and off. Grey dots keep your own positions. Double-click a knob to send it back to MINE.</p></div>
-    <div><p class="cap">Bypass</p><h3>Hear your original</h3><p>BP switches all of Desk's processing off, master included; only a safety limiter stays. Tap a module's name to bypass just that module.</p></div>
-    <div><p class="cap">Loudness</p><h3>Measured on the master</h3><p>An EBU R128 meter inside the device reads the master while the song plays: short-term loudness, and what Spotify's −14 LUFS normalisation will do once it has 10 seconds of the song. On this page there is no audio, so the number is the device's estimate from the master pad.</p></div>
+    <div><p class="cap" data-i="m1.cap">Mine</p><h3 data-i="m1.h">Hear MINE</h3><p data-i="m1.p">Hold MINE to hear Desk's mix while you hold it, or click to switch it on and off. Grey dots remember where your own knobs were. Double-click a knob to send it back to MINE.</p></div>
+    <div><p class="cap" data-i="m2.cap">Bypass</p><h3 data-i="m2.h">Hear your original</h3><p data-i="m2.p">BP switches off everything Desk did, the master too. Only a safety limiter stays on. Click a group's name to switch off just that group.</p></div>
+    <div><p class="cap" data-i="m3.cap">Loudness</p><h3 data-i="m3.h">Loudness, measured</h3><p data-i="m3.p">A loudness meter (EBU R128, the broadcast standard) sits inside the device and reads your master while the song plays. After 10 seconds it also shows how much Spotify would turn the song up or down to reach its −14 LUFS level. This page has no audio, so here the number is an estimate from the master pad.</p></div>
   </div>
 </div></section>
 
 <section class="sec" id="status" aria-labelledby="h-status"><div class="wrap">
-  <div class="sh"><p class="cap">04 · Status</p><div><h2 id="h-status">In development.</h2>
-    <p>Desk is not available yet. This is where it stands today.</p></div></div>
+  <div class="sh"><p class="cap" data-i="s4.cap">04 · Status</p><div><h2 id="h-status" data-i="s4.h">In development.</h2>
+    <p data-i="s4.p">Desk is not available yet. This is where it stands today.</p></div></div>
   <div class="req">
-    <div><p class="cap">Live</p><p>Developed on Ableton Live 12.4 Suite, which includes Max for Live.</p></div>
-    <div><p class="cap">Your audio</p><p>Stays on your computer: Desk reads the set and measures the master locally.</p></div>
-    <div><p class="cap">Tested</p><p>Every change runs through automated checks of the device, the knob math and the interface before it is merged.</p></div>
-    <div><p class="cap">Contact</p><p><a href="https://volumeattack.ru">volumeattack.ru</a></p></div>
+    <div><p class="cap">Live</p><p data-i="r1.p">Built and tested on Ableton Live 12.4 Suite, which includes Max for Live.</p></div>
+    <div><p class="cap" data-i="r2.cap">Your audio</p><p data-i="r2.p">Stays on your computer. Desk reads the project and measures the master on your machine, and sends nothing anywhere.</p></div>
+    <div><p class="cap" data-i="r3.cap">Tested</p><p data-i="r3.p">Every change passes automatic tests of the device, the knob maths and the interface before it is added.</p></div>
+    <div><p class="cap" data-i="r4.cap">Contact</p><p><a href="https://volumeattack.ru">volumeattack.ru</a></p></div>
   </div>
 </div></section>
 </main>
 
-<footer><div class="wrap cap"><span>Volume Attack · <a href="https://volumeattack.ru">volumeattack.ru</a></span><span class="g">Ableton and Live are trademarks of Ableton AG. Desk is not affiliated with Ableton.</span></div></footer>
+<footer><div class="wrap cap"><span>Volume Attack · <a href="https://volumeattack.ru">volumeattack.ru</a></span><span class="g" data-i="foot">Ableton and Live are trademarks of Ableton AG. Desk is not affiliated with Ableton.</span></div></footer>
 
 <script>
+// Landing copy per language. English is the page's own markup (data-i keys); the dictionary only holds the other eight.
+// Kept as written: Desk, MINE, BP, BYPASS, ANALYZE, Ableton Live, Max for Live, Live's device names (EQ Eight, Saturator, Limiter, Utility), EBU R128, LUFS, Spotify.
+const I18N={
+ru:{
+ "meta.desc":"Desk от Volume Attack: устройство Max for Live в разработке. Читает ваш сет в Ableton, раскладывает дорожки по модулям и даёт каждому модулю две ручки простыми словами — на штатных устройствах Live.",
+ 
+ "lang.aria":"Язык",
+ "nav.aria":"Разделы","nav.project":"Проект","nav.meaning":"Смысл","nav.mine":"MINE","nav.status":"Статус",
+ 
+ "hero.h1":"Крутите смысл,<br>а не ручки.",
+ 
+ 
+ "stage.frame":"Устройство Desk, интерактивное демо",
+ "h1.k":"Потяните ручку",
+ "h2.k":"Мастер-пад","h2.v":"двигайте точку: тёплый ↔ воздушный, тише ↔ громче",
+ "h3.k":"Двойной клик","h3.v":"возврат к MINE",
+ "h4.k":"Shift + цифры",
+ 
+ 
+ "h7.k":"Круглая клавиша слева",
+ "info.def":"Наведите на любой элемент устройства — так выглядит подсказка, которую оно пишет для каждого регулятора.",
+ "s1.cap":"01 · В вашем проекте",
+ 
+ 
+ "proof.1":"дорожек прочитано",
+ 
+ "c2.h":"Штатные устройства Live",
+ "c3.h":"Ваши устройства остаются",
+ "s2.cap":"02 · Смысл","s2.h":"Крутите смысл. Устройства покрутит Desk.",
+ 
+ 
+ 
+ "m1.cap":"MINE","m1.h":"Послушать MINE",
+ "m2.cap":"Bypass","m2.h":"Послушать оригинал",
+ "m3.cap":"Громкость",
+ "s4.cap":"04 · Статус","s4.h":"В разработке.","s4.p":"Desk пока недоступен. Вот как обстоят дела сегодня.",
+ 
+ "r2.cap":"Ваше аудио",
+ "r3.cap":"Проверки",
+ "r4.cap":"Контакты",
+ "stk.t":"Середина каждой ручки",
+ "stk.a":"MINE, середина каждой ручки. Перейти к демо.",
+ "foot":"Ableton и Live — товарные знаки Ableton AG. Desk не связан с Ableton."
+},
+es:{
+ "meta.desc":"Desk de Volume Attack: un dispositivo Max for Live en desarrollo. Lee tu set de Ableton, agrupa las pistas en módulos y da a cada módulo dos mandos con palabras claras, sobre los dispositivos propios de Live.",
+ 
+ "lang.aria":"Idioma",
+ "nav.aria":"Secciones","nav.project":"Proyecto","nav.meaning":"Sentido","nav.mine":"MINE","nav.status":"Estado",
+ 
+ "hero.h1":"Ajusta el sentido,<br>no los mandos.",
+ 
+ 
+ "stage.frame":"Dispositivo Desk, demostración interactiva",
+ "h1.k":"Arrastra un mando",
+ "h2.k":"Pad del master","h2.v":"arrastra el punto: cálido ↔ aéreo, suave ↔ fuerte",
+ "h3.k":"Doble clic","h3.v":"vuelve a MINE",
+ "h4.k":"Shift + cifras",
+ 
+ 
+ "h7.k":"Tecla redonda, a la izquierda",
+ "info.def":"Apunta a cualquier cosa del dispositivo: este es el texto de ayuda que escribe para cada control.",
+ "s1.cap":"01 · En tu proyecto",
+ 
+ 
+ "proof.1":"pistas leídas",
+ 
+ "c2.h":"Dispositivos propios de Live",
+ "c3.h":"Tus dispositivos se quedan",
+ "s2.cap":"02 · Sentido","s2.h":"Tú mueves el sentido. Desk mueve los dispositivos.",
+ 
+ 
+ 
+ "m1.cap":"MINE","m1.h":"Escucha MINE",
+ "m2.cap":"Bypass","m2.h":"Escucha tu original",
+ "m3.cap":"Volumen",
+ "s4.cap":"04 · Estado","s4.h":"En desarrollo.","s4.p":"Desk todavía no está disponible. Así están las cosas hoy.",
+ 
+ "r2.cap":"Tu audio",
+ "r3.cap":"Pruebas",
+ "r4.cap":"Contacto",
+ "stk.t":"El centro de cada mando",
+ "stk.a":"MINE, el centro de cada mando. Ir a la demo.",
+ "foot":"Ableton y Live son marcas registradas de Ableton AG. Desk no está afiliado a Ableton."
+},
+pt:{
+ "meta.desc":"Desk, da Volume Attack: um dispositivo Max for Live em desenvolvimento. Lê o seu set do Ableton, agrupa as faixas em módulos e dá a cada módulo dois knobs em palavras simples, sobre os dispositivos nativos do Live.",
+ 
+ "lang.aria":"Idioma",
+ "nav.aria":"Seções","nav.project":"Projeto","nav.meaning":"Sentido","nav.mine":"MINE","nav.status":"Status",
+ 
+ "hero.h1":"Gire o sentido,<br>não os knobs.",
+ 
+ 
+ "stage.frame":"Dispositivo Desk, demonstração interativa",
+ "h1.k":"Arraste um knob",
+ "h2.k":"Pad do master","h2.v":"arraste o ponto: quente ↔ arejado, baixo ↔ alto",
+ "h3.k":"Clique duplo","h3.v":"volta ao MINE",
+ "h4.k":"Shift + números",
+ 
+ 
+ "h7.k":"Tecla redonda, à esquerda",
+ "info.def":"Aponte para qualquer coisa no dispositivo: este é o texto de ajuda que ele escreve para cada controle.",
+ "s1.cap":"01 · No seu projeto",
+ 
+ 
+ "proof.1":"faixas lidas",
+ 
+ "c2.h":"Dispositivos nativos do Live",
+ "c3.h":"Os seus dispositivos ficam",
+ "s2.cap":"02 · Sentido","s2.h":"Você gira o sentido. O Desk gira os dispositivos.",
+ 
+ 
+ 
+ "m1.cap":"MINE","m1.h":"Ouça o MINE",
+ "m2.cap":"Bypass","m2.h":"Ouça o seu original",
+ "m3.cap":"Volume",
+ "s4.cap":"04 · Status","s4.h":"Em desenvolvimento.","s4.p":"O Desk ainda não está disponível. É assim que as coisas estão hoje.",
+ 
+ "r2.cap":"O seu áudio",
+ "r3.cap":"Testes",
+ "r4.cap":"Contato",
+ "stk.t":"O centro de cada knob",
+ "stk.a":"MINE, o centro de cada knob. Ir para a demo.",
+ "foot":"Ableton e Live são marcas registradas da Ableton AG. O Desk não é afiliado à Ableton."
+},
+de:{
+ "meta.desc":"Desk von Volume Attack: ein Max-for-Live-Device in Entwicklung. Es liest dein Ableton-Set, gruppiert die Spuren zu Modulen und gibt jedem Modul zwei Regler in klaren Worten – gebaut auf Lives eigenen Devices.",
+ 
+ "lang.aria":"Sprache",
+ "nav.aria":"Abschnitte","nav.project":"Projekt","nav.meaning":"Bedeutung","nav.mine":"MINE","nav.status":"Stand",
+ 
+ "hero.h1":"Dreh an der Bedeutung,<br>nicht an Reglern.",
+ 
+ 
+ "stage.frame":"Desk-Device, interaktive Demo",
+ "h1.k":"Regler ziehen",
+ "h2.k":"Master-Pad","h2.v":"den Punkt ziehen: warm ↔ luftig, leise ↔ laut",
+ "h3.k":"Doppelklick","h3.v":"zurück auf MINE",
+ "h4.k":"Shift + Ziffern",
+ 
+ 
+ "h7.k":"Runde Taste links",
+ "info.def":"Zeig auf irgendetwas am Device: So sieht der Hilfetext aus, den es für jedes Bedienelement schreibt.",
+ "s1.cap":"01 · In deinem Projekt",
+ 
+ 
+ "proof.1":"Spuren gelesen",
+ 
+ "c2.h":"Lives eigene Devices",
+ "c3.h":"Deine Devices bleiben",
+ "s2.cap":"02 · Bedeutung","s2.h":"Du drehst die Bedeutung. Desk dreht die Devices.",
+ 
+ 
+ 
+ "m1.cap":"MINE","m1.h":"MINE hören",
+ "m2.cap":"Bypass","m2.h":"Dein Original hören",
+ "m3.cap":"Lautheit",
+ "s4.cap":"04 · Stand","s4.h":"In Entwicklung.","s4.p":"Desk ist noch nicht verfügbar. So steht es heute.",
+ 
+ "r2.cap":"Dein Audio",
+ "r3.cap":"Getestet",
+ "r4.cap":"Kontakt",
+ "stk.t":"Die Mitte jedes Reglers",
+ "stk.a":"MINE, die Mitte jedes Reglers. Zur Demo.",
+ "foot":"Ableton und Live sind Marken der Ableton AG. Desk steht in keiner Verbindung zu Ableton."
+},
+fr:{
+ "meta.desc":"Desk de Volume Attack : un device Max for Live en développement. Il lit votre set Ableton, regroupe les pistes en modules et donne à chaque module deux boutons en mots simples, bâtis sur les devices natifs de Live.",
+ 
+ "lang.aria":"Langue",
+ "nav.aria":"Sections","nav.project":"Projet","nav.meaning":"Sens","nav.mine":"MINE","nav.status":"État",
+ 
+ "hero.h1":"Tournez le sens,<br>pas les boutons.",
+ 
+ 
+ "stage.frame":"Device Desk, démo interactive",
+ "h1.k":"Faire glisser un bouton",
+ "h2.k":"Pad master","h2.v":"déplacez le point : chaud ↔ aérien, doux ↔ fort",
+ "h3.k":"Double-clic","h3.v":"retour à MINE",
+ "h4.k":"Shift + chiffres",
+ 
+ 
+ "h7.k":"Touche ronde, à gauche",
+ "info.def":"Pointez n’importe quoi sur le device : voici le texte d’aide qu’il écrit pour chaque commande.",
+ "s1.cap":"01 · Dans votre projet",
+ 
+ 
+ "proof.1":"pistes lues",
+ 
+ "c2.h":"Les devices natifs de Live",
+ "c3.h":"Vos devices restent",
+ "s2.cap":"02 · Sens","s2.h":"Vous tournez le sens. Desk tourne les devices.",
+ 
+ 
+ 
+ "m1.cap":"MINE","m1.h":"Écouter MINE",
+ "m2.cap":"Bypass","m2.h":"Écouter votre original",
+ "m3.cap":"Volume sonore",
+ "s4.cap":"04 · État","s4.h":"En développement.","s4.p":"Desk n’est pas encore disponible. Voici où il en est aujourd’hui.",
+ 
+ "r2.cap":"Votre audio",
+ "r3.cap":"Testé",
+ "r4.cap":"Contact",
+ "stk.t":"Le milieu de chaque bouton",
+ "stk.a":"MINE, le milieu de chaque bouton. Aller à la démo.",
+ "foot":"Ableton et Live sont des marques d’Ableton AG. Desk n’est pas affilié à Ableton."
+},
+ja:{
+ "meta.desc":"Volume AttackのDesk：開発中のMax for Liveデバイス。Ableton Liveのセットを読み取り、トラックをモジュールにまとめ、各モジュールにわかりやすい言葉の2つのノブを用意します。土台はLive標準のデバイスです。",
+ 
+ "lang.aria":"言語",
+ "nav.aria":"セクション","nav.project":"プロジェクト","nav.meaning":"意味","nav.mine":"MINE","nav.status":"状況",
+ 
+ "hero.h1":"回すのは、ノブじゃない。<br>意味を回す。",
+ 
+ 
+ "stage.frame":"Deskデバイス、インタラクティブデモ",
+ "h1.k":"ノブをドラッグ",
+ "h2.k":"マスターパッド","h2.v":"点をドラッグ：暖かい ↔ 空気感、小さい ↔ 大きい",
+ "h3.k":"ダブルクリック","h3.v":"MINEに戻す",
+ "h4.k":"Shift + 数字",
+ 
+ 
+ "h7.k":"左の丸いキー",
+ "info.def":"デバイス上のどこかにポインタを合わせてください。各コントロールについてデバイスが書くヘルプがここに出ます。",
+ "s1.cap":"01 · あなたのプロジェクトで",
+ 
+ 
+ "proof.1":"トラックを読み取り",
+ 
+ "c2.h":"Live標準のデバイス",
+ "c3.h":"あなたのデバイスはそのまま",
+ "s2.cap":"02 · 意味","s2.h":"意味を回せば、デバイスはDeskが回す。",
+ 
+ 
+ 
+ "m1.cap":"MINE","m1.h":"MINEを聴く",
+ "m2.cap":"Bypass","m2.h":"元の音を聴く",
+ "m3.cap":"ラウドネス",
+ "s4.cap":"04 · 状況","s4.h":"開発中。","s4.p":"Deskはまだ公開されていません。現在の状況は次のとおりです。",
+ 
+ "r2.cap":"あなたの音声",
+ "r3.cap":"テスト",
+ "r4.cap":"連絡先",
+ "stk.t":"すべてのノブの中心",
+ "stk.a":"MINE、すべてのノブの中心。デモへ。",
+ "foot":"AbletonおよびLiveはAbleton AGの商標です。DeskはAbletonとは提携していません。"
+},
+zh:{
+ "meta.desc":"Volume Attack 出品的 Desk：开发中的 Max for Live 设备。它读取你的 Ableton 工程，把轨道归入模块，并为每个模块配上两个用大白话命名的旋钮，全部建立在 Live 自带设备之上。",
+ 
+ "lang.aria":"语言",
+ "nav.aria":"章节","nav.project":"项目","nav.meaning":"含义","nav.mine":"MINE","nav.status":"进展",
+ 
+ "hero.h1":"调的是意思，<br>不是旋钮。",
+ 
+ 
+ "stage.frame":"Desk 设备，交互演示",
+ "h1.k":"拖动旋钮",
+ "h2.k":"主控面板","h2.v":"拖动圆点：温暖 ↔ 空气感，轻 ↔ 响",
+ "h3.k":"双击","h3.v":"回到 MINE",
+ "h4.k":"Shift + 数字",
+ 
+ 
+ "h7.k":"左侧圆形按键",
+ "info.def":"把指针移到设备上的任何位置：这是它为每个控件写的帮助文字。",
+ "s1.cap":"01 · 在你的工程里",
+ 
+ 
+ "proof.1":"已读取的轨道",
+ 
+ "c2.h":"Live 自带设备",
+ "c3.h":"你的设备原样保留",
+ "s2.cap":"02 · 含义","s2.h":"你调含义，设备交给 Desk。",
+ 
+ 
+ 
+ "m1.cap":"MINE","m1.h":"听 MINE",
+ "m2.cap":"Bypass","m2.h":"听你的原始声音",
+ "m3.cap":"响度",
+ "s4.cap":"04 · 进展","s4.h":"开发中。","s4.p":"Desk 目前还不能使用。以下是现在的情况。",
+ 
+ "r2.cap":"你的音频",
+ "r3.cap":"测试",
+ "r4.cap":"联系",
+ "stk.t":"每个旋钮的中心",
+ "stk.a":"MINE，每个旋钮的中心。前往演示。",
+ "foot":"Ableton 和 Live 是 Ableton AG 的商标。Desk 与 Ableton 无关联。"
+},
+ko:{
+ "meta.desc":"Volume Attack의 Desk: 개발 중인 Max for Live 디바이스입니다. Ableton 세트를 읽어 트랙을 모듈로 묶고, 각 모듈에 쉬운 말로 된 노브 두 개를 만들어 줍니다. 기반은 Live 기본 디바이스입니다.",
+ 
+ "lang.aria":"언어",
+ "nav.aria":"섹션","nav.project":"프로젝트","nav.meaning":"의미","nav.mine":"MINE","nav.status":"현황",
+ 
+ "hero.h1":"노브가 아니라,<br>의미를 돌리세요.",
+ 
+ 
+ "stage.frame":"Desk 디바이스, 인터랙티브 데모",
+ "h1.k":"노브 드래그",
+ "h2.k":"마스터 패드","h2.v":"점을 끌어 보세요: 따뜻함 ↔ 공기감, 작게 ↔ 크게",
+ "h3.k":"더블클릭","h3.v":"MINE으로 되돌리기",
+ "h4.k":"Shift + 숫자",
+ 
+ 
+ "h7.k":"왼쪽 둥근 키",
+ "info.def":"디바이스의 아무 곳에나 포인터를 올려 보세요. 디바이스가 각 컨트롤에 대해 써 주는 도움말이 여기에 나옵니다.",
+ "s1.cap":"01 · 내 프로젝트 안에서",
+ 
+ 
+ "proof.1":"읽은 트랙",
+ 
+ "c2.h":"Live 기본 디바이스",
+ "c3.h":"내 디바이스는 그대로",
+ "s2.cap":"02 · 의미","s2.h":"의미는 내가 돌리고, 디바이스는 Desk가 돌립니다.",
+ 
+ 
+ 
+ "m1.cap":"MINE","m1.h":"MINE 듣기",
+ "m2.cap":"Bypass","m2.h":"원본 듣기",
+ "m3.cap":"라우드니스",
+ "s4.cap":"04 · 현황","s4.h":"개발 중.","s4.p":"Desk는 아직 사용할 수 없습니다. 지금 상황은 이렇습니다.",
+ 
+ "r2.cap":"내 오디오",
+ "r3.cap":"테스트",
+ "r4.cap":"문의",
+ "stk.t":"모든 노브의 중심",
+ "stk.a":"MINE, 모든 노브의 중심. 데모로 이동.",
+ "foot":"Ableton과 Live는 Ableton AG의 상표입니다. Desk는 Ableton과 제휴 관계가 없습니다."
+}
+};
 // the knobs of the demo analysis (filled in by tools/site/build.py from tests/fixtures/analyze/knobs.json)
 const KNOBS=[{"s":"pad","l":"close","r":"spacious"},{"s":"pad","l":"warm","r":"airy"},{"s":"drums","l":"dark","r":"bright"},{"s":"drums","l":"tucked","r":"upfront"},{"s":"vocal","l":"tucked","r":"upfront"},{"s":"vocal","l":"close","r":"spacious"},{"s":"lead","l":"close","r":"spacious"},{"s":"lead","l":"steady","r":"wobbly"},{"s":"fx","l":"warm","r":"airy"},{"s":"fx","l":"tucked","r":"upfront"},{"s":"bass","l":"heavy","r":"clear"},{"s":"bass","l":"dark","r":"bright"},{"s":"master","l":"warm","r":"airy"},{"s":"master","l":"quiet","r":"loud"}];
 // Desk look module colours (tools/knobs/design.js PALETTE)
 const COL={pad:"#add5ff",drums:"#ffd200",vocal:"#ff4800",lead:"#ff6390",fx:"#54e3d0",bass:"#2b6cff",master:"#c8c8c8"};
 const $=s=>document.querySelector(s),frame=$("#devf"),fit=$("#fit");
-const dark=()=>document.documentElement.dataset.theme?document.documentElement.dataset.theme==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
-// the page theme also sets the device's (Desk look: desk-light / desk-dark)
+const dark=()=>matchMedia("(prefers-color-scheme:dark)").matches;
+// the page follows the system theme, live; the device in the frame gets the same one (Desk look: desk-light / desk-dark)
 const tell=()=>{try{frame.contentWindow.postMessage({src:"desk-landing",look:"desk",dark:dark()},location.origin);}catch(e){/* not loaded */}};
-function paint(){document.querySelectorAll("[data-theme-set]").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.themeSet==="dark")===dark()));tell();}
-document.querySelectorAll("[data-theme-set]").forEach(b=>b.addEventListener("click",()=>{document.documentElement.dataset.theme=b.dataset.themeSet;paint();}));
-matchMedia("(prefers-color-scheme:dark)").addEventListener("change",paint);
+matchMedia("(prefers-color-scheme:dark)").addEventListener("change",tell);
+
+// language: DESK_LANG was chosen in <head>; English is the markup, the other eight come from I18N
+const LANGS=[["en","English","EN"],["ru","Русский","RU"],["es","Español","ES"],["pt","Português (Brasil)","PT"],["de","Deutsch","DE"],["fr","Français","FR"],["ja","日本語","JA"],["zh","简体中文","ZH"],["ko","한국어","KO"]];
+const LANG_TAG={pt:"pt-BR",zh:"zh-Hans"};
+const EN=new Map(),metaDesc=document.querySelector('meta[name="description"]');
+let lang=DESK_LANG,infoLive=false;
+function applyLang(code){
+  const T=I18N[code]||{};
+  lang=code;document.documentElement.lang=LANG_TAG[code]||code;
+  document.querySelectorAll("[data-i]").forEach(el=>{
+    const a=el.dataset.a;
+    if(!EN.has(el))EN.set(el,a?el.getAttribute(a):el.innerHTML);
+    const v=T[el.dataset.i]!==undefined?T[el.dataset.i]:EN.get(el);
+    if(a)el.setAttribute(a,v);else if(!(el.id==="iv-p"&&infoLive))el.innerHTML=v;
+  });
+  if(!EN.has(metaDesc))EN.set(metaDesc,metaDesc.content);
+  metaDesc.content=T["meta.desc"]||EN.get(metaDesc);
+  const cur=LANGS.find(l=>l[0]===code);
+  $("#lang-c").textContent=cur[2];
+  $("#lang-b").setAttribute("aria-label",(T["lang.aria"]||"Language")+": "+cur[1]);
+  $("#lang-l").setAttribute("aria-label",T["lang.aria"]||"Language");
+  document.querySelectorAll("#lang-l li").forEach(li=>li.setAttribute("aria-selected",String(li.dataset.c===code)));
+}
+// the picker: a button and a listbox (arrows, Home/End, Enter/Space, Esc; the list closes on Tab and on a click outside)
+const box=$("#lang"),btn=$("#lang-b"),list=$("#lang-l");
+list.innerHTML=LANGS.map(l=>`<li role="option" id="lo-${l[0]}" data-c="${l[0]}" lang="${LANG_TAG[l[0]]||l[0]}">${l[1]}<span>${l[2]}</span></li>`).join("");
+const opts=[...list.children];let hi=0;
+function mark(i){hi=(i+opts.length)%opts.length;opts.forEach((o,j)=>o.classList.toggle("cur",j===hi));list.setAttribute("aria-activedescendant",opts[hi].id);opts[hi].scrollIntoView({block:"nearest"});}
+function open(){box.classList.add("open");btn.setAttribute("aria-expanded","true");mark(LANGS.findIndex(l=>l[0]===lang));list.focus({preventScroll:true});}
+function close(back){box.classList.remove("open");btn.setAttribute("aria-expanded","false");if(back)btn.focus();}
+function choose(code){try{localStorage.setItem("desk-lang",code);}catch(e){/* private window: the choice lasts until the page closes */}applyLang(code);close(true);}
+btn.addEventListener("click",()=>box.classList.contains("open")?close(true):open());
+btn.addEventListener("keydown",e=>{if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();open();}});
+list.addEventListener("click",e=>{const o=e.target.closest("li");if(o)choose(o.dataset.c);});
+list.addEventListener("mousemove",e=>{const o=e.target.closest("li");if(o)mark(opts.indexOf(o));});
+list.addEventListener("keydown",e=>{
+  const k=e.key;
+  if(k==="ArrowDown"){e.preventDefault();mark(hi+1);}
+  else if(k==="ArrowUp"){e.preventDefault();mark(hi-1);}
+  else if(k==="Home"){e.preventDefault();mark(0);}
+  else if(k==="End"){e.preventDefault();mark(opts.length-1);}
+  else if(k==="Enter"||k===" "){e.preventDefault();choose(opts[hi].dataset.c);}
+  else if(k==="Escape"){e.preventDefault();close(true);}
+  else if(k==="Tab")close(false);
+});
+document.addEventListener("pointerdown",e=>{if(!box.contains(e.target))close(false);});
+try{applyLang(DESK_LANG);}finally{document.documentElement.removeAttribute("data-pending");}
 // the device page reports its help text and its size; the frame takes the device's width (scaled down on narrow screens)
 let devW=692;
 const size=()=>{frame.style.width=Math.min(devW,fit.clientWidth)+"px";};
 addEventListener("resize",size);
 addEventListener("message",e=>{if(e.origin!==location.origin||e.source!==frame.contentWindow||!e.data||e.data.src!=="desk-demo")return;const d=e.data;
   if(d.type==="hello")tell();
-  if(d.type==="info"){$("#iv-t").textContent=d.title;$("#iv-p").textContent=d.text;}
+  if(d.type==="info"){infoLive=true;$("#iv-t").textContent=d.title;$("#iv-p").textContent=d.text;}
   if(d.type==="size"&&d.w){devW=d.w;size();frame.style.height=d.h+"px";}});
 // meaning words (section 02)
 const by={};KNOBS.forEach(k=>(by[k.s]=by[k.s]||[]).push(k));
 $("#words").innerHTML=Object.keys(by).map(m=>`<div class="w" style="background:${COL[m]||"#c8c8c8"}"><span class="cap">${m}</span>${by[m].map(k=>`<div>${k.l} ↔ ${k.r}</div>`).join("")}</div>`).join("");
-paint();size();
+// sticker: go to the demo and light its MINE key for a moment (the key's box is read from the same-origin device page)
+const stk=$("#stk"),hl=$("#hl");let hlT=0;
+stk.addEventListener("click",()=>{
+  const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  fit.scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"});
+  try{
+    const k=frame.contentDocument.querySelector(".k-mine");if(!k)return;
+    const r=k.getBoundingClientRect(),f=frame.getBoundingClientRect(),w=fit.getBoundingClientRect();
+    Object.assign(hl.style,{left:Math.round(f.left-w.left+r.left)-2+"px",top:Math.round(f.top-w.top+r.top)-2+"px",width:Math.round(r.width)+4+"px",height:Math.round(r.height)+4+"px"});
+    hl.classList.add("on");clearTimeout(hlT);hlT=setTimeout(()=>hl.classList.remove("on"),1600);
+  }catch(e){/* device not loaded: only the scroll */}
+});
+tell();size();
 </script>
 </body>
 </html>

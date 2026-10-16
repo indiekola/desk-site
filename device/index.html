@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Desk · demo</title>
-<link rel="stylesheet" href="design.css?v=ce05195705a0">
+<link rel="stylesheet" href="design.css?v=b96d458fa9ed">
 <style>
 /* Desk device page — the strip is the real height of a Max for Live device in Live (169 px) */
 /* sizes, radii, type and motion tokens: design.css (from Figma, product/figma/SPEC.md) */
@@ -85,7 +85,7 @@ body.alloff .k1 .k-mine:not([aria-pressed="true"]) .kc{opacity:1}body.alloff .k1
 .dev :is(.name,.nm,.pl,.pl2,.cap,.caps,.mini,.btn,.byp,.cmp,.tag,.ov span,.title,.lst button,.tabs button,.nm.turn,.lufs small,.ky){font-size:var(--cap)!important;line-height:12px} /* whole-pixel line boxes: 9 × 1.25 = 11.25 put everything below on quarter pixels */
 /* loudness block */
 /* loudness block (Figma 16:2482): padding 4; LOUDNESS + the value (Spline Sans 27, cap-trimmed to 20 px); below, two 12 px
-   rows of key ← → value: the status line (VS MINE / PEAK share it, crossfading) and SPOTIFY. */
+   rows of key ← → value: PEAK, VS MINE and SPOTIFY, all three always there (Figma 15-2254). */
 .ld{display:flex;flex-direction:column;justify-content:space-between;align-self:stretch;padding:4px;flex:none;width:var(--ld-w);font-variant-numeric:tabular-nums}
 .ld .top{display:flex;flex-direction:column;gap:8px}.ld .cap{display:block;font-size:var(--cap);line-height:12px}
 .ld b{font-family:var(--font-num);font-variant-numeric:lining-nums proportional-nums;font-feature-settings:"lnum" 1,"pnum" 1;font-weight:400;font-size:27px;line-height:20px;letter-spacing:0!important;display:block;white-space:nowrap;text-box:trim-both cap alphabetic}
@@ -93,8 +93,6 @@ body.alloff .k1 .k-mine:not([aria-pressed="true"]) .kc{opacity:1}body.alloff .k1
 .ld .row{display:flex;justify-content:space-between;gap:4px;height:12px;line-height:12px;font-size:var(--cap);white-space:nowrap;position:relative}
 .ld .row .v{text-align:right}
 .ld .u{font-family:var(--font-num);text-transform:none;font-size:7.74px;line-height:12px;margin-left:4px;letter-spacing:0!important;position:relative;top:-2px}  /* on the value's baseline it sat 2 px lower than Figma's (pt 4 in a 12 px row): measured, raised */
-.ld .stl .sl{position:absolute;inset:0;display:flex;justify-content:space-between;gap:4px;opacity:0;transition:opacity var(--m-fast) var(--e-out)}
-.ld .stl[data-show="mine"] .s-mine,.ld .stl[data-show="peak"] .s-peak{opacity:1}
 .ld .s-peak{color:var(--warn)}
 /* the pad's four axis words ON the axes (Figma 15:67, 2026-10-04): LOUD top, QUIET bottom, WARM left, AIRY right; each
    word sits in a 16 px box of the pad's own colour (4 px each side, 2 px above and below) so the cross line breaks under
@@ -218,7 +216,7 @@ body.dragx .lv .peek,body:not(.ready) .lv .peek{pointer-events:none}
 body[data-flow="empty"] .side .again,body[data-flow="analysing"] .side .again,body[data-flow="error"] .side .again{display:none}
 body[data-flow="analysing"] .side .x,body.analyzed[data-flow="error"] .side .x{display:grid}
 body:not(.ready) :is(.side .again,.side .lvk button,.k1 .ky,.mt){pointer-events:none}
-/* no UNDO key (founder, 2026-10-04): BUILD's writes are undone with Live's own Undo (Cmd/Ctrl+Z); the bridge keeps
+/* no UNDO key (decided 2026-10-04): BUILD's writes are undone with Live's own Undo (Cmd/Ctrl+Z); the bridge keeps
    its journal and POST /undo as an internal safety net, with no control in the device */
 /* under the start / progress panel nothing of the desk shows through its edges; hidden once the panel has faded in */
 .body>:not(.work){transition:visibility 0s linear var(--m-fast)}
@@ -280,12 +278,12 @@ if(/[?&]embed\b/.test(location.search))document.documentElement.classList.add("e
   <section class="v"><h2>Desk · device</h2><p>Modules in their colours with two meaning knobs each — drag a module by its name strip to reorder, tap the strip to bypass it (white = bypassed). A half or black dot next to a knob = its plugin is only partly or not supported (hover for details). The master is the square XY pad; loudness on the right; MINE · BYPASS · FULL keys: hold = hear it while held, click = switch on, click again = off. Pushing a knob past its end leans the module into the bottom corner on that side. Six modules per level: more wait on the levels above and below, whose edges peek at the top and bottom of the device — ↑ ↓ on the left, Page Up / Page Down or a click on a peeking strip switch levels, drag a module up or down to move it to another level.</p>
     <div class="scroll"><div class="dev" id="M2"></div></div></section>
 </main>
-<script src="demo.js?v=ce05195705a0"></script>
-<script src="design.js?v=ce05195705a0"></script>
-<script src="glyphs.js?v=ce05195705a0"></script>
-<script src="controls.js?v=ce05195705a0"></script>
+<script src="demo.js?v=b96d458fa9ed"></script>
+<script src="design.js?v=b96d458fa9ed"></script>
+<script src="glyphs.js?v=b96d458fa9ed"></script>
+<script src="controls.js?v=b96d458fa9ed"></script>
 <script>DeskDemo.attach();</script>
-<script src="flow.js?v=ce05195705a0"></script>
+<script src="flow.js?v=b96d458fa9ed"></script>
 <script>
 let LOOK={}; // module colours for this project: colorsFor() in design.js
 const st={knobs:{},list:[],strips:[],subs:{}};
@@ -579,26 +577,25 @@ const fmtDb=d=>(d>0?"+":"−")+Math.abs(d).toFixed(1);
 // how far the pad's quiet ↔ loud sits from MINE, in dB of the estimate; 0 when MINE is on or the design has no such knob
 const padOff=()=>VIEW.mine||!K("master_loud")?0:lufs(vx("master_loud"))-lufs(.5);
 // Loudness block (Figma 16:2482, 2026-10-04): LOUDNESS + short-term LUFS (27 px, one decimal; the Desk meter while it
-// plays, the pad's estimate otherwise); then one STATUS line and SPOTIFY. The status line holds "VS MINE ±X" (pad off
-// its centre) and "PEAK −X.X" (true peak since the last play above −1 dBTP, warning colour): one shows alone; both
-// alternate every 2 s with a 160 ms crossfade; with reduced motion only PEAK (the warning matters more); none = an
-// empty line, so the block never changes height. SPOTIFY: how much Spotify turns the song down (see spotify() below).
-const SPOTIFY_MIN_S=10,STATUS_EVERY=2000;
+// plays, the pad's estimate otherwise); then three rows, always there (Figma 15-2254): PEAK (true peak since the last
+// play above −1 dBTP, warning colour), VS MINE (pad off its centre) and SPOTIFY. A row with nothing to say keeps its
+// key and an empty value, so the block never changes height. SPOTIFY: how much Spotify turns the song down (see spotify() below).
+const SPOTIFY_MIN_S=10;
 function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="cap">loudness</span><b class="lv-n"></b></div>`+
     `<div class="bot"><button class="row gn" type="button" aria-haspopup="menu" aria-expanded="false" hidden><span class="k">genre</span><span class="v gn-n"></span></button>`+
-      `<div class="row stl"><span class="sl s-mine"><span class="k">vs mine</span><span class="v"></span></span>`+
-      `<span class="sl s-peak"><span class="k">peak</span><span class="v"></span></span></div>`+
+      `<div class="row s-peak"><span class="k">peak</span><span class="v"></span></div>`+
+      `<div class="row s-mine"><span class="k">vs mine</span><span class="v"></span></div>`+
     `<div class="row"><span class="k">spotify</span><span class="v sp-n"></span></div></div>`+
     `<div class="gp" role="menu" aria-label="genre"></div></div>`),
-    v=b.querySelector(".lv-n"),sp=b.querySelector(".sp-n"),stl=b.querySelector(".stl"),
+    v=b.querySelector(".lv-n"),sp=b.querySelector(".sp-n"),
     mineV=b.querySelector(".s-mine .v"),peakV=b.querySelector(".s-peak .v");
   const fmtL=l=>(l<0?"−":"")+Math.abs(l).toFixed(1),trim=t=>t.replace(/\.0$/,"");
-  let last=null,turn="mine";
+  let last=null;
   // the Desk meter's short-term while it plays; else the pad's estimate — only when the design has a master quiet ↔ loud
   // knob (a design without one, e.g. a master with no device to steer, has no estimate); else null = nothing to show
   const shortNow=()=>{const m=METER&&METER.live?METER:null;
     return m&&m.short_term!=null?{l:m.short_term,what:"measured"}:K("master_loud")?{l:lufs(vx("master_loud")),what:null}:null;};
-  // SPOTIFY (founder, 2026-10-04): how much Spotify turns the song down at −14 LUFS = max(0, integrated + 14) dB, shown
+  // SPOTIFY (decided 2026-10-04): how much Spotify turns the song down at −14 LUFS = max(0, integrated + 14) dB, shown
   // the Figma way ("−3.9 dB", "0 dB"). Integrated from the Desk meter once it has 10 s gated (this run), else the
   // loudness ANALYZE measured on the master (its summary); nothing measured = "play" (Info View: press play in Live).
   const spotify=()=>{const m=METER&&METER.live?METER:null;
@@ -610,14 +607,9 @@ function loudBlock(){const b=el(`<div class="ld"><div class="top"><span class="c
   const measuring=()=>!!LOUD&&LOUD.state==="measuring";
   const spText=s=>s?(s.down<.05?"0":"−"+s.down.toFixed(1))+'<span class="u">dB</span>':
     measuring()?`<span class="none">${measN()}/${minS()}<span class="u">s</span></span>`:'<span class="none">play</span>';
-  // which of the two status items shows now: "", "mine", "peak" (both: the one whose turn it is)
   const status=()=>{const off=padOff(),tp=METER&&METER.live?METER.true_peak_db:null;
-    const hasMine=Math.abs(off)>=.05,hasPeak=tp!=null&&tp>-1;
-    mineV.textContent=hasMine?trim(fmtDb(off)):"";peakV.textContent=hasPeak?fmtDb(tp):"";
-    stl.dataset.both=hasMine&&hasPeak?"1":"";
-    stl.dataset.show=hasMine&&hasPeak?(RMQ?"peak":turn):hasPeak?"peak":hasMine?"mine":"";};
-  setInterval(()=>{turn=turn==="mine"?"peak":"mine";if(stl.dataset.both)status();},STATUS_EVERY);
-  const draw=()=>{if(!FLOW.analyzed||FLOW.state==="reveal"&&!FLOW.loudOn){v.innerHTML='<span class="none">—</span>';sp.innerHTML="";stl.dataset.show="";last=null;return;}
+    mineV.textContent=Math.abs(off)>=.05?trim(fmtDb(off)):"";peakV.textContent=tp!=null&&tp>-1?fmtDb(tp):"";};
+  const draw=()=>{if(!FLOW.analyzed||FLOW.state==="reveal"&&!FLOW.loudOn){v.innerHTML='<span class="none">—</span>';sp.innerHTML="";mineV.textContent=peakV.textContent="";last=null;return;}
     status();const s=spText(spotify());if(sp.innerHTML!==s)sp.innerHTML=s;
     const n=shortNow();if(!n){cancelAnimationFrame(v._tw);v.innerHTML='<span class="none">—</span>';last=null;return;}  // nothing measured, no estimate
     if(last!=null&&Math.abs(n.l-last)<.05)return;if(last==null)last=n.l;
@@ -860,10 +852,10 @@ function done(fs){
   if(!FLOW.err.retry)FLOW.msg="stopped at "+Flow.groupOf(e.step||"read").verb;   // never the plain LET'S START after a run: say it stopped
   setFlow("error");Desk.infoState(e.title,e.text+(FLOW.analyzed?"\nEsc returns to your desk.":""));}
 // Esc only leaves an error for the desk. A running analysis stops on the cancel key alone: no key press, hover, scroll,
-// resize or reload of the page stops it (the founder, 2026-10-04: "analysis stops at any rustle").
+// resize or reload of the page stops it (decided 2026-10-04).
 addEventListener("keydown",e=>{if(e.key!=="Escape")return;
   if(FLOW.state==="error"&&FLOW.analyzed)backToDesk();});
-// No UNDO key in the device (founder, 2026-10-04): Live's own Undo (Cmd/Ctrl+Z) takes BUILD's changes back. The bridge's
+// No UNDO key in the device (decided 2026-10-04): Live's own Undo (Cmd/Ctrl+Z) takes BUILD's changes back. The bridge's
 // journal and POST /undo stay as an internal safety net (no control here).
 const APPLIED_HOLD=900;   // ms the finished panel (all steps done, "N changes" bottom right) stays before the reveal
 // re-analyze (left column): live once the desk is built; a dot when the set changed since the analysis

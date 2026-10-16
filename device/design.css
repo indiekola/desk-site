@@ -2,7 +2,7 @@
    Change a value here and every view follows. Values come from the Figma file (product/figma/SPEC.md, 2026-10-04):
    where Figma and older notes disagree, Figma wins. Motion is the one thing kept from before. */
 /* Spline Sans Mono (captions, numbers in captions) + Spline Sans (big values): OFL (tools/knobs/fonts-ofl/OFL.txt),
-   founder's choice 2026-10-04, replacing GT America Mono everywhere */
+   chosen 2026-10-04, replacing GT America Mono everywhere */
 @font-face{font-family:"Spline Sans Mono";src:url("../fonts-ofl/SplineSansMono.ttf") format("truetype");font-weight:300 700;font-display:swap}
 @font-face{font-family:"Spline Sans";src:url("../fonts-ofl/SplineSans.ttf") format("truetype");font-weight:300 700;font-display:swap}
 :root{
@@ -81,7 +81,7 @@ html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
 
 /* ── motion system (both views). One property per job, so nothing fights:
    transform = press tilt (tiltOn) · translate/rotate = drag · .arm rotate / .d scale = knob value.
-   No hover zoom anywhere (founder, 2026-10-04): nothing grows or shrinks under the mouse; hover cues are the module's
+   No hover zoom anywhere (decided 2026-10-04): nothing grows or shrinks under the mouse; hover cues are the module's
    pill, colour and the icon moves below. */
 /* knob (.dz on the dial): the disc is drawn by ::before so the dial element itself holds the ticks */
 .dz{background:none!important}
@@ -119,7 +119,7 @@ body.mine .mk :is(.sp,.sup){pointer-events:auto}
 /* Themes, in two modes.
    Desk mode (default): Desk's own palette and look — "desk-light" (the values above) and "desk-dark".
    Live mode ("system"): everything follows Ableton — the module colours come from the set's tracks and the interface
-   from Live's theme. Two layers only, as in the founder's Live sketch (Figma 28:3723 "ableton immaterial"):
+   from Live's theme. Two layers only, as in the Live sketch (Figma 28:3723 "ableton immaterial"):
      surface  = surface_bg → --dev, --page: the device and everything drawn straight on it (loudness block)
      panels   = lcd_bg → --knob: knob bodies, the pad, MINE / BP keys (off and on), the left column's keys, bolt disc
                 and level pill, start and progress panels, the hover pill on a module

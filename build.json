@@ -1,8 +1,7 @@
 {
- "version": "ce05195705a0",
+ "version": "b96d458fa9ed",
  "files": [
   ".nojekyll",
-  "CNAME",
   "README.md",
   "device/controls.js",
   "device/demo.js",

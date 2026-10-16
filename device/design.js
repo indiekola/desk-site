@@ -97,7 +97,7 @@ function unitsFor(id,x,refresh){const key=id+"@"+x.toFixed(3);if(key in UNITS)re
     UNITS[key]=shown.join("\n")+(list.length>5?`\n+${list.length-5} more`:"");refresh&&refresh();}).catch(()=>{});
   return "";}
 
-// look: two modes. "live" (the default, founder 2026-10-04) = follow Ableton: Live's theme for the interface, the set's
+// look: two modes. "live" (the default, decided 2026-10-04) = follow Ableton: Live's theme for the interface, the set's
 // track colours for the modules. "desk" = Desk's own palette and light/dark themes, for marketing (landing, promo,
 // screenshots): ?mode=desk (or ?look=desk). In the browser L switches the mode, T the theme within it (remembered per
 // browser once chosen with a key). In the device Live's real theme colours arrive through liveTheme() below.
