@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Desk by Volume Attack — 노브가 아니라, 의미를 돌리세요</title>
+<meta name="description" content="Volume Attack의 Desk: 개발 중인 Max for Live 디바이스입니다. Ableton 세트를 읽어 트랙을 모듈로 묶고, 각 모듈에 쉬운 말로 된 노브 두 개를 만들어 줍니다. 기반은 Live 기본 디바이스입니다.">
+<link rel="canonical" href="https://desk.volumeattack.ru/ko/">
+<link rel="alternate" hreflang="en" href="https://desk.volumeattack.ru/">
+<link rel="alternate" hreflang="ru" href="https://desk.volumeattack.ru/ru/">
+<link rel="alternate" hreflang="es" href="https://desk.volumeattack.ru/es/">
+<link rel="alternate" hreflang="pt-BR" href="https://desk.volumeattack.ru/pt-br/">
+<link rel="alternate" hreflang="de" href="https://desk.volumeattack.ru/de/">
+<link rel="alternate" hreflang="fr" href="https://desk.volumeattack.ru/fr/">
+<link rel="alternate" hreflang="ja" href="https://desk.volumeattack.ru/ja/">
+<link rel="alternate" hreflang="zh-Hans" href="https://desk.volumeattack.ru/zh-hans/">
+<link rel="alternate" hreflang="ko" href="https://desk.volumeattack.ru/ko/">
+<link rel="alternate" hreflang="x-default" href="https://desk.volumeattack.ru/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Desk by Volume Attack">
+<meta property="og:title" content="Desk by Volume Attack — 노브가 아니라, 의미를 돌리세요">
+<meta property="og:description" content="Volume Attack의 Desk: 개발 중인 Max for Live 디바이스입니다. Ableton 세트를 읽어 트랙을 모듈로 묶고, 각 모듈에 쉬운 말로 된 노브 두 개를 만들어 줍니다. 기반은 Live 기본 디바이스입니다.">
+<meta property="og:url" content="https://desk.volumeattack.ru/ko/">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="ru_RU">
+<meta property="og:locale:alternate" content="es_ES">
+<meta property="og:locale:alternate" content="pt_BR">
+<meta property="og:locale:alternate" content="de_DE">
+<meta property="og:locale:alternate" content="fr_FR">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:locale:alternate" content="zh_CN">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Desk by Volume Attack — 노브가 아니라, 의미를 돌리세요">
+<meta name="twitter:description" content="Volume Attack의 Desk: 개발 중인 Max for Live 디바이스입니다. Ableton 세트를 읽어 트랙을 모듈로 묶고, 각 모듈에 쉬운 말로 된 노브 두 개를 만들어 줍니다. 기반은 Live 기본 디바이스입니다.">
+<script>
+// Every language has its own pre-rendered page (tools/site/build.py fills PAGE_LANG; the root is English). A saved choice or the
+// browser's language never redirects: it only offers a small, dismissible link at the foot of the page. ?lang= still works
+// and sends the visitor to the language's own address.
+var DESK_LANGS=["en","ru","es","pt","de","fr","ja","zh","ko"];
+var DESK_PATH={en:"/",ru:"/ru/",es:"/es/",pt:"/pt-br/",de:"/de/",fr:"/fr/",ja:"/ja/",zh:"/zh-hans/",ko:"/ko/"};
+var DESK_LANG="ko";
+(function(){
+  var q=null;
+  try{q=new URLSearchParams(location.search).get("lang");}catch(e){}
+  if(q&&q!==DESK_LANG&&DESK_LANGS.indexOf(q)>=0)location.replace(DESK_PATH[q]+location.hash);
+})();
+</script>
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%23000'/%3E%3Cpath d='M126 86.7H96L118.5 0 60 105.3H90L67.5 192Z' fill='%23fff' transform='translate(24 24) scale(.75)'/%3E%3C/svg%3E">
+<!-- Source of the public site. Publish with tools/site/build.py (product/site.md); the markers [{"s":"pad","l":"close","r":"spacious"},{"s":"pad","l":"warm","r":"airy"},{"s":"drums","l":"dark","r":"bright"},{"s":"drums","l":"tucked","r":"upfront"},{"s":"vocal","l":"tucked","r":"upfront"},{"s":"vocal","l":"close","r":"spacious"},{"s":"lead","l":"close","r":"spacious"},{"s":"lead","l":"steady","r":"wobbly"},{"s":"fx","l":"warm","r":"airy"},{"s":"fx","l":"tucked","r":"upfront"},{"s":"bass","l":"heavy","r":"clear"},{"s":"bass","l":"dark","r":"bright"},{"s":"master","l":"warm","r":"airy"},{"s":"master","l":"quiet","r":"loud"}] and
+     40c1d07ffcbf are filled in by the build. Copy rule (decided 2026-10-04): only what exists in main today and was verified,
+     by tests or in Live. No dates, prices, plans, "coming soon", quality claims or numbers that were not measured. -->
+<style>
+@font-face{font-family:"Spline Sans Mono";src:url("/fonts-ofl/SplineSansMono.ttf?v=40c1d07ffcbf") format("truetype");font-weight:300 700;font-display:swap}
+@font-face{font-family:"Spline Sans";src:url("/fonts-ofl/SplineSans.ttf?v=40c1d07ffcbf") format("truetype");font-weight:300 700;font-display:swap}
+:root{
+  --bg:#fff;--ink:#000;--grey:#6b6b6b;--line:#000;--soft:#f2f2f2;--acc:#ff4800;
+  --font:"Spline Sans Mono",ui-monospace,SFMono-Regular,Menlo,monospace;--font-num:"Spline Sans",system-ui,sans-serif;
+  --m-fast:160ms;--m:260ms;--m-slow:460ms;--e-out:cubic-bezier(.2,.8,.2,1);--e-io:cubic-bezier(.45,0,.2,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#111;--ink:#fff;--grey:#a0a0a0;--line:#fff;--soft:#1d1d1d;color-scheme:dark}}
+/* Spline Sans has no Cyrillic or CJK: those scripts use the system's UI fonts, same size and weight */
+:lang(ru){--font:"Spline Sans Mono",ui-monospace,Menlo,"PT Mono","Roboto Mono",monospace;--font-num:"Spline Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+:lang(ja){--font:"Spline Sans Mono",ui-monospace,"Hiragino Sans","Yu Gothic UI","Noto Sans CJK JP","IPAGothic",monospace;--font-num:"Spline Sans","Hiragino Sans","Yu Gothic UI","Noto Sans CJK JP","IPAGothic",system-ui,sans-serif}
+:lang(zh){--font:"Spline Sans Mono",ui-monospace,"PingFang SC","Microsoft YaHei UI","Noto Sans CJK SC","WenQuanYi Zen Hei",monospace;--font-num:"Spline Sans","PingFang SC","Microsoft YaHei UI","Noto Sans CJK SC","WenQuanYi Zen Hei",system-ui,sans-serif}
+:lang(ko){--font:"Spline Sans Mono",ui-monospace,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR","WenQuanYi Zen Hei",monospace;--font-num:"Spline Sans","Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR","WenQuanYi Zen Hei",system-ui,sans-serif}
+:lang(ja) .cap,:lang(zh) .cap,:lang(ko) .cap{font-size:11px;line-height:14px}
+:lang(ja) h1,:lang(zh) h1,:lang(ko) h1{font-size:clamp(28px,4.6vw,48px);line-height:1.2;letter-spacing:0;text-wrap:balance;line-break:strict;word-break:keep-all}
+:lang(ja) .lede,:lang(zh) .lede,:lang(ko) .lede{line-break:strict}
+*{box-sizing:border-box;font-weight:400}
+/* Swiss / Bauhaus (DSK-30): text, headings and UI are the proportional sans; the mono is only for captions, numbers, keys and tags */
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-size-adjust:100%;scroll-padding-top:56px}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--font-num);overflow-x:hidden;transition:background-color var(--m-slow) var(--e-io),color var(--m-slow) var(--e-io)}
+a{color:inherit}
+p{margin:0 0 16px}
+h1,h2,h3{margin:0;font-weight:600;font-family:var(--font-num)}
+.cap,.proof b,.hints li span:first-child,.infov,footer,.mark{font-family:var(--font)}
+.cap{font-size:10px;line-height:12px;text-transform:uppercase;letter-spacing:.02em}
+.sh>.cap::before,.cols>div>.cap::before{content:"";display:block;width:12px;height:12px;background:var(--acc);margin-bottom:12px}
+.cols>div>.cap::before{width:8px;height:8px;margin-bottom:8px}
+.g{color:var(--grey)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 32px}
+.logo{width:16px;height:16px;flex:none;display:block}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);transition:background-color var(--m-slow) var(--e-io)}
+.top .wrap{display:flex;align-items:center;gap:24px;height:48px}
+.mark{text-decoration:none;display:flex;gap:8px;align-items:center;white-space:nowrap}
+.top nav{display:flex;gap:16px;margin-left:auto}
+.top nav a{text-decoration:none;opacity:.6;transition:opacity var(--m-fast) var(--e-out)}
+.top nav a:hover,.top nav a:focus-visible{opacity:1}
+/* offer to read the page in the visitor's language: fixed, so it never moves the page */
+.offer{position:fixed;left:16px;bottom:16px;z-index:20;display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px 4px 4px 12px;font:400 13px/20px var(--font-num)}
+.offer a{color:var(--ink);text-underline-offset:3px}
+.offer button{appearance:none;border:0;background:none;color:var(--ink);width:28px;height:28px;display:grid;place-items:center;cursor:pointer;border-radius:8px;-webkit-tap-highlight-color:transparent}
+.offer button:hover{background:var(--soft)}
+.offer svg{width:8px;height:8px}
+.offer a:focus-visible,.offer button:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
+/* language picker: a pill of the old toggle's size; the list opens under it */
+.lang{position:relative;display:inline-flex}
+.lang-b{appearance:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:none;color:var(--ink);border-radius:999px;padding:6px 10px 6px 12px;font:400 10px/12px var(--font);text-transform:uppercase;cursor:pointer;transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out);-webkit-tap-highlight-color:transparent}
+.lang-b:hover,.lang-b[aria-expanded="true"]{background:var(--ink);color:var(--bg)}
+.lang-b svg{width:8px;height:8px;flex:none;transition:transform var(--m-fast) var(--e-out)}
+.lang-b[aria-expanded="true"] svg{transform:rotate(180deg)}
+.lang-l{position:absolute;right:0;top:calc(100% + 8px);z-index:30;margin:0;padding:4px;list-style:none;min-width:176px;background:var(--bg);border:1px solid var(--line);border-radius:12px;opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity var(--m-fast) var(--e-out),transform var(--m-fast) var(--e-out),visibility 0s linear var(--m-fast)}
+.lang.open .lang-l{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+.lang-l li{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:6px 8px;border-radius:8px;font:400 13px/20px var(--font-num);cursor:pointer;-webkit-user-select:none;user-select:none}
+.lang-l li span{font:400 10px/12px var(--font);text-transform:uppercase;color:var(--grey)}
+.lang-l li:hover,.lang-l li.cur{background:var(--soft)}
+.lang-l li[aria-selected="true"]::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--ink);order:3}
+.lang-b:focus-visible,.lang-l:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
+.lang-l:focus{outline:0}
+.lang-l:focus-visible li.cur{outline:1px solid var(--ink);outline-offset:-1px}
+
+/* hero */
+.hero{padding-top:72px;padding-bottom:64px}
+.hero h1{font-size:clamp(40px,8vw,96px);line-height:.98;letter-spacing:-.04em;font-weight:700;margin:24px 0 32px}
+.lede{max-width:56ch;font-size:20px;line-height:1.5}
+.stage{margin:40px 0 0}
+.stage>.cap{margin-bottom:12px}
+/* the device: the real device page (device/index.html) in a frame of the device's own size and corners */
+.fit{width:100%}
+.devf{display:block;border:0;width:692px;max-width:100%;height:169px;border-radius:0;background:transparent;color-scheme:normal}
+.under{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;margin-top:16px;align-items:start}
+.hints{display:grid;gap:4px;margin:0;padding:0;list-style:none}
+.hints li{display:flex;gap:8px}
+.hints li span:first-child{min-width:128px;flex:none;max-width:40%}
+.hints li span.g{font:400 13px/18px var(--font-num);text-transform:none;letter-spacing:0}
+.hints li{align-items:baseline;border-top:1px solid var(--line);padding:6px 0}
+.hints{gap:0}
+/* the device's own help text (what it writes about the control under the pointer) */
+.infov{background:var(--ink);color:var(--bg);border-radius:4px;padding:10px 12px;min-height:124px;font:400 10px/14px var(--font)}
+.infov b{display:block;font-weight:400;text-transform:uppercase;margin-bottom:6px}
+.infov p{margin:0;white-space:pre-line;font-variant-numeric:tabular-nums}
+
+/* sections */
+.sec{border-top:1px solid var(--line);padding:72px 0}
+.sh{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;margin-bottom:48px}
+.sh h2{font-size:clamp(28px,4.4vw,56px);line-height:1.04;letter-spacing:-.035em;font-weight:700;margin-bottom:24px;max-width:18ch}
+.sh p{max-width:60ch;font-size:18px;line-height:1.55}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.cols h3{font-size:22px;line-height:1.2;letter-spacing:-.015em;margin:8px 0 12px}
+.cols p{font-size:16px;max-width:36ch}
+.proof{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:0;border-top:4px solid var(--ink);border-bottom:1px solid var(--line);margin-bottom:48px}
+.proof div{padding:16px 16px 20px 0;border-left:0}
+.proof div:first-child{border-left:0}
+.proof .cap{display:block}
+.proof b{display:block;font:700 64px/64px var(--font-num);font-feature-settings:"lnum" 1;letter-spacing:-.04em;margin-bottom:8px}
+.words{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-bottom:32px}
+.w{border-radius:4px;padding:12px 12px 16px;color:#000}
+.w .cap{display:block;margin-bottom:8px}
+.w div{font-size:15px;line-height:22px;font-weight:500}
+.req{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px}
+.req div{border-bottom:1px solid var(--line);padding:16px 0 20px}
+.req div p{margin:0;font-size:16px}
+footer{border-top:1px solid var(--line);padding:24px 0 40px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+@media (max-width:900px){
+  .top nav{display:none}
+  .lang{margin-left:auto}
+  .under{grid-template-columns:minmax(0,1fr)}
+  .sh{grid-template-columns:minmax(0,1fr);gap:8px}
+  .cols{grid-template-columns:minmax(0,1fr)}
+  .proof{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .proof div:nth-child(n+3){border-top:1px solid var(--line)}
+  .proof b{font-size:48px;line-height:48px}
+  .lede{font-size:18px}
+  .sh p{font-size:17px}
+  .words{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .req{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:600px){
+  .wrap{padding:0 16px}
+  .hints li span:first-child{min-width:104px}
+}
+/* sticker (DSK-30, option A «Dial»): one round accent badge on the hero's top right edge; tilted, it straightens on hover / focus; a tap goes to the demo and lights its MINE key */
+.hero{position:relative}
+.stk{appearance:none;position:absolute;right:32px;top:40px;z-index:5;width:152px;height:152px;border-radius:50%;border:0;background:var(--acc);color:#000;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;cursor:pointer;transform:rotate(-12deg);transition:transform var(--m) var(--e-out);-webkit-tap-highlight-color:transparent;font-family:var(--font-num)}
+.stk b{font:700 28px/28px var(--font-num);letter-spacing:-.02em}
+.stk span{font:400 12px/15px var(--font-num);max-width:104px}
+.stk:hover,.stk:focus-visible{transform:rotate(0)}
+.stk:focus-visible{outline:1px solid var(--ink);outline-offset:4px}
+.fit{position:relative}
+.hl{position:absolute;pointer-events:none;border:1px solid var(--acc);border-radius:4px;box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 35%,transparent);opacity:0;transition:opacity var(--m-fast) var(--e-out)}
+.hl.on{opacity:1}
+@media (max-width:900px){.stk{position:relative;right:auto;top:auto;margin:16px 0 -8px auto;width:96px;height:96px;gap:2px}.stk b{font-size:20px;line-height:20px}.stk span{font-size:10px;line-height:12px;max-width:72px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:0s!important}}
+</style>
+<!-- Vercel Web Analytics: cookieless page views, served by Vercel at /_vercel/insights/script.js (404 off Vercel, harmless) -->
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="mark" href="#top"><svg class="logo" viewBox="0 0 192 192" aria-hidden="true"><path d="M126 86.7097H95.9992L118.499 0L60 105.29H89.9986L67.4991 192L126 86.7097Z" fill="currentColor"/></svg><span>Desk <span class="g">by Volume Attack</span></span></a>
+  <nav aria-label="섹션" data-i="nav.aria" data-a="aria-label"><a href="#project" data-i="nav.project">프로젝트</a><a href="#meaning" data-i="nav.meaning">의미</a><a href="#mine" data-i="nav.mine">MINE</a><a href="#status" data-i="nav.status">현황</a></nav>
+  <div class="lang" id="lang">
+    <button type="button" class="lang-b" id="lang-b" aria-haspopup="listbox" aria-expanded="false" aria-controls="lang-l" aria-label="Language"><span id="lang-c">EN</span><svg viewBox="0 0 8 8" aria-hidden="true"><path d="M1 2.5 4 5.5 7 2.5" fill="none" stroke="currentColor" stroke-width="1"/></svg></button>
+    <ul class="lang-l" id="lang-l" role="listbox" tabindex="-1" aria-label="Language"></ul>
+  </div>
+</div></header>
+
+<main id="top">
+<section class="hero wrap" aria-labelledby="h1">
+  <p class="cap" data-i="hero.cap">Max for Live가 포함된 Ableton Live 12용 · 개발 중</p>
+  <button type="button" class="stk" id="stk" data-i="stk.a" data-a="aria-label" aria-label="MINE, 모든 노브의 중심. 데모로 이동."><b aria-hidden="true">MINE</b><span aria-hidden="true" data-i="stk.t">모든 노브의 중심</span></button>
+  <h1 id="h1" data-i="hero.h1">노브가 아니라,<br>의미를 돌리세요.</h1>
+  <p class="lede" data-i="hero.lede">Desk는 Ableton 프로젝트를 살펴보고 트랙을 곡 안에서 하는 일에 따라 나눕니다. 드럼, 베이스, 보컬 같은 식입니다. 각 그룹에는 양 끝에 쉬운 말이 붙은 노브 두 개가 생깁니다. 예를 들면 <i>뒤로 ↔ 앞으로</i>나 <i>무겁게 ↔ 맑게</i> 같은 것입니다. 노브를 돌리면 Desk가 그 뒤의 Live 디바이스를 움직입니다. 모든 노브의 가운데는 MINE, 즉 Desk가 내 트랙을 위해 맞춰 둔 믹스입니다.</p>
+
+  <figure class="stage" aria-labelledby="cap-dev">
+    <p class="cap g" id="cap-dev" data-i="stage.cap">오늘의 디바이스 모습입니다. 데모는 우리 곡 하나를 실제로 분석한 기록을 다시 재생합니다. Live에는 연결되어 있지 않습니다. 디바이스 자체의 표시는 영어입니다.</p>
+    <div class="fit" id="fit"><i class="hl" id="hl" aria-hidden="true"></i><iframe class="devf" id="devf" src="/device/index.html?embed&amp;mode=desk&amp;v=40c1d07ffcbf" title="Desk 디바이스, 인터랙티브 데모" data-i="stage.frame" data-a="title" scrolling="no"></iframe></div>
+    <div class="under">
+      <ul class="hints cap">
+        <li><span data-i="h1.k">노브 드래그</span><span class="g" data-i="h1.v">위아래로 끌어서 돌립니다. Shift를 누르면 작은 단위로 움직입니다</span></li>
+        <li><span data-i="h2.k">마스터 패드</span><span class="g" data-i="h2.v">점을 끌어 보세요: 따뜻함 ↔ 공기감, 작게 ↔ 크게</span></li>
+        <li><span data-i="h3.k">더블클릭</span><span class="g" data-i="h3.v">MINE으로 되돌리기</span></li>
+        <li><span data-i="h4.k">Shift + 숫자</span><span class="g" data-i="h4.v">값을 입력: Shift 4 = +4, Shift 0 = MINE으로 되돌리기</span></li>
+        <li><span data-i="h5.k">그룹 이름</span><span class="g" data-i="h5.v">클릭하면 그 그룹이 꺼집니다. 끌어서 순서를 바꿉니다</span></li>
+        <li><span>MINE · BP</span><span class="g" data-i="h6.v">누르고 있는 동안 듣기. 클릭하면 켜고 끕니다</span></li>
+        <li><span data-i="h7.k">왼쪽 둥근 키</span><span class="g" data-i="h7.v">다시 분석 (데모는 녹화본을 4배 빠르게 재생합니다)</span></li>
+      </ul>
+      <div class="infov" aria-live="polite"><b id="iv-t">Desk</b><p id="iv-p" data-i="info.def">디바이스의 아무 곳에나 포인터를 올려 보세요. 디바이스가 각 컨트롤에 대해 써 주는 도움말이 여기에 나옵니다.</p></div>
+    </div>
+  </figure>
+</section>
+
+<section class="sec" id="project" aria-labelledby="h-project"><div class="wrap">
+  <div class="sh"><p class="cap" data-i="s1.cap">01 · 내 프로젝트 안에서</p><div><h2 id="h-project" data-i="s1.h">파일이 아니라, 내 프로젝트.</h2>
+    <p data-i="s1.p">Desk는 Live 안에서, 이미 가진 트랙 위에서 작동합니다. 내보내거나 업로드할 것이 없습니다. ANALYZE를 누르면 Desk가 트랙을 읽고, 그룹으로 묶고, 마스터용 노브를 추가하고, 모든 것을 Live 기본 디바이스 위에 설정합니다.</p></div></div>
+  <div class="proof" aria-label="우리 곡 하나의 분석 1회, 2026년 10월 3일 기록" data-i="proof.aria" data-a="aria-label">
+    <div><b>11</b><span class="cap g" data-i="proof.1">읽은 트랙</span></div>
+    <div><b>6</b><span class="cap g" data-i="proof.2">그룹 + 마스터</span></div>
+    <div><b>14</b><span class="cap g" data-i="proof.3">노브</span></div>
+    <div><b>0</b><span class="cap g" data-i="proof.4">다른 제작사의 플러그인 (이 세트 안)</span></div>
+  </div>
+  <div class="cols">
+    <div><p class="cap">01</p><h3 data-i="c1.h">역할별 그룹</h3><p data-i="c1.p">트랙은 곡 안에서 하는 일에 따라 묶입니다. 디바이스는 한 번에 여섯 그룹을 보여 주고, 나머지는 키 하나로 넘길 수 있습니다.</p></div>
+    <div><p class="cap">02</p><h3 data-i="c2.h">Live 기본 디바이스</h3><p data-i="c2.p">EQ Eight, Saturator, Limiter, Utility, Drum Buss, 트랙 볼륨, 센드. 모든 변경은 열어 보고, 읽고, 바꿀 수 있는 디바이스에서 일어납니다.</p></div>
+    <div><p class="cap">03</p><h3 data-i="c3.h">내 디바이스는 그대로</h3><p data-i="c3.p">Desk는 자기 디바이스를 트랙 끝에 추가하고 볼륨이나 센드 같은 값을 바꿉니다. 내가 넣은 디바이스는 절대 지우지 않습니다. Cmd+Z 한 번이면 분석 전체가 취소됩니다.</p></div>
+  </div>
+</div></section>
+
+<section class="sec" id="meaning" aria-labelledby="h-meaning"><div class="wrap">
+  <div class="sh"><p class="cap" data-i="s2.cap">02 · 의미</p><div><h2 id="h-meaning" data-i="s2.h">의미는 내가 돌리고, 디바이스는 Desk가 돌립니다.</h2>
+    <p data-i="s2.p">이것은 Desk가 우리 곡을 위해 만든 노브입니다. 각 노브는 MINE을 중심으로 −10에서 +10까지 움직입니다. 노브에 포인터를 올리면 도움말에 움직이는 항목이 dB, Hz, %로 나옵니다.</p></div></div>
+  <div class="words" id="words"></div>
+</div></section>
+
+<section class="sec" id="mine" aria-labelledby="h-mine"><div class="wrap">
+  <div class="sh"><p class="cap" data-i="s3.cap">03 · 내 믹스는 언제나 손닿는 곳에</p><div><h2 id="h-mine" data-i="s3.h">한 번 클릭으로 MINE으로.</h2>
+    <p data-i="s3.p">MINE은 Desk가 내 트랙을 위해 만든 믹스이자 모든 노브의 가운데입니다. BP(바이패스)는 원본을 재생합니다. 위쪽 데모에서 두 키를 모두 눌러 보세요.</p></div></div>
+  <div class="cols">
+    <div><p class="cap" data-i="m1.cap">MINE</p><h3 data-i="m1.h">MINE 듣기</h3><p data-i="m1.p">MINE을 누르고 있는 동안 Desk의 믹스를 들을 수 있고, 클릭하면 켜고 끕니다. 회색 점은 내 노브가 있던 위치를 기억합니다. 노브를 더블클릭하면 MINE으로 돌아갑니다.</p></div>
+    <div><p class="cap" data-i="m2.cap">Bypass</p><h3 data-i="m2.h">원본 듣기</h3><p data-i="m2.p">BP는 Desk가 한 모든 것을 끕니다. 마스터도 마찬가지입니다. 안전용 리미터만 켜진 채로 남습니다. 그룹 이름을 클릭하면 그 그룹만 끌 수 있습니다.</p></div>
+    <div><p class="cap" data-i="m3.cap">라우드니스</p><h3 data-i="m3.h">라우드니스, 측정</h3><p data-i="m3.p">라우드니스 미터(방송 표준인 EBU R128)가 디바이스 안에 있어서 곡이 재생되는 동안 마스터를 읽습니다. 10초 뒤에는 Spotify가 −14 LUFS 레벨에 맞추려고 곡을 얼마나 키우거나 줄일지도 보여 줍니다. 이 페이지에는 오디오가 없어서 여기의 숫자는 마스터 패드로 계산한 추정치입니다.</p></div>
+  </div>
+</div></section>
+
+<section class="sec" id="status" aria-labelledby="h-status"><div class="wrap">
+  <div class="sh"><p class="cap" data-i="s4.cap">04 · 현황</p><div><h2 id="h-status" data-i="s4.h">개발 중.</h2>
+    <p data-i="s4.p">Desk는 아직 사용할 수 없습니다. 지금 상황은 이렇습니다.</p></div></div>
+  <div class="req">
+    <div><p class="cap">Live</p><p data-i="r1.p">Max for Live가 포함된 Ableton Live 12.4 Suite에서 만들고 테스트했습니다.</p></div>
+    <div><p class="cap" data-i="r2.cap">내 오디오</p><p data-i="r2.p">내 컴퓨터에만 남습니다. Desk는 프로젝트를 읽고 마스터를 내 컴퓨터에서 측정하며, 어디로도 아무것도 보내지 않습니다.</p></div>
+    <div><p class="cap" data-i="r3.cap">테스트</p><p data-i="r3.p">모든 변경은 추가되기 전에 디바이스, 노브 계산, 인터페이스의 자동 테스트를 통과합니다.</p></div>
+    <div><p class="cap" data-i="r4.cap">문의</p><p><a href="https://volumeattack.ru">volumeattack.ru</a></p></div>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap cap"><span>Volume Attack · <a href="https://volumeattack.ru">volumeattack.ru</a></span><span class="g" data-i="foot">Ableton과 Live는 Ableton AG의 상표입니다. Desk는 Ableton과 제휴 관계가 없습니다.</span></div></footer>
+
+<script>
+// Landing copy per language. English is the page's own markup (data-i keys); the dictionary only holds the other eight.
+// Kept as written: Desk, MINE, BP, BYPASS, ANALYZE, Ableton Live, Max for Live, Live's device names (EQ Eight, Saturator, Limiter, Utility), EBU R128, LUFS, Spotify.
+const I18N={"ko":{"info.idle":"아무 컨트롤에나 포인터를 올리면 그 기능이 표시됩니다.","lang.aria":"언어"}};
+// the knobs of the demo analysis (filled in by tools/site/build.py from tests/fixtures/analyze/knobs.json)
+const KNOBS=[{"s":"pad","l":"close","r":"spacious"},{"s":"pad","l":"warm","r":"airy"},{"s":"drums","l":"dark","r":"bright"},{"s":"drums","l":"tucked","r":"upfront"},{"s":"vocal","l":"tucked","r":"upfront"},{"s":"vocal","l":"close","r":"spacious"},{"s":"lead","l":"close","r":"spacious"},{"s":"lead","l":"steady","r":"wobbly"},{"s":"fx","l":"warm","r":"airy"},{"s":"fx","l":"tucked","r":"upfront"},{"s":"bass","l":"heavy","r":"clear"},{"s":"bass","l":"dark","r":"bright"},{"s":"master","l":"warm","r":"airy"},{"s":"master","l":"quiet","r":"loud"}];
+// Desk look module colours (tools/knobs/design.js PALETTE)
+const COL={pad:"#add5ff",drums:"#ffd200",vocal:"#ff4800",lead:"#ff6390",fx:"#54e3d0",bass:"#2b6cff",master:"#c8c8c8"};
+const $=s=>document.querySelector(s),frame=$("#devf"),fit=$("#fit");
+const dark=()=>matchMedia("(prefers-color-scheme:dark)").matches;
+// the page follows the system theme, live; the device in the frame gets the same one (Desk look: desk-light / desk-dark)
+const tell=()=>{try{frame.contentWindow.postMessage({src:"desk-landing",look:"desk",dark:dark()},location.origin);}catch(e){/* not loaded */}};
+matchMedia("(prefers-color-scheme:dark)").addEventListener("change",tell);
+
+// language: DESK_LANG was chosen in <head>; English is the markup, the other eight come from I18N
+const LANGS=[["en","English","EN"],["ru","Русский","RU"],["es","Español","ES"],["pt","Português (Brasil)","PT"],["de","Deutsch","DE"],["fr","Français","FR"],["ja","日本語","JA"],["zh","简体中文","ZH"],["ko","한국어","KO"]];
+const LANG_TAG={pt:"pt-BR",zh:"zh-Hans"};
+const EN=new Map(),metaDesc=document.querySelector('meta[name="description"]');
+let lang=DESK_LANG,infoLive=false,infoMsg=null;
+const IDLE_EN="Hover any control to see what it does.";
+function showInfo(){if(!infoMsg)return;const T=I18N[lang]||{};$("#iv-t").textContent=infoMsg.title;$("#iv-p").textContent=infoMsg.text===IDLE_EN&&T["info.idle"]?T["info.idle"]:infoMsg.text;}
+function applyLang(code){
+  const T=I18N[code]||{};
+  lang=code;document.documentElement.lang=LANG_TAG[code]||code;
+  document.querySelectorAll("[data-i]").forEach(el=>{
+    const a=el.dataset.a;
+    if(!EN.has(el))EN.set(el,a?el.getAttribute(a):el.innerHTML);
+    const v=T[el.dataset.i]!==undefined?T[el.dataset.i]:EN.get(el);
+    if(a)el.setAttribute(a,v);else if(!(el.id==="iv-p"&&infoLive))el.innerHTML=v;
+  });
+  if(!EN.has(metaDesc))EN.set(metaDesc,metaDesc.content);
+  metaDesc.content=T["meta.desc"]||EN.get(metaDesc);
+  const cur=LANGS.find(l=>l[0]===code);
+  $("#lang-c").textContent=cur[2];
+  $("#lang-b").setAttribute("aria-label",(T["lang.aria"]||"Language")+": "+cur[1]);
+  $("#lang-l").setAttribute("aria-label",T["lang.aria"]||"Language");
+  document.querySelectorAll("#lang-l li").forEach(li=>li.setAttribute("aria-selected",String(li.dataset.c===code)));
+  showInfo();
+}
+// the picker: a button and a listbox (arrows, Home/End, Enter/Space, Esc; the list closes on Tab and on a click outside)
+const box=$("#lang"),btn=$("#lang-b"),list=$("#lang-l");
+list.innerHTML=LANGS.map(l=>`<li role="option" id="lo-${l[0]}" data-c="${l[0]}" lang="${LANG_TAG[l[0]]||l[0]}">${l[1]}<span>${l[2]}</span></li>`).join("");
+const opts=[...list.children];let hi=0;
+function mark(i){hi=(i+opts.length)%opts.length;opts.forEach((o,j)=>o.classList.toggle("cur",j===hi));list.setAttribute("aria-activedescendant",opts[hi].id);opts[hi].scrollIntoView({block:"nearest"});}
+function open(){box.classList.add("open");btn.setAttribute("aria-expanded","true");mark(LANGS.findIndex(l=>l[0]===lang));list.focus({preventScroll:true});}
+function close(back){box.classList.remove("open");btn.setAttribute("aria-expanded","false");if(back)btn.focus();}
+function choose(code){try{localStorage.setItem("desk-lang",code);}catch(e){/* private window: the choice is not kept */}if(code===lang){close(true);return;}location.href=DESK_PATH[code]+location.hash;}
+btn.addEventListener("click",()=>box.classList.contains("open")?close(true):open());
+btn.addEventListener("keydown",e=>{if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();open();}});
+list.addEventListener("click",e=>{const o=e.target.closest("li");if(o)choose(o.dataset.c);});
+list.addEventListener("mousemove",e=>{const o=e.target.closest("li");if(o)mark(opts.indexOf(o));});
+list.addEventListener("keydown",e=>{
+  const k=e.key;
+  if(k==="ArrowDown"){e.preventDefault();mark(hi+1);}
+  else if(k==="ArrowUp"){e.preventDefault();mark(hi-1);}
+  else if(k==="Home"){e.preventDefault();mark(0);}
+  else if(k==="End"){e.preventDefault();mark(opts.length-1);}
+  else if(k==="Enter"||k===" "){e.preventDefault();choose(opts[hi].dataset.c);}
+  else if(k==="Escape"){e.preventDefault();close(true);}
+  else if(k==="Tab")close(false);
+});
+document.addEventListener("pointerdown",e=>{if(!box.contains(e.target))close(false);});
+applyLang(DESK_LANG);
+// a small, dismissible offer in the visitor's own language: the saved choice, else the browser's first supported language. Never a redirect.
+const OFFER={en:["Read in English","Close"],ru:["Читать по-русски","Закрыть"],es:["Leer en español","Cerrar"],pt:["Ler em português","Fechar"],de:["Auf Deutsch lesen","Schließen"],fr:["Lire en français","Fermer"],ja:["日本語で読む","閉じる"],zh:["阅读简体中文版","关闭"],ko:["한국어로 보기","닫기"]};
+(function(){
+  let want=null,off=false;
+  try{want=localStorage.getItem("desk-lang");off=sessionStorage.getItem("desk-offer-off")==="1";}catch(e){/* no storage: the offer is simply shown again */}
+  if(!want||DESK_LANGS.indexOf(want)<0){
+    want=null;
+    for(const l of (navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||""])){
+      const t=String(l).toLowerCase(),p=t.split("-")[0];
+      if(p==="zh"&&/-(hant|tw|hk|mo)\b/.test(t))continue;   // Traditional Chinese is not offered: look at the next language
+      if(DESK_LANGS.indexOf(p)>=0){want=p;break;}
+    }
+  }
+  if(!want||want===lang||off)return;
+  const o=document.createElement("div");o.className="offer";o.lang=LANG_TAG[want]||want;
+  const a=document.createElement("a");a.href=DESK_PATH[want]+location.hash;a.textContent=OFFER[want][0];
+  const x=document.createElement("button");x.type="button";x.setAttribute("aria-label",OFFER[want][1]);x.innerHTML='<svg viewBox="0 0 8 8" aria-hidden="true"><path d="M1 1 7 7M7 1 1 7" fill="none" stroke="currentColor" stroke-width="1"/></svg>';
+  x.addEventListener("click",()=>{o.remove();try{sessionStorage.setItem("desk-offer-off","1");}catch(e){/* ignore */}});
+  o.append(a,x);document.body.append(o);
+})();
+// the device page reports its help text and its size; the frame takes the device's width (scaled down on narrow screens)
+let devW=692;
+const size=()=>{frame.style.width=Math.min(devW,fit.clientWidth)+"px";};
+addEventListener("resize",size);
+addEventListener("message",e=>{if(e.origin!==location.origin||e.source!==frame.contentWindow||!e.data||e.data.src!=="desk-demo")return;const d=e.data;
+  if(d.type==="hello")tell();
+  if(d.type==="info"){infoLive=true;infoMsg=d;showInfo();}
+  if(d.type==="size"&&d.w){devW=d.w;size();frame.style.height=d.h+"px";}});
+// meaning words (section 02)
+const by={};KNOBS.forEach(k=>(by[k.s]=by[k.s]||[]).push(k));
+$("#words").innerHTML=Object.keys(by).map(m=>`<div class="w" style="background:${COL[m]||"#c8c8c8"}"><span class="cap">${m}</span>${by[m].map(k=>`<div>${k.l} ↔ ${k.r}</div>`).join("")}</div>`).join("");
+// sticker: go to the demo and light its MINE key for a moment (the key's box is read from the same-origin device page)
+const stk=$("#stk"),hl=$("#hl");let hlT=0;
+stk.addEventListener("click",()=>{
+  const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  fit.scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"});
+  try{
+    const k=frame.contentDocument.querySelector(".k-mine");if(!k)return;
+    const r=k.getBoundingClientRect(),f=frame.getBoundingClientRect(),w=fit.getBoundingClientRect();
+    Object.assign(hl.style,{left:Math.round(f.left-w.left+r.left)-2+"px",top:Math.round(f.top-w.top+r.top)-2+"px",width:Math.round(r.width)+4+"px",height:Math.round(r.height)+4+"px"});
+    hl.classList.add("on");clearTimeout(hlT);hlT=setTimeout(()=>hl.classList.remove("on"),1600);
+  }catch(e){/* device not loaded: only the scroll */}
+});
+tell();size();
+</script>
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Desk by Volume Attack — Tournez le sens, pas les boutons</title>
+<meta name="description" content="Desk de Volume Attack : un device Max for Live en développement. Il lit votre set Ableton, regroupe les pistes en modules et donne à chaque module deux boutons en mots simples, bâtis sur les devices natifs de Live.">
+<link rel="canonical" href="https://desk.volumeattack.ru/fr/">
+<link rel="alternate" hreflang="en" href="https://desk.volumeattack.ru/">
+<link rel="alternate" hreflang="ru" href="https://desk.volumeattack.ru/ru/">
+<link rel="alternate" hreflang="es" href="https://desk.volumeattack.ru/es/">
+<link rel="alternate" hreflang="pt-BR" href="https://desk.volumeattack.ru/pt-br/">
+<link rel="alternate" hreflang="de" href="https://desk.volumeattack.ru/de/">
+<link rel="alternate" hreflang="fr" href="https://desk.volumeattack.ru/fr/">
+<link rel="alternate" hreflang="ja" href="https://desk.volumeattack.ru/ja/">
+<link rel="alternate" hreflang="zh-Hans" href="https://desk.volumeattack.ru/zh-hans/">
+<link rel="alternate" hreflang="ko" href="https://desk.volumeattack.ru/ko/">
+<link rel="alternate" hreflang="x-default" href="https://desk.volumeattack.ru/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Desk by Volume Attack">
+<meta property="og:title" content="Desk by Volume Attack — Tournez le sens, pas les boutons">
+<meta property="og:description" content="Desk de Volume Attack : un device Max for Live en développement. Il lit votre set Ableton, regroupe les pistes en modules et donne à chaque module deux boutons en mots simples, bâtis sur les devices natifs de Live.">
+<meta property="og:url" content="https://desk.volumeattack.ru/fr/">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="ru_RU">
+<meta property="og:locale:alternate" content="es_ES">
+<meta property="og:locale:alternate" content="pt_BR">
+<meta property="og:locale:alternate" content="de_DE">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:locale:alternate" content="zh_CN">
+<meta property="og:locale:alternate" content="ko_KR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Desk by Volume Attack — Tournez le sens, pas les boutons">
+<meta name="twitter:description" content="Desk de Volume Attack : un device Max for Live en développement. Il lit votre set Ableton, regroupe les pistes en modules et donne à chaque module deux boutons en mots simples, bâtis sur les devices natifs de Live.">
+<script>
+// Every language has its own pre-rendered page (tools/site/build.py fills PAGE_LANG; the root is English). A saved choice or the
+// browser's language never redirects: it only offers a small, dismissible link at the foot of the page. ?lang= still works
+// and sends the visitor to the language's own address.
+var DESK_LANGS=["en","ru","es","pt","de","fr","ja","zh","ko"];
+var DESK_PATH={en:"/",ru:"/ru/",es:"/es/",pt:"/pt-br/",de:"/de/",fr:"/fr/",ja:"/ja/",zh:"/zh-hans/",ko:"/ko/"};
+var DESK_LANG="fr";
+(function(){
+  var q=null;
+  try{q=new URLSearchParams(location.search).get("lang");}catch(e){}
+  if(q&&q!==DESK_LANG&&DESK_LANGS.indexOf(q)>=0)location.replace(DESK_PATH[q]+location.hash);
+})();
+</script>
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%23000'/%3E%3Cpath d='M126 86.7H96L118.5 0 60 105.3H90L67.5 192Z' fill='%23fff' transform='translate(24 24) scale(.75)'/%3E%3C/svg%3E">
+<!-- Source of the public site. Publish with tools/site/build.py (product/site.md); the markers [{"s":"pad","l":"close","r":"spacious"},{"s":"pad","l":"warm","r":"airy"},{"s":"drums","l":"dark","r":"bright"},{"s":"drums","l":"tucked","r":"upfront"},{"s":"vocal","l":"tucked","r":"upfront"},{"s":"vocal","l":"close","r":"spacious"},{"s":"lead","l":"close","r":"spacious"},{"s":"lead","l":"steady","r":"wobbly"},{"s":"fx","l":"warm","r":"airy"},{"s":"fx","l":"tucked","r":"upfront"},{"s":"bass","l":"heavy","r":"clear"},{"s":"bass","l":"dark","r":"bright"},{"s":"master","l":"warm","r":"airy"},{"s":"master","l":"quiet","r":"loud"}] and
+     40c1d07ffcbf are filled in by the build. Copy rule (decided 2026-10-04): only what exists in main today and was verified,
+     by tests or in Live. No dates, prices, plans, "coming soon", quality claims or numbers that were not measured. -->
+<style>
+@font-face{font-family:"Spline Sans Mono";src:url("/fonts-ofl/SplineSansMono.ttf?v=40c1d07ffcbf") format("truetype");font-weight:300 700;font-display:swap}
+@font-face{font-family:"Spline Sans";src:url("/fonts-ofl/SplineSans.ttf?v=40c1d07ffcbf") format("truetype");font-weight:300 700;font-display:swap}
+:root{
+  --bg:#fff;--ink:#000;--grey:#6b6b6b;--line:#000;--soft:#f2f2f2;--acc:#ff4800;
+  --font:"Spline Sans Mono",ui-monospace,SFMono-Regular,Menlo,monospace;--font-num:"Spline Sans",system-ui,sans-serif;
+  --m-fast:160ms;--m:260ms;--m-slow:460ms;--e-out:cubic-bezier(.2,.8,.2,1);--e-io:cubic-bezier(.45,0,.2,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#111;--ink:#fff;--grey:#a0a0a0;--line:#fff;--soft:#1d1d1d;color-scheme:dark}}
+/* Spline Sans has no Cyrillic or CJK: those scripts use the system's UI fonts, same size and weight */
+:lang(ru){--font:"Spline Sans Mono",ui-monospace,Menlo,"PT Mono","Roboto Mono",monospace;--font-num:"Spline Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+:lang(ja){--font:"Spline Sans Mono",ui-monospace,"Hiragino Sans","Yu Gothic UI","Noto Sans CJK JP","IPAGothic",monospace;--font-num:"Spline Sans","Hiragino Sans","Yu Gothic UI","Noto Sans CJK JP","IPAGothic",system-ui,sans-serif}
+:lang(zh){--font:"Spline Sans Mono",ui-monospace,"PingFang SC","Microsoft YaHei UI","Noto Sans CJK SC","WenQuanYi Zen Hei",monospace;--font-num:"Spline Sans","PingFang SC","Microsoft YaHei UI","Noto Sans CJK SC","WenQuanYi Zen Hei",system-ui,sans-serif}
+:lang(ko){--font:"Spline Sans Mono",ui-monospace,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR","WenQuanYi Zen Hei",monospace;--font-num:"Spline Sans","Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR","WenQuanYi Zen Hei",system-ui,sans-serif}
+:lang(ja) .cap,:lang(zh) .cap,:lang(ko) .cap{font-size:11px;line-height:14px}
+:lang(ja) h1,:lang(zh) h1,:lang(ko) h1{font-size:clamp(28px,4.6vw,48px);line-height:1.2;letter-spacing:0;text-wrap:balance;line-break:strict;word-break:keep-all}
+:lang(ja) .lede,:lang(zh) .lede,:lang(ko) .lede{line-break:strict}
+*{box-sizing:border-box;font-weight:400}
+/* Swiss / Bauhaus (DSK-30): text, headings and UI are the proportional sans; the mono is only for captions, numbers, keys and tags */
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-size-adjust:100%;scroll-padding-top:56px}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--font-num);overflow-x:hidden;transition:background-color var(--m-slow) var(--e-io),color var(--m-slow) var(--e-io)}
+a{color:inherit}
+p{margin:0 0 16px}
+h1,h2,h3{margin:0;font-weight:600;font-family:var(--font-num)}
+.cap,.proof b,.hints li span:first-child,.infov,footer,.mark{font-family:var(--font)}
+.cap{font-size:10px;line-height:12px;text-transform:uppercase;letter-spacing:.02em}
+.sh>.cap::before,.cols>div>.cap::before{content:"";display:block;width:12px;height:12px;background:var(--acc);margin-bottom:12px}
+.cols>div>.cap::before{width:8px;height:8px;margin-bottom:8px}
+.g{color:var(--grey)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 32px}
+.logo{width:16px;height:16px;flex:none;display:block}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);transition:background-color var(--m-slow) var(--e-io)}
+.top .wrap{display:flex;align-items:center;gap:24px;height:48px}
+.mark{text-decoration:none;display:flex;gap:8px;align-items:center;white-space:nowrap}
+.top nav{display:flex;gap:16px;margin-left:auto}
+.top nav a{text-decoration:none;opacity:.6;transition:opacity var(--m-fast) var(--e-out)}
+.top nav a:hover,.top nav a:focus-visible{opacity:1}
+/* offer to read the page in the visitor's language: fixed, so it never moves the page */
+.offer{position:fixed;left:16px;bottom:16px;z-index:20;display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px 4px 4px 12px;font:400 13px/20px var(--font-num)}
+.offer a{color:var(--ink);text-underline-offset:3px}
+.offer button{appearance:none;border:0;background:none;color:var(--ink);width:28px;height:28px;display:grid;place-items:center;cursor:pointer;border-radius:8px;-webkit-tap-highlight-color:transparent}
+.offer button:hover{background:var(--soft)}
+.offer svg{width:8px;height:8px}
+.offer a:focus-visible,.offer button:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
+/* language picker: a pill of the old toggle's size; the list opens under it */
+.lang{position:relative;display:inline-flex}
+.lang-b{appearance:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:none;color:var(--ink);border-radius:999px;padding:6px 10px 6px 12px;font:400 10px/12px var(--font);text-transform:uppercase;cursor:pointer;transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out);-webkit-tap-highlight-color:transparent}
+.lang-b:hover,.lang-b[aria-expanded="true"]{background:var(--ink);color:var(--bg)}
+.lang-b svg{width:8px;height:8px;flex:none;transition:transform var(--m-fast) var(--e-out)}
+.lang-b[aria-expanded="true"] svg{transform:rotate(180deg)}
+.lang-l{position:absolute;right:0;top:calc(100% + 8px);z-index:30;margin:0;padding:4px;list-style:none;min-width:176px;background:var(--bg);border:1px solid var(--line);border-radius:12px;opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity var(--m-fast) var(--e-out),transform var(--m-fast) var(--e-out),visibility 0s linear var(--m-fast)}
+.lang.open .lang-l{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+.lang-l li{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:6px 8px;border-radius:8px;font:400 13px/20px var(--font-num);cursor:pointer;-webkit-user-select:none;user-select:none}
+.lang-l li span{font:400 10px/12px var(--font);text-transform:uppercase;color:var(--grey)}
+.lang-l li:hover,.lang-l li.cur{background:var(--soft)}
+.lang-l li[aria-selected="true"]::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--ink);order:3}
+.lang-b:focus-visible,.lang-l:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
+.lang-l:focus{outline:0}
+.lang-l:focus-visible li.cur{outline:1px solid var(--ink);outline-offset:-1px}
+
+/* hero */
+.hero{padding-top:72px;padding-bottom:64px}
+.hero h1{font-size:clamp(40px,8vw,96px);line-height:.98;letter-spacing:-.04em;font-weight:700;margin:24px 0 32px}
+.lede{max-width:56ch;font-size:20px;line-height:1.5}
+.stage{margin:40px 0 0}
+.stage>.cap{margin-bottom:12px}
+/* the device: the real device page (device/index.html) in a frame of the device's own size and corners */
+.fit{width:100%}
+.devf{display:block;border:0;width:692px;max-width:100%;height:169px;border-radius:0;background:transparent;color-scheme:normal}
+.under{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;margin-top:16px;align-items:start}
+.hints{display:grid;gap:4px;margin:0;padding:0;list-style:none}
+.hints li{display:flex;gap:8px}
+.hints li span:first-child{min-width:128px;flex:none;max-width:40%}
+.hints li span.g{font:400 13px/18px var(--font-num);text-transform:none;letter-spacing:0}
+.hints li{align-items:baseline;border-top:1px solid var(--line);padding:6px 0}
+.hints{gap:0}
+/* the device's own help text (what it writes about the control under the pointer) */
+.infov{background:var(--ink);color:var(--bg);border-radius:4px;padding:10px 12px;min-height:124px;font:400 10px/14px var(--font)}
+.infov b{display:block;font-weight:400;text-transform:uppercase;margin-bottom:6px}
+.infov p{margin:0;white-space:pre-line;font-variant-numeric:tabular-nums}
+
+/* sections */
+.sec{border-top:1px solid var(--line);padding:72px 0}
+.sh{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;margin-bottom:48px}
+.sh h2{font-size:clamp(28px,4.4vw,56px);line-height:1.04;letter-spacing:-.035em;font-weight:700;margin-bottom:24px;max-width:18ch}
+.sh p{max-width:60ch;font-size:18px;line-height:1.55}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.cols h3{font-size:22px;line-height:1.2;letter-spacing:-.015em;margin:8px 0 12px}
+.cols p{font-size:16px;max-width:36ch}
+.proof{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:0;border-top:4px solid var(--ink);border-bottom:1px solid var(--line);margin-bottom:48px}
+.proof div{padding:16px 16px 20px 0;border-left:0}
+.proof div:first-child{border-left:0}
+.proof .cap{display:block}
+.proof b{display:block;font:700 64px/64px var(--font-num);font-feature-settings:"lnum" 1;letter-spacing:-.04em;margin-bottom:8px}
+.words{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-bottom:32px}
+.w{border-radius:4px;padding:12px 12px 16px;color:#000}
+.w .cap{display:block;margin-bottom:8px}
+.w div{font-size:15px;line-height:22px;font-weight:500}
+.req{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px}
+.req div{border-bottom:1px solid var(--line);padding:16px 0 20px}
+.req div p{margin:0;font-size:16px}
+footer{border-top:1px solid var(--line);padding:24px 0 40px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+@media (max-width:900px){
+  .top nav{display:none}
+  .lang{margin-left:auto}
+  .under{grid-template-columns:minmax(0,1fr)}
+  .sh{grid-template-columns:minmax(0,1fr);gap:8px}
+  .cols{grid-template-columns:minmax(0,1fr)}
+  .proof{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .proof div:nth-child(n+3){border-top:1px solid var(--line)}
+  .proof b{font-size:48px;line-height:48px}
+  .lede{font-size:18px}
+  .sh p{font-size:17px}
+  .words{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .req{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:600px){
+  .wrap{padding:0 16px}
+  .hints li span:first-child{min-width:104px}
+}
+/* sticker (DSK-30, option A «Dial»): one round accent badge on the hero's top right edge; tilted, it straightens on hover / focus; a tap goes to the demo and lights its MINE key */
+.hero{position:relative}
+.stk{appearance:none;position:absolute;right:32px;top:40px;z-index:5;width:152px;height:152px;border-radius:50%;border:0;background:var(--acc);color:#000;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;cursor:pointer;transform:rotate(-12deg);transition:transform var(--m) var(--e-out);-webkit-tap-highlight-color:transparent;font-family:var(--font-num)}
+.stk b{font:700 28px/28px var(--font-num);letter-spacing:-.02em}
+.stk span{font:400 12px/15px var(--font-num);max-width:104px}
+.stk:hover,.stk:focus-visible{transform:rotate(0)}
+.stk:focus-visible{outline:1px solid var(--ink);outline-offset:4px}
+.fit{position:relative}
+.hl{position:absolute;pointer-events:none;border:1px solid var(--acc);border-radius:4px;box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 35%,transparent);opacity:0;transition:opacity var(--m-fast) var(--e-out)}
+.hl.on{opacity:1}
+@media (max-width:900px){.stk{position:relative;right:auto;top:auto;margin:16px 0 -8px auto;width:96px;height:96px;gap:2px}.stk b{font-size:20px;line-height:20px}.stk span{font-size:10px;line-height:12px;max-width:72px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:0s!important}}
+</style>
+<!-- Vercel Web Analytics: cookieless page views, served by Vercel at /_vercel/insights/script.js (404 off Vercel, harmless) -->
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="mark" href="#top"><svg class="logo" viewBox="0 0 192 192" aria-hidden="true"><path d="M126 86.7097H95.9992L118.499 0L60 105.29H89.9986L67.4991 192L126 86.7097Z" fill="currentColor"/></svg><span>Desk <span class="g">by Volume Attack</span></span></a>
+  <nav aria-label="Sections" data-i="nav.aria" data-a="aria-label"><a href="#project" data-i="nav.project">Projet</a><a href="#meaning" data-i="nav.meaning">Sens</a><a href="#mine" data-i="nav.mine">MINE</a><a href="#status" data-i="nav.status">État</a></nav>
+  <div class="lang" id="lang">
+    <button type="button" class="lang-b" id="lang-b" aria-haspopup="listbox" aria-expanded="false" aria-controls="lang-l" aria-label="Language"><span id="lang-c">EN</span><svg viewBox="0 0 8 8" aria-hidden="true"><path d="M1 2.5 4 5.5 7 2.5" fill="none" stroke="currentColor" stroke-width="1"/></svg></button>
+    <ul class="lang-l" id="lang-l" role="listbox" tabindex="-1" aria-label="Language"></ul>
+  </div>
+</div></header>
+
+<main id="top">
+<section class="hero wrap" aria-labelledby="h1">
+  <p class="cap" data-i="hero.cap">Pour Ableton Live 12 avec Max for Live · en développement</p>
+  <button type="button" class="stk" id="stk" data-i="stk.a" data-a="aria-label" aria-label="MINE, le milieu de chaque bouton. Aller à la démo."><b aria-hidden="true">MINE</b><span aria-hidden="true" data-i="stk.t">Le milieu de chaque bouton</span></button>
+  <h1 id="h1" data-i="hero.h1">Tournez le sens,<br>pas les boutons.</h1>
+  <p class="lede" data-i="hero.lede">Desk regarde votre projet Ableton et trie les pistes selon ce qu’elles font dans le morceau : batterie, basse, voix, etc. Chaque groupe reçoit deux boutons avec des mots simples aux extrémités, comme <i>en retrait ↔ devant</i> ou <i>lourd ↔ clair</i>. Tournez un bouton et Desk déplace les devices de Live derrière lui. Le milieu de chaque bouton est MINE : le mix que Desk a préparé pour votre morceau.</p>
+
+  <figure class="stage" aria-labelledby="cap-dev">
+    <p class="cap g" id="cap-dev" data-i="stage.cap">Voici le device tel qu’il est aujourd’hui. La démo rejoue une vraie analyse d’un de nos morceaux. Elle n’est pas connectée à Live. Les libellés du device lui-même sont en anglais.</p>
+    <div class="fit" id="fit"><i class="hl" id="hl" aria-hidden="true"></i><iframe class="devf" id="devf" src="/device/index.html?embed&amp;mode=desk&amp;v=40c1d07ffcbf" title="Device Desk, démo interactive" data-i="stage.frame" data-a="title" scrolling="no"></iframe></div>
+    <div class="under">
+      <ul class="hints cap">
+        <li><span data-i="h1.k">Faire glisser un bouton</span><span class="g" data-i="h1.v">vers le haut ou le bas pour tourner ; avec Shift, par petits pas</span></li>
+        <li><span data-i="h2.k">Pad master</span><span class="g" data-i="h2.v">déplacez le point : chaud ↔ aérien, doux ↔ fort</span></li>
+        <li><span data-i="h3.k">Double-clic</span><span class="g" data-i="h3.v">retour à MINE</span></li>
+        <li><span data-i="h4.k">Shift + chiffres</span><span class="g" data-i="h4.v">saisissez une valeur : Shift 4 = +4, Shift 0 = retour à MINE</span></li>
+        <li><span data-i="h5.k">Nom du groupe</span><span class="g" data-i="h5.v">cliquez pour désactiver ce groupe ; faites glisser pour changer l’ordre</span></li>
+        <li><span>MINE · BP</span><span class="g" data-i="h6.v">maintenez pour écouter tant que vous maintenez ; cliquez pour activer et désactiver</span></li>
+        <li><span data-i="h7.k">Touche ronde, à gauche</span><span class="g" data-i="h7.v">analyser à nouveau (la démo rejoue l’enregistrement 4 fois plus vite)</span></li>
+      </ul>
+      <div class="infov" aria-live="polite"><b id="iv-t">Desk</b><p id="iv-p" data-i="info.def">Pointez n’importe quoi sur le device : voici le texte d’aide qu’il écrit pour chaque commande.</p></div>
+    </div>
+  </figure>
+</section>
+
+<section class="sec" id="project" aria-labelledby="h-project"><div class="wrap">
+  <div class="sh"><p class="cap" data-i="s1.cap">01 · Dans votre projet</p><div><h2 id="h-project" data-i="s1.h">Pas un fichier. Votre projet.</h2>
+    <p data-i="s1.p">Desk travaille dans Live, sur les pistes que vous avez déjà. Vous n’exportez ni ne téléversez rien. Appuyez sur ANALYZE : Desk lit les pistes, les regroupe, ajoute des boutons pour le master et règle tout sur les devices natifs de Live.</p></div></div>
+  <div class="proof" aria-label="Une analyse d’un de nos morceaux, enregistrée le 3 octobre 2026" data-i="proof.aria" data-a="aria-label">
+    <div><b>11</b><span class="cap g" data-i="proof.1">pistes lues</span></div>
+    <div><b>6</b><span class="cap g" data-i="proof.2">groupes + master</span></div>
+    <div><b>14</b><span class="cap g" data-i="proof.3">boutons</span></div>
+    <div><b>0</b><span class="cap g" data-i="proof.4">plugins d’autres éditeurs (dans ce set)</span></div>
+  </div>
+  <div class="cols">
+    <div><p class="cap">01</p><h3 data-i="c1.h">Des groupes par fonction</h3><p data-i="c1.p">Les pistes sont regroupées selon ce qu’elles font dans le morceau. Le device montre six groupes à la fois ; les autres sont à une touche.</p></div>
+    <div><p class="cap">02</p><h3 data-i="c2.h">Les devices natifs de Live</h3><p data-i="c2.p">EQ Eight, Saturator, Limiter, Utility, Drum Buss, volume de piste et départs. Chaque changement se fait sur un device que vous pouvez ouvrir, lire et modifier.</p></div>
+    <div><p class="cap">03</p><h3 data-i="c3.h">Vos devices restent</h3><p data-i="c3.p">Desk ajoute ses propres devices à la fin d’une piste et modifie des valeurs comme le volume et les départs. Il ne retire jamais un device que vous avez posé. Un seul Cmd+Z annule toute l’analyse.</p></div>
+  </div>
+</div></section>
+
+<section class="sec" id="meaning" aria-labelledby="h-meaning"><div class="wrap">
+  <div class="sh"><p class="cap" data-i="s2.cap">02 · Sens</p><div><h2 id="h-meaning" data-i="s2.h">Vous tournez le sens. Desk tourne les devices.</h2>
+    <p data-i="s2.p">Voici les boutons que Desk a créés pour un de nos morceaux. Chacun va de −10 à +10 autour de MINE. Pointez un bouton et son texte d’aide liste ce qu’il déplace, en dB, Hz et %.</p></div></div>
+  <div class="words" id="words"></div>
+</div></section>
+
+<section class="sec" id="mine" aria-labelledby="h-mine"><div class="wrap">
+  <div class="sh"><p class="cap" data-i="s3.cap">03 · Votre mix reste à portée</p><div><h2 id="h-mine" data-i="s3.h">Un clic pour revenir à MINE.</h2>
+    <p data-i="s3.p">MINE est le mix que Desk a construit pour votre morceau, et le milieu de chaque bouton. BP (bypass) joue votre original. Essayez les deux touches dans la démo en haut.</p></div></div>
+  <div class="cols">
+    <div><p class="cap" data-i="m1.cap">MINE</p><h3 data-i="m1.h">Écouter MINE</h3><p data-i="m1.p">Maintenez MINE pour entendre le mix de Desk tant que vous maintenez, ou cliquez pour l’activer et le désactiver. Les points gris se souviennent de la position de vos propres boutons. Un double-clic sur un bouton le renvoie sur MINE.</p></div>
+    <div><p class="cap" data-i="m2.cap">Bypass</p><h3 data-i="m2.h">Écouter votre original</h3><p data-i="m2.p">BP désactive tout ce que Desk a fait, le master aussi. Seul un limiteur de sécurité reste actif. Cliquez sur le nom d’un groupe pour désactiver ce groupe seulement.</p></div>
+    <div><p class="cap" data-i="m3.cap">Volume sonore</p><h3 data-i="m3.h">Volume sonore, mesuré</h3><p data-i="m3.p">Un indicateur de volume sonore (EBU R128, la norme de la radiodiffusion) se trouve dans le device et lit votre master pendant que le morceau joue. Au bout de 10 secondes, il montre aussi de combien Spotify monterait ou baisserait le morceau pour atteindre son niveau de −14 LUFS. Cette page n’a pas d’audio : ici, le chiffre est une estimation faite à partir du pad master.</p></div>
+  </div>
+</div></section>
+
+<section class="sec" id="status" aria-labelledby="h-status"><div class="wrap">
+  <div class="sh"><p class="cap" data-i="s4.cap">04 · État</p><div><h2 id="h-status" data-i="s4.h">En développement.</h2>
+    <p data-i="s4.p">Desk n’est pas encore disponible. Voici où il en est aujourd’hui.</p></div></div>
+  <div class="req">
+    <div><p class="cap">Live</p><p data-i="r1.p">Conçu et testé sur Ableton Live 12.4 Suite, qui inclut Max for Live.</p></div>
+    <div><p class="cap" data-i="r2.cap">Votre audio</p><p data-i="r2.p">Reste sur votre ordinateur. Desk lit le projet et mesure le master sur votre machine, et n’envoie rien nulle part.</p></div>
+    <div><p class="cap" data-i="r3.cap">Testé</p><p data-i="r3.p">Chaque changement passe des tests automatiques du device, du calcul des boutons et de l’interface avant d’être ajouté.</p></div>
+    <div><p class="cap" data-i="r4.cap">Contact</p><p><a href="https://volumeattack.ru">volumeattack.ru</a></p></div>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap cap"><span>Volume Attack · <a href="https://volumeattack.ru">volumeattack.ru</a></span><span class="g" data-i="foot">Ableton et Live sont des marques d’Ableton AG. Desk n’est pas affilié à Ableton.</span></div></footer>
+
+<script>
+// Landing copy per language. English is the page's own markup (data-i keys); the dictionary only holds the other eight.
+// Kept as written: Desk, MINE, BP, BYPASS, ANALYZE, Ableton Live, Max for Live, Live's device names (EQ Eight, Saturator, Limiter, Utility), EBU R128, LUFS, Spotify.
+const I18N={"fr":{"info.idle":"Pointez n’importe quel contrôle pour voir ce qu’il fait.","lang.aria":"Langue"}};
+// the knobs of the demo analysis (filled in by tools/site/build.py from tests/fixtures/analyze/knobs.json)
+const KNOBS=[{"s":"pad","l":"close","r":"spacious"},{"s":"pad","l":"warm","r":"airy"},{"s":"drums","l":"dark","r":"bright"},{"s":"drums","l":"tucked","r":"upfront"},{"s":"vocal","l":"tucked","r":"upfront"},{"s":"vocal","l":"close","r":"spacious"},{"s":"lead","l":"close","r":"spacious"},{"s":"lead","l":"steady","r":"wobbly"},{"s":"fx","l":"warm","r":"airy"},{"s":"fx","l":"tucked","r":"upfront"},{"s":"bass","l":"heavy","r":"clear"},{"s":"bass","l":"dark","r":"bright"},{"s":"master","l":"warm","r":"airy"},{"s":"master","l":"quiet","r":"loud"}];
+// Desk look module colours (tools/knobs/design.js PALETTE)
+const COL={pad:"#add5ff",drums:"#ffd200",vocal:"#ff4800",lead:"#ff6390",fx:"#54e3d0",bass:"#2b6cff",master:"#c8c8c8"};
+const $=s=>document.querySelector(s),frame=$("#devf"),fit=$("#fit");
+const dark=()=>matchMedia("(prefers-color-scheme:dark)").matches;
+// the page follows the system theme, live; the device in the frame gets the same one (Desk look: desk-light / desk-dark)
+const tell=()=>{try{frame.contentWindow.postMessage({src:"desk-landing",look:"desk",dark:dark()},location.origin);}catch(e){/* not loaded */}};
+matchMedia("(prefers-color-scheme:dark)").addEventListener("change",tell);
+
+// language: DESK_LANG was chosen in <head>; English is the markup, the other eight come from I18N
+const LANGS=[["en","English","EN"],["ru","Русский","RU"],["es","Español","ES"],["pt","Português (Brasil)","PT"],["de","Deutsch","DE"],["fr","Français","FR"],["ja","日本語","JA"],["zh","简体中文","ZH"],["ko","한국어","KO"]];
+const LANG_TAG={pt:"pt-BR",zh:"zh-Hans"};
+const EN=new Map(),metaDesc=document.querySelector('meta[name="description"]');
+let lang=DESK_LANG,infoLive=false,infoMsg=null;
+const IDLE_EN="Hover any control to see what it does.";
+function showInfo(){if(!infoMsg)return;const T=I18N[lang]||{};$("#iv-t").textContent=infoMsg.title;$("#iv-p").textContent=infoMsg.text===IDLE_EN&&T["info.idle"]?T["info.idle"]:infoMsg.text;}
+function applyLang(code){
+  const T=I18N[code]||{};
+  lang=code;document.documentElement.lang=LANG_TAG[code]||code;
+  document.querySelectorAll("[data-i]").forEach(el=>{
+    const a=el.dataset.a;
+    if(!EN.has(el))EN.set(el,a?el.getAttribute(a):el.innerHTML);
+    const v=T[el.dataset.i]!==undefined?T[el.dataset.i]:EN.get(el);
+    if(a)el.setAttribute(a,v);else if(!(el.id==="iv-p"&&infoLive))el.innerHTML=v;
+  });
+  if(!EN.has(metaDesc))EN.set(metaDesc,metaDesc.content);
+  metaDesc.content=T["meta.desc"]||EN.get(metaDesc);
+  const cur=LANGS.find(l=>l[0]===code);
+  $("#lang-c").textContent=cur[2];
+  $("#lang-b").setAttribute("aria-label",(T["lang.aria"]||"Language")+": "+cur[1]);
+  $("#lang-l").setAttribute("aria-label",T["lang.aria"]||"Language");
+  document.querySelectorAll("#lang-l li").forEach(li=>li.setAttribute("aria-selected",String(li.dataset.c===code)));
+  showInfo();
+}
+// the picker: a button and a listbox (arrows, Home/End, Enter/Space, Esc; the list closes on Tab and on a click outside)
+const box=$("#lang"),btn=$("#lang-b"),list=$("#lang-l");
+list.innerHTML=LANGS.map(l=>`<li role="option" id="lo-${l[0]}" data-c="${l[0]}" lang="${LANG_TAG[l[0]]||l[0]}">${l[1]}<span>${l[2]}</span></li>`).join("");
+const opts=[...list.children];let hi=0;
+function mark(i){hi=(i+opts.length)%opts.length;opts.forEach((o,j)=>o.classList.toggle("cur",j===hi));list.setAttribute("aria-activedescendant",opts[hi].id);opts[hi].scrollIntoView({block:"nearest"});}
+function open(){box.classList.add("open");btn.setAttribute("aria-expanded","true");mark(LANGS.findIndex(l=>l[0]===lang));list.focus({preventScroll:true});}
+function close(back){box.classList.remove("open");btn.setAttribute("aria-expanded","false");if(back)btn.focus();}
+function choose(code){try{localStorage.setItem("desk-lang",code);}catch(e){/* private window: the choice is not kept */}if(code===lang){close(true);return;}location.href=DESK_PATH[code]+location.hash;}
+btn.addEventListener("click",()=>box.classList.contains("open")?close(true):open());
+btn.addEventListener("keydown",e=>{if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();open();}});
+list.addEventListener("click",e=>{const o=e.target.closest("li");if(o)choose(o.dataset.c);});
+list.addEventListener("mousemove",e=>{const o=e.target.closest("li");if(o)mark(opts.indexOf(o));});
+list.addEventListener("keydown",e=>{
+  const k=e.key;
+  if(k==="ArrowDown"){e.preventDefault();mark(hi+1);}
+  else if(k==="ArrowUp"){e.preventDefault();mark(hi-1);}
+  else if(k==="Home"){e.preventDefault();mark(0);}
+  else if(k==="End"){e.preventDefault();mark(opts.length-1);}
+  else if(k==="Enter"||k===" "){e.preventDefault();choose(opts[hi].dataset.c);}
+  else if(k==="Escape"){e.preventDefault();close(true);}
+  else if(k==="Tab")close(false);
+});
+document.addEventListener("pointerdown",e=>{if(!box.contains(e.target))close(false);});
+applyLang(DESK_LANG);
+// a small, dismissible offer in the visitor's own language: the saved choice, else the browser's first supported language. Never a redirect.
+const OFFER={en:["Read in English","Close"],ru:["Читать по-русски","Закрыть"],es:["Leer en español","Cerrar"],pt:["Ler em português","Fechar"],de:["Auf Deutsch lesen","Schließen"],fr:["Lire en français","Fermer"],ja:["日本語で読む","閉じる"],zh:["阅读简体中文版","关闭"],ko:["한국어로 보기","닫기"]};
+(function(){
+  let want=null,off=false;
+  try{want=localStorage.getItem("desk-lang");off=sessionStorage.getItem("desk-offer-off")==="1";}catch(e){/* no storage: the offer is simply shown again */}
+  if(!want||DESK_LANGS.indexOf(want)<0){
+    want=null;
+    for(const l of (navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||""])){
+      const t=String(l).toLowerCase(),p=t.split("-")[0];
+      if(p==="zh"&&/-(hant|tw|hk|mo)\b/.test(t))continue;   // Traditional Chinese is not offered: look at the next language
+      if(DESK_LANGS.indexOf(p)>=0){want=p;break;}
+    }
+  }
+  if(!want||want===lang||off)return;
+  const o=document.createElement("div");o.className="offer";o.lang=LANG_TAG[want]||want;
+  const a=document.createElement("a");a.href=DESK_PATH[want]+location.hash;a.textContent=OFFER[want][0];
+  const x=document.createElement("button");x.type="button";x.setAttribute("aria-label",OFFER[want][1]);x.innerHTML='<svg viewBox="0 0 8 8" aria-hidden="true"><path d="M1 1 7 7M7 1 1 7" fill="none" stroke="currentColor" stroke-width="1"/></svg>';
+  x.addEventListener("click",()=>{o.remove();try{sessionStorage.setItem("desk-offer-off","1");}catch(e){/* ignore */}});
+  o.append(a,x);document.body.append(o);
+})();
+// the device page reports its help text and its size; the frame takes the device's width (scaled down on narrow screens)
+let devW=692;
+const size=()=>{frame.style.width=Math.min(devW,fit.clientWidth)+"px";};
+addEventListener("resize",size);
+addEventListener("message",e=>{if(e.origin!==location.origin||e.source!==frame.contentWindow||!e.data||e.data.src!=="desk-demo")return;const d=e.data;
+  if(d.type==="hello")tell();
+  if(d.type==="info"){infoLive=true;infoMsg=d;showInfo();}
+  if(d.type==="size"&&d.w){devW=d.w;size();frame.style.height=d.h+"px";}});
+// meaning words (section 02)
+const by={};KNOBS.forEach(k=>(by[k.s]=by[k.s]||[]).push(k));
+$("#words").innerHTML=Object.keys(by).map(m=>`<div class="w" style="background:${COL[m]||"#c8c8c8"}"><span class="cap">${m}</span>${by[m].map(k=>`<div>${k.l} ↔ ${k.r}</div>`).join("")}</div>`).join("");
+// sticker: go to the demo and light its MINE key for a moment (the key's box is read from the same-origin device page)
+const stk=$("#stk"),hl=$("#hl");let hlT=0;
+stk.addEventListener("click",()=>{
+  const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  fit.scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"});
+  try{
+    const k=frame.contentDocument.querySelector(".k-mine");if(!k)return;
+    const r=k.getBoundingClientRect(),f=frame.getBoundingClientRect(),w=fit.getBoundingClientRect();
+    Object.assign(hl.style,{left:Math.round(f.left-w.left+r.left)-2+"px",top:Math.round(f.top-w.top+r.top)-2+"px",width:Math.round(r.width)+4+"px",height:Math.round(r.height)+4+"px"});
+    hl.classList.add("on");clearTimeout(hlT);hlT=setTimeout(()=>hl.classList.remove("on"),1600);
+  }catch(e){/* device not loaded: only the scroll */}
+});
+tell();size();
+</script>
+</body>
+</html>

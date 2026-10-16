@@ -3,47 +3,57 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Desk by Volume Attack</title>
-<meta name="description" content="Desk by Volume Attack: a device for Ableton Live, in development. It sorts your tracks into groups and gives each group two knobs in plain words, using Live\'s own devices.">
+<title>Desk by Volume Attack — Turn meaning, not knobs</title>
+<meta name="description" content="Desk by Volume Attack: a device for Ableton Live, in development. It sorts your tracks into groups and gives each group two knobs in plain words, using Live's own devices.">
+<link rel="canonical" href="https://desk.volumeattack.ru/">
+<link rel="alternate" hreflang="en" href="https://desk.volumeattack.ru/">
+<link rel="alternate" hreflang="ru" href="https://desk.volumeattack.ru/ru/">
+<link rel="alternate" hreflang="es" href="https://desk.volumeattack.ru/es/">
+<link rel="alternate" hreflang="pt-BR" href="https://desk.volumeattack.ru/pt-br/">
+<link rel="alternate" hreflang="de" href="https://desk.volumeattack.ru/de/">
+<link rel="alternate" hreflang="fr" href="https://desk.volumeattack.ru/fr/">
+<link rel="alternate" hreflang="ja" href="https://desk.volumeattack.ru/ja/">
+<link rel="alternate" hreflang="zh-Hans" href="https://desk.volumeattack.ru/zh-hans/">
+<link rel="alternate" hreflang="ko" href="https://desk.volumeattack.ru/ko/">
 <link rel="alternate" hreflang="x-default" href="https://desk.volumeattack.ru/">
-<link rel="alternate" hreflang="en" href="https://desk.volumeattack.ru/?lang=en">
-<link rel="alternate" hreflang="ru" href="https://desk.volumeattack.ru/?lang=ru">
-<link rel="alternate" hreflang="es" href="https://desk.volumeattack.ru/?lang=es">
-<link rel="alternate" hreflang="pt-BR" href="https://desk.volumeattack.ru/?lang=pt">
-<link rel="alternate" hreflang="de" href="https://desk.volumeattack.ru/?lang=de">
-<link rel="alternate" hreflang="fr" href="https://desk.volumeattack.ru/?lang=fr">
-<link rel="alternate" hreflang="ja" href="https://desk.volumeattack.ru/?lang=ja">
-<link rel="alternate" hreflang="zh-Hans" href="https://desk.volumeattack.ru/?lang=zh">
-<link rel="alternate" hreflang="ko" href="https://desk.volumeattack.ru/?lang=ko">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Desk by Volume Attack">
+<meta property="og:title" content="Desk by Volume Attack — Turn meaning, not knobs">
+<meta property="og:description" content="Desk by Volume Attack: a device for Ableton Live, in development. It sorts your tracks into groups and gives each group two knobs in plain words, using Live's own devices.">
+<meta property="og:url" content="https://desk.volumeattack.ru/">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ru_RU">
+<meta property="og:locale:alternate" content="es_ES">
+<meta property="og:locale:alternate" content="pt_BR">
+<meta property="og:locale:alternate" content="de_DE">
+<meta property="og:locale:alternate" content="fr_FR">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:locale:alternate" content="zh_CN">
+<meta property="og:locale:alternate" content="ko_KR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Desk by Volume Attack — Turn meaning, not knobs">
+<meta name="twitter:description" content="Desk by Volume Attack: a device for Ableton Live, in development. It sorts your tracks into groups and gives each group two knobs in plain words, using Live's own devices.">
 <script>
-// language first, before anything is painted: ?lang= (the hreflang links) → the visitor's saved choice → navigator.languages → English
+// Every language has its own pre-rendered page (tools/site/build.py fills PAGE_LANG; the root is English). A saved choice or the
+// browser's language never redirects: it only offers a small, dismissible link at the foot of the page. ?lang= still works
+// and sends the visitor to the language's own address.
 var DESK_LANGS=["en","ru","es","pt","de","fr","ja","zh","ko"];
-function deskPick(){
-  var q=null,saved=null,i,l,p;
+var DESK_PATH={en:"/",ru:"/ru/",es:"/es/",pt:"/pt-br/",de:"/de/",fr:"/fr/",ja:"/ja/",zh:"/zh-hans/",ko:"/ko/"};
+var DESK_LANG="en";
+(function(){
+  var q=null;
   try{q=new URLSearchParams(location.search).get("lang");}catch(e){}
-  if(q&&DESK_LANGS.indexOf(q)>=0)return q;
-  try{saved=localStorage.getItem("desk-lang");}catch(e){}
-  if(saved&&DESK_LANGS.indexOf(saved)>=0)return saved;
-  var want=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||""]);
-  for(i=0;i<want.length;i++){
-    l=String(want[i]).toLowerCase();p=l.split("-")[0];
-    if(p==="zh"&&/-(hant|tw|hk|mo)\b/.test(l))continue;   // Traditional Chinese is not offered: look at the next language
-    if(DESK_LANGS.indexOf(p)>=0)return p;
-  }
-  return "en";
-}
-var DESK_LANG=deskPick();
-document.documentElement.lang=({pt:"pt-BR",zh:"zh-Hans"})[DESK_LANG]||DESK_LANG;
-if(DESK_LANG!=="en")document.documentElement.setAttribute("data-pending","");   // hides the English text until it is swapped (no flash, no shift)
+  if(q&&q!==DESK_LANG&&DESK_LANGS.indexOf(q)>=0)location.replace(DESK_PATH[q]+location.hash);
+})();
 </script>
 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%23000'/%3E%3Cpath d='M126 86.7H96L118.5 0 60 105.3H90L67.5 192Z' fill='%23fff' transform='translate(24 24) scale(.75)'/%3E%3C/svg%3E">
 <!-- Source of the public site. Publish with tools/site/build.py (product/site.md); the markers [{"s":"pad","l":"close","r":"spacious"},{"s":"pad","l":"warm","r":"airy"},{"s":"drums","l":"dark","r":"bright"},{"s":"drums","l":"tucked","r":"upfront"},{"s":"vocal","l":"tucked","r":"upfront"},{"s":"vocal","l":"close","r":"spacious"},{"s":"lead","l":"close","r":"spacious"},{"s":"lead","l":"steady","r":"wobbly"},{"s":"fx","l":"warm","r":"airy"},{"s":"fx","l":"tucked","r":"upfront"},{"s":"bass","l":"heavy","r":"clear"},{"s":"bass","l":"dark","r":"bright"},{"s":"master","l":"warm","r":"airy"},{"s":"master","l":"quiet","r":"loud"}] and
-     216b17f49fb3 are filled in by the build. Copy rule (decided 2026-10-04): only what exists in main today and was verified,
+     40c1d07ffcbf are filled in by the build. Copy rule (decided 2026-10-04): only what exists in main today and was verified,
      by tests or in Live. No dates, prices, plans, "coming soon", quality claims or numbers that were not measured. -->
 <style>
-@font-face{font-family:"Spline Sans Mono";src:url("fonts-ofl/SplineSansMono.ttf?v=216b17f49fb3") format("truetype");font-weight:300 700;font-display:swap}
-@font-face{font-family:"Spline Sans";src:url("fonts-ofl/SplineSans.ttf?v=216b17f49fb3") format("truetype");font-weight:300 700;font-display:swap}
+@font-face{font-family:"Spline Sans Mono";src:url("/fonts-ofl/SplineSansMono.ttf?v=40c1d07ffcbf") format("truetype");font-weight:300 700;font-display:swap}
+@font-face{font-family:"Spline Sans";src:url("/fonts-ofl/SplineSans.ttf?v=40c1d07ffcbf") format("truetype");font-weight:300 700;font-display:swap}
 :root{
   --bg:#fff;--ink:#000;--grey:#6b6b6b;--line:#000;--soft:#f2f2f2;--acc:#ff4800;
   --font:"Spline Sans Mono",ui-monospace,SFMono-Regular,Menlo,monospace;--font-num:"Spline Sans",system-ui,sans-serif;
@@ -51,8 +61,6 @@ if(DESK_LANG!=="en")document.documentElement.setAttribute("data-pending","");   
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root{--bg:#111;--ink:#fff;--grey:#a0a0a0;--line:#fff;--soft:#1d1d1d;color-scheme:dark}}
-/* the English text is the markup; another language is swapped in before the first paint (script in <head> sets data-pending) */
-html[data-pending] body{visibility:hidden}
 /* Spline Sans has no Cyrillic or CJK: those scripts use the system's UI fonts, same size and weight */
 :lang(ru){--font:"Spline Sans Mono",ui-monospace,Menlo,"PT Mono","Roboto Mono",monospace;--font-num:"Spline Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 :lang(ja){--font:"Spline Sans Mono",ui-monospace,"Hiragino Sans","Yu Gothic UI","Noto Sans CJK JP","IPAGothic",monospace;--font-num:"Spline Sans","Hiragino Sans","Yu Gothic UI","Noto Sans CJK JP","IPAGothic",system-ui,sans-serif}
@@ -83,6 +91,13 @@ h1,h2,h3{margin:0;font-weight:600;font-family:var(--font-num)}
 .top nav{display:flex;gap:16px;margin-left:auto}
 .top nav a{text-decoration:none;opacity:.6;transition:opacity var(--m-fast) var(--e-out)}
 .top nav a:hover,.top nav a:focus-visible{opacity:1}
+/* offer to read the page in the visitor's language: fixed, so it never moves the page */
+.offer{position:fixed;left:16px;bottom:16px;z-index:20;display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px 4px 4px 12px;font:400 13px/20px var(--font-num)}
+.offer a{color:var(--ink);text-underline-offset:3px}
+.offer button{appearance:none;border:0;background:none;color:var(--ink);width:28px;height:28px;display:grid;place-items:center;cursor:pointer;border-radius:8px;-webkit-tap-highlight-color:transparent}
+.offer button:hover{background:var(--soft)}
+.offer svg{width:8px;height:8px}
+.offer a:focus-visible,.offer button:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
 /* language picker: a pill of the old toggle's size; the list opens under it */
 .lang{position:relative;display:inline-flex}
 .lang-b{appearance:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:none;color:var(--ink);border-radius:999px;padding:6px 10px 6px 12px;font:400 10px/12px var(--font);text-transform:uppercase;cursor:pointer;transition:background-color var(--m-fast) var(--e-out),color var(--m-fast) var(--e-out);-webkit-tap-highlight-color:transparent}
@@ -197,7 +212,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
   <figure class="stage" aria-labelledby="cap-dev">
     <p class="cap g" id="cap-dev" data-i="stage.cap">This is the device as it looks today. The demo replays one real analysis of our own track. It is not connected to Live. The device's own labels are in English.</p>
-    <div class="fit" id="fit"><i class="hl" id="hl" aria-hidden="true"></i><iframe class="devf" id="devf" src="device/index.html?embed&amp;mode=desk&amp;v=216b17f49fb3" title="Desk device, interactive demo" data-i="stage.frame" data-a="title" scrolling="no"></iframe></div>
+    <div class="fit" id="fit"><i class="hl" id="hl" aria-hidden="true"></i><iframe class="devf" id="devf" src="/device/index.html?embed&amp;mode=desk&amp;v=40c1d07ffcbf" title="Desk device, interactive demo" data-i="stage.frame" data-a="title" scrolling="no"></iframe></div>
     <div class="under">
       <ul class="hints cap">
         <li><span data-i="h1.k">Drag a knob</span><span class="g" data-i="h1.v">up or down to turn it; hold Shift for small steps</span></li>
@@ -262,584 +277,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 <script>
 // Landing copy per language. English is the page's own markup (data-i keys); the dictionary only holds the other eight.
 // Kept as written: Desk, MINE, BP, BYPASS, ANALYZE, Ableton Live, Max for Live, Live's device names (EQ Eight, Saturator, Limiter, Utility), EBU R128, LUFS, Spotify.
-const I18N={
-ru:{
- "meta.desc":"Desk от Volume Attack: устройство Max for Live в разработке. Читает ваш сет в Ableton, раскладывает дорожки по модулям и даёт каждому модулю две ручки простыми словами — на штатных устройствах Live.",
-
- "lang.aria":"Язык",
- "nav.aria":"Разделы","nav.project":"Проект","nav.meaning":"Смысл","nav.mine":"MINE","nav.status":"Статус",
-
- "hero.h1":"Крутите смысл,<br>а не ручки.",
-
-
- "stage.frame":"Устройство Desk, интерактивное демо",
- "h1.k":"Потяните ручку",
- "h2.k":"Мастер-пад","h2.v":"двигайте точку: тёплый ↔ воздушный, тише ↔ громче",
- "h3.k":"Двойной клик","h3.v":"возврат к MINE",
- "h4.k":"Shift + цифры",
-
-
- "h7.k":"Круглая клавиша слева",
- "info.def":"Наведите на любой элемент устройства — так выглядит подсказка, которую оно пишет для каждого регулятора.",
- "info.idle":"Наведите на любой элемент, чтобы увидеть, что он делает.",
- "s1.cap":"01 · В вашем проекте",
-
-
- "proof.1":"дорожек прочитано",
-
- "c2.h":"Штатные устройства Live",
- "c3.h":"Ваши устройства остаются",
- "s2.cap":"02 · Смысл","s2.h":"Крутите смысл. Устройства покрутит Desk.",
-
-
-
- "m1.cap":"MINE","m1.h":"Послушать MINE",
- "m2.cap":"Bypass","m2.h":"Послушать оригинал",
- "m3.cap":"Громкость",
- "s4.cap":"04 · Статус","s4.h":"В разработке.","s4.p":"Desk пока недоступен. Вот как обстоят дела сегодня.",
-
- "r2.cap":"Ваше аудио",
- "r3.cap":"Проверки",
- "r4.cap":"Контакты",
- "hero.cap":"Для Ableton Live 12 с Max for Live · в разработке",
- "hero.lede":"Desk смотрит на ваш проект в Ableton и раскладывает дорожки по тому, что они делают в песне: ударные, бас, вокал и так далее. У каждой группы две ручки с простыми словами по краям, например <i>в глубине ↔ впереди</i> или <i>плотно ↔ чисто</i>. Крутите ручку — Desk двигает устройства Live за ней. Середина каждой ручки — MINE: микс, который Desk настроил для вашего трека.",
- "stage.cap":"Так устройство выглядит сегодня. Демо проигрывает один настоящий анализ нашего собственного трека. Оно не подключено к Live. Подписи на самом устройстве — на английском.",
- "h1.v":"вверх или вниз — покрутить; с зажатым Shift — маленькими шагами",
- "h4.v":"введите значение: Shift 4 = +4, Shift 0 = возврат к MINE",
- "h5.k":"Имя группы",
- "h5.v":"клик выключает группу; перетащите, чтобы поменять порядок",
- "h6.v":"удерживайте, чтобы слушать, пока держите; клик включает и выключает",
- "h7.v":"анализ заново (демо проигрывает запись в 4 раза быстрее)",
- "s1.h":"Не файл. Ваш проект.",
- "s1.p":"Desk работает внутри Live, на тех дорожках, что у вас уже есть. Ничего не нужно экспортировать или загружать. Нажмите ANALYZE — Desk прочитает дорожки, сгруппирует их, добавит ручки для мастера и настроит всё на штатных устройствах Live.",
- "proof.aria":"Один анализ нашего собственного трека, записан 3 октября 2026",
- "proof.2":"групп + мастер",
- "proof.3":"ручек",
- "proof.4":"плагинов других разработчиков (в этом сете)",
- "c1.h":"Группы по задаче",
- "c1.p":"Дорожки группируются по тому, что они делают в песне. Устройство показывает шесть групп сразу; остальные — одной клавишей дальше.",
- "c2.p":"EQ Eight, Saturator, Limiter, Utility, Drum Buss, громкость дорожки и посылы. Любое изменение происходит на устройстве, которое можно открыть, прочитать и поменять.",
- "c3.p":"Desk добавляет свои устройства в конец дорожки и меняет значения вроде громкости и посылов. Устройства, которые поставили вы, он не удаляет. Один Cmd+Z возвращает весь анализ.",
- "s2.p":"Это ручки, которые Desk сделал для нашего трека. Каждая идёт от −10 до +10 вокруг MINE. Наведите на ручку — в подсказке перечислено, что она двигает, в дБ, Гц и %.",
- "s3.cap":"03 · Ваш микс всегда под рукой",
- "s3.h":"Один клик — и снова MINE.",
- "s3.p":"MINE — микс, который Desk собрал для вашего трека, и середина каждой ручки. BP (bypass) играет ваш оригинал. Попробуйте обе клавиши в демо вверху.",
- "m1.p":"Удерживайте MINE, чтобы слышать микс Desk, пока держите, или нажмите, чтобы включить и выключить. Серые точки помнят, где стояли ваши собственные ручки. Двойной клик по ручке возвращает её к MINE.",
- "m2.p":"BP выключает всё, что сделал Desk, и мастер тоже. Остаётся только предохранительный лимитер. Клик по имени группы выключает только эту группу.",
- "m3.h":"Громкость, измеренная",
- "m3.p":"Измеритель громкости (EBU R128, вещательный стандарт) встроен в устройство и читает ваш мастер, пока играет песня. Через 10 секунд он также показывает, насколько Spotify прибавил бы или убавил громкость песни до уровня −14 LUFS. На этой странице нет звука, поэтому здесь число — оценка по мастер-паду.",
- "r1.p":"Собрано и проверено на Ableton Live 12.4 Suite, в который входит Max for Live.",
- "r2.p":"Остаётся на вашем компьютере. Desk читает проект и измеряет мастер на вашей машине и никуда ничего не отправляет.",
- "r3.p":"Каждое изменение проходит автоматические проверки устройства, математики ручек и интерфейса, прежде чем попадает в проект.",
- "stk.t":"Середина каждой ручки",
- "stk.a":"MINE, середина каждой ручки. Перейти к демо.",
- "foot":"Ableton и Live — товарные знаки Ableton AG. Desk не связан с Ableton."
-},
-es:{
- "meta.desc":"Desk de Volume Attack: un dispositivo Max for Live en desarrollo. Lee tu set de Ableton, agrupa las pistas en módulos y da a cada módulo dos mandos con palabras claras, sobre los dispositivos propios de Live.",
-
- "lang.aria":"Idioma",
- "nav.aria":"Secciones","nav.project":"Proyecto","nav.meaning":"Sentido","nav.mine":"MINE","nav.status":"Estado",
-
- "hero.h1":"Ajusta el sentido,<br>no los mandos.",
-
-
- "stage.frame":"Dispositivo Desk, demostración interactiva",
- "h1.k":"Arrastra un mando",
- "h2.k":"Pad del master","h2.v":"arrastra el punto: cálido ↔ aéreo, suave ↔ fuerte",
- "h3.k":"Doble clic","h3.v":"vuelve a MINE",
- "h4.k":"Shift + cifras",
-
-
- "h7.k":"Tecla redonda, a la izquierda",
- "info.def":"Apunta a cualquier cosa del dispositivo: este es el texto de ayuda que escribe para cada control.",
- "info.idle":"Apunta a cualquier control para ver qué hace.",
- "s1.cap":"01 · En tu proyecto",
-
-
- "proof.1":"pistas leídas",
-
- "c2.h":"Dispositivos propios de Live",
- "c3.h":"Tus dispositivos se quedan",
- "s2.cap":"02 · Sentido","s2.h":"Tú mueves el sentido. Desk mueve los dispositivos.",
-
-
-
- "m1.cap":"MINE","m1.h":"Escucha MINE",
- "m2.cap":"Bypass","m2.h":"Escucha tu original",
- "m3.cap":"Volumen",
- "s4.cap":"04 · Estado","s4.h":"En desarrollo.","s4.p":"Desk todavía no está disponible. Así están las cosas hoy.",
-
- "r2.cap":"Tu audio",
- "r3.cap":"Pruebas",
- "r4.cap":"Contacto",
- "hero.cap":"Para Ableton Live 12 con Max for Live · en desarrollo",
- "hero.lede":"Desk mira tu proyecto de Ableton y ordena las pistas según lo que hacen en la canción: batería, bajo, voz y demás. Cada grupo recibe dos mandos con palabras claras en los extremos, como <i>al fondo ↔ delante</i> o <i>pesado ↔ claro</i>. Gira un mando y Desk mueve los dispositivos de Live que hay detrás. El centro de cada mando es MINE: la mezcla que Desk preparó para tu pista.",
- "stage.cap":"Así se ve hoy el dispositivo. La demo reproduce un análisis real de una pista nuestra. No está conectada a Live. Las etiquetas del propio dispositivo están en inglés.",
- "h1.v":"arriba o abajo para girarlo; con Shift, pasos pequeños",
- "h4.v":"escribe un valor: Shift 4 = +4, Shift 0 = vuelve a MINE",
- "h5.k":"Nombre del grupo",
- "h5.v":"clic para apagar ese grupo; arrastra para cambiar el orden",
- "h6.v":"mantén pulsado para escuchar mientras lo mantienes; clic para activar y desactivar",
- "h7.v":"analizar de nuevo (la demo reproduce la grabación 4 veces más rápido)",
- "s1.h":"No es un archivo. Es tu proyecto.",
- "s1.p":"Desk trabaja dentro de Live, sobre las pistas que ya tienes. No exportas ni subes nada. Pulsa ANALYZE y Desk lee las pistas, las agrupa, añade mandos para el master y lo configura todo con los dispositivos propios de Live.",
- "proof.aria":"Un análisis de una pista nuestra, grabado el 3 de octubre de 2026",
- "proof.2":"grupos + master",
- "proof.3":"mandos",
- "proof.4":"plugins de otros fabricantes (en este set)",
- "c1.h":"Grupos por función",
- "c1.p":"Las pistas se agrupan según lo que hacen en la canción. El dispositivo muestra seis grupos a la vez; el resto está a una tecla de distancia.",
- "c2.p":"EQ Eight, Saturator, Limiter, Utility, Drum Buss, volumen de pista y envíos. Cada cambio ocurre en un dispositivo que puedes abrir, leer y modificar.",
- "c3.p":"Desk añade sus propios dispositivos al final de una pista y cambia valores como el volumen y los envíos. Nunca elimina un dispositivo que hayas puesto tú. Un Cmd+Z deshace todo el análisis.",
- "s2.p":"Estos son los mandos que Desk hizo para una pista nuestra. Cada uno va de −10 a +10 alrededor de MINE. Apunta a un mando y su texto de ayuda enumera lo que mueve, en dB, Hz y %.",
- "s3.cap":"03 · Tu mezcla siempre a mano",
- "s3.h":"Un clic para volver a MINE.",
- "s3.p":"MINE es la mezcla que Desk construyó para tu pista y el centro de cada mando. BP (bypass) reproduce tu original. Prueba las dos teclas en la demo de arriba.",
- "m1.p":"Mantén pulsado MINE para oír la mezcla de Desk mientras lo mantienes, o haz clic para activarla y desactivarla. Los puntos grises recuerdan dónde estaban tus propios mandos. Doble clic en un mando lo devuelve a MINE.",
- "m2.p":"BP apaga todo lo que hizo Desk, también en el master. Solo queda activo un limitador de seguridad. Haz clic en el nombre de un grupo para apagar solo ese grupo.",
- "m3.h":"Volumen, medido",
- "m3.p":"Un medidor de volumen (EBU R128, el estándar de radiodifusión) está dentro del dispositivo y lee tu master mientras suena la canción. A los 10 segundos muestra también cuánto subiría o bajaría Spotify la canción para llegar a su nivel de −14 LUFS. Esta página no tiene audio, así que aquí el número es una estimación a partir del pad del master.",
- "r1.p":"Creado y probado en Ableton Live 12.4 Suite, que incluye Max for Live.",
- "r2.p":"Se queda en tu ordenador. Desk lee el proyecto y mide el master en tu máquina, y no envía nada a ninguna parte.",
- "r3.p":"Cada cambio pasa pruebas automáticas del dispositivo, de las matemáticas de los mandos y de la interfaz antes de añadirse.",
- "stk.t":"El centro de cada mando",
- "stk.a":"MINE, el centro de cada mando. Ir a la demo.",
- "foot":"Ableton y Live son marcas registradas de Ableton AG. Desk no está afiliado a Ableton."
-},
-pt:{
- "meta.desc":"Desk, da Volume Attack: um dispositivo Max for Live em desenvolvimento. Lê o seu set do Ableton, agrupa as faixas em módulos e dá a cada módulo dois knobs em palavras simples, sobre os dispositivos nativos do Live.",
-
- "lang.aria":"Idioma",
- "nav.aria":"Seções","nav.project":"Projeto","nav.meaning":"Sentido","nav.mine":"MINE","nav.status":"Status",
-
- "hero.h1":"Gire o sentido,<br>não os knobs.",
-
-
- "stage.frame":"Dispositivo Desk, demonstração interativa",
- "h1.k":"Arraste um knob",
- "h2.k":"Pad do master","h2.v":"arraste o ponto: quente ↔ arejado, baixo ↔ alto",
- "h3.k":"Clique duplo","h3.v":"volta ao MINE",
- "h4.k":"Shift + números",
-
-
- "h7.k":"Tecla redonda, à esquerda",
- "info.def":"Aponte para qualquer coisa no dispositivo: este é o texto de ajuda que ele escreve para cada controle.",
- "info.idle":"Aponte para qualquer controle para ver o que ele faz.",
- "s1.cap":"01 · No seu projeto",
-
-
- "proof.1":"faixas lidas",
-
- "c2.h":"Dispositivos nativos do Live",
- "c3.h":"Os seus dispositivos ficam",
- "s2.cap":"02 · Sentido","s2.h":"Você gira o sentido. O Desk gira os dispositivos.",
-
-
-
- "m1.cap":"MINE","m1.h":"Ouça o MINE",
- "m2.cap":"Bypass","m2.h":"Ouça o seu original",
- "m3.cap":"Volume",
- "s4.cap":"04 · Status","s4.h":"Em desenvolvimento.","s4.p":"O Desk ainda não está disponível. É assim que as coisas estão hoje.",
-
- "r2.cap":"O seu áudio",
- "r3.cap":"Testes",
- "r4.cap":"Contato",
- "hero.cap":"Para Ableton Live 12 com Max for Live · em desenvolvimento",
- "hero.lede":"O Desk olha o seu projeto do Ableton e organiza as faixas pelo que elas fazem na música: bateria, baixo, vocal e assim por diante. Cada grupo ganha dois knobs com palavras simples nas pontas, como <i>no fundo ↔ na frente</i> ou <i>pesado ↔ limpo</i>. Gire um knob e o Desk mexe nos dispositivos do Live por trás dele. O meio de cada knob é o MINE: a mix que o Desk montou para a sua faixa.",
- "stage.cap":"É assim que o dispositivo está hoje. A demonstração reproduz uma análise real de uma faixa nossa. Ela não está conectada ao Live. Os rótulos do próprio dispositivo estão em inglês.",
- "h1.v":"para cima ou para baixo para girar; com Shift, passos pequenos",
- "h4.v":"digite um valor: Shift 4 = +4, Shift 0 = volta ao MINE",
- "h5.k":"Nome do grupo",
- "h5.v":"clique para desligar o grupo; arraste para mudar a ordem",
- "h6.v":"segure para ouvir enquanto segura; clique para ligar e desligar",
- "h7.v":"analisar de novo (a demonstração reproduz a gravação 4 vezes mais rápido)",
- "s1.h":"Não é um arquivo. É o seu projeto.",
- "s1.p":"O Desk trabalha dentro do Live, nas faixas que você já tem. Você não exporta nem envia nada. Aperte ANALYZE e o Desk lê as faixas, agrupa, adiciona knobs para o master e monta tudo nos dispositivos nativos do Live.",
- "proof.aria":"Uma análise de uma faixa nossa, gravada em 3 de outubro de 2026",
- "proof.2":"grupos + master",
- "proof.3":"knobs",
- "proof.4":"plugins de outros fabricantes (neste set)",
- "c1.h":"Grupos por função",
- "c1.p":"As faixas são agrupadas pelo que fazem na música. O dispositivo mostra seis grupos por vez; os outros estão a uma tecla de distância.",
- "c2.p":"EQ Eight, Saturator, Limiter, Utility, Drum Buss, volume da faixa e sends. Cada mudança acontece em um dispositivo que você pode abrir, ler e alterar.",
- "c3.p":"O Desk adiciona os próprios dispositivos no fim de uma faixa e altera valores como volume e sends. Ele nunca remove um dispositivo que você colocou. Um Cmd+Z desfaz a análise inteira.",
- "s2.p":"Estes são os knobs que o Desk fez para uma faixa nossa. Cada um vai de −10 a +10 em torno do MINE. Aponte para um knob e o texto de ajuda lista o que ele mexe, em dB, Hz e %.",
- "s3.cap":"03 · Sua mix sempre ao alcance",
- "s3.h":"Um clique de volta ao MINE.",
- "s3.p":"O MINE é a mix que o Desk montou para a sua faixa, e o meio de cada knob. O BP (bypass) toca o seu original. Experimente as duas teclas na demonstração lá em cima.",
- "m1.p":"Segure o MINE para ouvir a mix do Desk enquanto segura, ou clique para ligar e desligar. Os pontos cinza lembram onde estavam os seus próprios knobs. Clique duplo em um knob o leva de volta ao MINE.",
- "m2.p":"O BP desliga tudo o que o Desk fez, o master também. Só um limiter de segurança continua ligado. Clique no nome de um grupo para desligar só esse grupo.",
- "m3.h":"Volume, medido",
- "m3.p":"Um medidor de volume (EBU R128, o padrão da radiodifusão) fica dentro do dispositivo e lê o seu master enquanto a música toca. Depois de 10 segundos, ele também mostra quanto o Spotify aumentaria ou diminuiria a música para chegar ao nível de −14 LUFS. Esta página não tem áudio, então aqui o número é uma estimativa a partir do pad do master.",
- "r1.p":"Criado e testado no Ableton Live 12.4 Suite, que inclui o Max for Live.",
- "r2.p":"Fica no seu computador. O Desk lê o projeto e mede o master na sua máquina e não envia nada para lugar nenhum.",
- "r3.p":"Cada mudança passa por testes automáticos do dispositivo, da matemática dos knobs e da interface antes de ser adicionada.",
- "stk.t":"O centro de cada knob",
- "stk.a":"MINE, o centro de cada knob. Ir para a demo.",
- "foot":"Ableton e Live são marcas registradas da Ableton AG. O Desk não é afiliado à Ableton."
-},
-de:{
- "meta.desc":"Desk von Volume Attack: ein Max-for-Live-Device in Entwicklung. Es liest dein Ableton-Set, gruppiert die Spuren zu Modulen und gibt jedem Modul zwei Regler in klaren Worten – gebaut auf Lives eigenen Devices.",
-
- "lang.aria":"Sprache",
- "nav.aria":"Abschnitte","nav.project":"Projekt","nav.meaning":"Bedeutung","nav.mine":"MINE","nav.status":"Stand",
-
- "hero.h1":"Dreh an der Bedeutung,<br>nicht an Reglern.",
-
-
- "stage.frame":"Desk-Device, interaktive Demo",
- "h1.k":"Regler ziehen",
- "h2.k":"Master-Pad","h2.v":"den Punkt ziehen: warm ↔ luftig, leise ↔ laut",
- "h3.k":"Doppelklick","h3.v":"zurück auf MINE",
- "h4.k":"Shift + Ziffern",
-
-
- "h7.k":"Runde Taste links",
- "info.def":"Zeig auf irgendetwas am Device: So sieht der Hilfetext aus, den es für jedes Bedienelement schreibt.",
- "info.idle":"Zeig auf ein beliebiges Bedienelement, um zu sehen, was es macht.",
- "s1.cap":"01 · In deinem Projekt",
-
-
- "proof.1":"Spuren gelesen",
-
- "c2.h":"Lives eigene Devices",
- "c3.h":"Deine Devices bleiben",
- "s2.cap":"02 · Bedeutung","s2.h":"Du drehst die Bedeutung. Desk dreht die Devices.",
-
-
-
- "m1.cap":"MINE","m1.h":"MINE hören",
- "m2.cap":"Bypass","m2.h":"Dein Original hören",
- "m3.cap":"Lautheit",
- "s4.cap":"04 · Stand","s4.h":"In Entwicklung.","s4.p":"Desk ist noch nicht verfügbar. So steht es heute.",
-
- "r2.cap":"Dein Audio",
- "r3.cap":"Getestet",
- "r4.cap":"Kontakt",
- "hero.cap":"Für Ableton Live 12 mit Max for Live · in Entwicklung",
- "hero.lede":"Desk schaut in dein Ableton-Projekt und sortiert die Spuren danach, was sie im Song tun: Drums, Bass, Gesang und so weiter. Jede Gruppe bekommt zwei Regler mit klaren Worten an den Enden, etwa <i>dahinter ↔ vorn</i> oder <i>schwer ↔ klar</i>. Dreh einen Regler, und Desk bewegt die Live-Devices dahinter. Die Mitte jedes Reglers ist MINE: der Mix, den Desk für deinen Track eingerichtet hat.",
- "stage.cap":"So sieht das Device heute aus. Die Demo spielt eine echte Analyse unseres eigenen Tracks ab. Sie ist nicht mit Live verbunden. Die Beschriftungen des Devices selbst sind englisch.",
- "h1.v":"nach oben oder unten ziehen zum Drehen; mit Shift in kleinen Schritten",
- "h4.v":"einen Wert eintippen: Shift 4 = +4, Shift 0 = zurück auf MINE",
- "h5.k":"Gruppenname",
- "h5.v":"klicken schaltet die Gruppe aus; ziehen ändert die Reihenfolge",
- "h6.v":"gedrückt halten, um zu hören, solange du hältst; klicken schaltet ein und aus",
- "h7.v":"nochmal analysieren (die Demo spielt die Aufnahme 4× schneller ab)",
- "s1.h":"Keine Datei. Dein Projekt.",
- "s1.p":"Desk arbeitet in Live, auf den Spuren, die du schon hast. Du exportierst oder lädst nichts hoch. Drück ANALYZE, und Desk liest die Spuren, gruppiert sie, fügt Regler für den Master hinzu und richtet alles auf Lives eigenen Devices ein.",
- "proof.aria":"Eine Analyse unseres eigenen Tracks, aufgenommen am 3. Oktober 2026",
- "proof.2":"Gruppen + Master",
- "proof.3":"Regler",
- "proof.4":"Plugins anderer Hersteller (in diesem Set)",
- "c1.h":"Gruppen nach Aufgabe",
- "c1.p":"Die Spuren werden danach gruppiert, was sie im Song tun. Das Device zeigt sechs Gruppen auf einmal; weitere sind eine Taste entfernt.",
- "c2.p":"EQ Eight, Saturator, Limiter, Utility, Drum Buss, Spurlautstärke und Sends. Jede Änderung passiert auf einem Device, das du öffnen, lesen und ändern kannst.",
- "c3.p":"Desk fügt eigene Devices am Ende einer Spur hinzu und ändert Werte wie Lautstärke und Sends. Ein Device, das du eingesetzt hast, entfernt es nie. Ein Cmd+Z nimmt die ganze Analyse zurück.",
- "s2.p":"Das sind die Regler, die Desk für unseren eigenen Track gebaut hat. Jeder reicht von −10 bis +10 um MINE. Zeig auf einen Regler, und sein Hilfetext nennt, was er bewegt, in dB, Hz und %.",
- "s3.cap":"03 · Dein Mix bleibt in Reichweite",
- "s3.h":"Ein Klick zurück zu MINE.",
- "s3.p":"MINE ist der Mix, den Desk für deinen Track gebaut hat, und die Mitte jedes Reglers. BP (Bypass) spielt dein Original. Probier beide Tasten in der Demo oben aus.",
- "m1.p":"Halte MINE gedrückt, um den Mix von Desk zu hören, solange du hältst, oder klick, um ihn ein- und auszuschalten. Graue Punkte merken sich, wo deine eigenen Regler standen. Ein Doppelklick auf einen Regler schickt ihn zurück auf MINE.",
- "m2.p":"BP schaltet alles ab, was Desk getan hat, auch den Master. Nur ein Sicherheits-Limiter bleibt an. Ein Klick auf den Namen einer Gruppe schaltet nur diese Gruppe ab.",
- "m3.h":"Lautheit, gemessen",
- "m3.p":"Ein Lautheitsmesser (EBU R128, der Rundfunkstandard) sitzt im Device und liest deinen Master, während der Song läuft. Nach 10 Sekunden zeigt er auch, wie viel lauter oder leiser Spotify den Song machen würde, um seinen Pegel von −14 LUFS zu erreichen. Diese Seite hat keinen Ton, deshalb ist die Zahl hier eine Schätzung aus dem Master-Pad.",
- "r1.p":"Gebaut und getestet auf Ableton Live 12.4 Suite, die Max for Live enthält.",
- "r2.p":"Bleibt auf deinem Computer. Desk liest das Projekt und misst den Master auf deinem Rechner und sendet nichts irgendwohin.",
- "r3.p":"Jede Änderung besteht automatische Tests des Devices, der Reglerrechnung und der Oberfläche, bevor sie hinzukommt.",
- "stk.t":"Die Mitte jedes Reglers",
- "stk.a":"MINE, die Mitte jedes Reglers. Zur Demo.",
- "foot":"Ableton und Live sind Marken der Ableton AG. Desk steht in keiner Verbindung zu Ableton."
-},
-fr:{
- "meta.desc":"Desk de Volume Attack : un device Max for Live en développement. Il lit votre set Ableton, regroupe les pistes en modules et donne à chaque module deux boutons en mots simples, bâtis sur les devices natifs de Live.",
-
- "lang.aria":"Langue",
- "nav.aria":"Sections","nav.project":"Projet","nav.meaning":"Sens","nav.mine":"MINE","nav.status":"État",
-
- "hero.h1":"Tournez le sens,<br>pas les boutons.",
-
-
- "stage.frame":"Device Desk, démo interactive",
- "h1.k":"Faire glisser un bouton",
- "h2.k":"Pad master","h2.v":"déplacez le point : chaud ↔ aérien, doux ↔ fort",
- "h3.k":"Double-clic","h3.v":"retour à MINE",
- "h4.k":"Shift + chiffres",
-
-
- "h7.k":"Touche ronde, à gauche",
- "info.def":"Pointez n’importe quoi sur le device : voici le texte d’aide qu’il écrit pour chaque commande.",
- "info.idle":"Pointez n’importe quel contrôle pour voir ce qu’il fait.",
- "s1.cap":"01 · Dans votre projet",
-
-
- "proof.1":"pistes lues",
-
- "c2.h":"Les devices natifs de Live",
- "c3.h":"Vos devices restent",
- "s2.cap":"02 · Sens","s2.h":"Vous tournez le sens. Desk tourne les devices.",
-
-
-
- "m1.cap":"MINE","m1.h":"Écouter MINE",
- "m2.cap":"Bypass","m2.h":"Écouter votre original",
- "m3.cap":"Volume sonore",
- "s4.cap":"04 · État","s4.h":"En développement.","s4.p":"Desk n’est pas encore disponible. Voici où il en est aujourd’hui.",
-
- "r2.cap":"Votre audio",
- "r3.cap":"Testé",
- "r4.cap":"Contact",
- "hero.cap":"Pour Ableton Live 12 avec Max for Live · en développement",
- "hero.lede":"Desk regarde votre projet Ableton et trie les pistes selon ce qu’elles font dans le morceau : batterie, basse, voix, etc. Chaque groupe reçoit deux boutons avec des mots simples aux extrémités, comme <i>en retrait ↔ devant</i> ou <i>lourd ↔ clair</i>. Tournez un bouton et Desk déplace les devices de Live derrière lui. Le milieu de chaque bouton est MINE : le mix que Desk a préparé pour votre morceau.",
- "stage.cap":"Voici le device tel qu’il est aujourd’hui. La démo rejoue une vraie analyse d’un de nos morceaux. Elle n’est pas connectée à Live. Les libellés du device lui-même sont en anglais.",
- "h1.v":"vers le haut ou le bas pour tourner ; avec Shift, par petits pas",
- "h4.v":"saisissez une valeur : Shift 4 = +4, Shift 0 = retour à MINE",
- "h5.k":"Nom du groupe",
- "h5.v":"cliquez pour désactiver ce groupe ; faites glisser pour changer l’ordre",
- "h6.v":"maintenez pour écouter tant que vous maintenez ; cliquez pour activer et désactiver",
- "h7.v":"analyser à nouveau (la démo rejoue l’enregistrement 4 fois plus vite)",
- "s1.h":"Pas un fichier. Votre projet.",
- "s1.p":"Desk travaille dans Live, sur les pistes que vous avez déjà. Vous n’exportez ni ne téléversez rien. Appuyez sur ANALYZE : Desk lit les pistes, les regroupe, ajoute des boutons pour le master et règle tout sur les devices natifs de Live.",
- "proof.aria":"Une analyse d’un de nos morceaux, enregistrée le 3 octobre 2026",
- "proof.2":"groupes + master",
- "proof.3":"boutons",
- "proof.4":"plugins d’autres éditeurs (dans ce set)",
- "c1.h":"Des groupes par fonction",
- "c1.p":"Les pistes sont regroupées selon ce qu’elles font dans le morceau. Le device montre six groupes à la fois ; les autres sont à une touche.",
- "c2.p":"EQ Eight, Saturator, Limiter, Utility, Drum Buss, volume de piste et départs. Chaque changement se fait sur un device que vous pouvez ouvrir, lire et modifier.",
- "c3.p":"Desk ajoute ses propres devices à la fin d’une piste et modifie des valeurs comme le volume et les départs. Il ne retire jamais un device que vous avez posé. Un seul Cmd+Z annule toute l’analyse.",
- "s2.p":"Voici les boutons que Desk a créés pour un de nos morceaux. Chacun va de −10 à +10 autour de MINE. Pointez un bouton et son texte d’aide liste ce qu’il déplace, en dB, Hz et %.",
- "s3.cap":"03 · Votre mix reste à portée",
- "s3.h":"Un clic pour revenir à MINE.",
- "s3.p":"MINE est le mix que Desk a construit pour votre morceau, et le milieu de chaque bouton. BP (bypass) joue votre original. Essayez les deux touches dans la démo en haut.",
- "m1.p":"Maintenez MINE pour entendre le mix de Desk tant que vous maintenez, ou cliquez pour l’activer et le désactiver. Les points gris se souviennent de la position de vos propres boutons. Un double-clic sur un bouton le renvoie sur MINE.",
- "m2.p":"BP désactive tout ce que Desk a fait, le master aussi. Seul un limiteur de sécurité reste actif. Cliquez sur le nom d’un groupe pour désactiver ce groupe seulement.",
- "m3.h":"Volume sonore, mesuré",
- "m3.p":"Un indicateur de volume sonore (EBU R128, la norme de la radiodiffusion) se trouve dans le device et lit votre master pendant que le morceau joue. Au bout de 10 secondes, il montre aussi de combien Spotify monterait ou baisserait le morceau pour atteindre son niveau de −14 LUFS. Cette page n’a pas d’audio : ici, le chiffre est une estimation faite à partir du pad master.",
- "r1.p":"Conçu et testé sur Ableton Live 12.4 Suite, qui inclut Max for Live.",
- "r2.p":"Reste sur votre ordinateur. Desk lit le projet et mesure le master sur votre machine, et n’envoie rien nulle part.",
- "r3.p":"Chaque changement passe des tests automatiques du device, du calcul des boutons et de l’interface avant d’être ajouté.",
- "stk.t":"Le milieu de chaque bouton",
- "stk.a":"MINE, le milieu de chaque bouton. Aller à la démo.",
- "foot":"Ableton et Live sont des marques d’Ableton AG. Desk n’est pas affilié à Ableton."
-},
-ja:{
- "meta.desc":"Volume AttackのDesk：開発中のMax for Liveデバイス。Ableton Liveのセットを読み取り、トラックをモジュールにまとめ、各モジュールにわかりやすい言葉の2つのノブを用意します。土台はLive標準のデバイスです。",
-
- "lang.aria":"言語",
- "nav.aria":"セクション","nav.project":"プロジェクト","nav.meaning":"意味","nav.mine":"MINE","nav.status":"状況",
-
- "hero.h1":"回すのは、ノブじゃない。<br>意味を回す。",
-
-
- "stage.frame":"Deskデバイス、インタラクティブデモ",
- "h1.k":"ノブをドラッグ",
- "h2.k":"マスターパッド","h2.v":"点をドラッグ：暖かい ↔ 空気感、小さい ↔ 大きい",
- "h3.k":"ダブルクリック","h3.v":"MINEに戻す",
- "h4.k":"Shift + 数字",
-
-
- "h7.k":"左の丸いキー",
- "info.def":"デバイス上のどこかにポインタを合わせてください。各コントロールについてデバイスが書くヘルプがここに出ます。",
- "info.idle":"どのコントロールでもポインタを合わせると、その働きが表示されます。",
- "s1.cap":"01 · あなたのプロジェクトで",
-
-
- "proof.1":"トラックを読み取り",
-
- "c2.h":"Live標準のデバイス",
- "c3.h":"あなたのデバイスはそのまま",
- "s2.cap":"02 · 意味","s2.h":"意味を回せば、デバイスはDeskが回す。",
-
-
-
- "m1.cap":"MINE","m1.h":"MINEを聴く",
- "m2.cap":"Bypass","m2.h":"元の音を聴く",
- "m3.cap":"ラウドネス",
- "s4.cap":"04 · 状況","s4.h":"開発中。","s4.p":"Deskはまだ公開されていません。現在の状況は次のとおりです。",
-
- "r2.cap":"あなたの音声",
- "r3.cap":"テスト",
- "r4.cap":"連絡先",
- "hero.cap":"Ableton Live 12（Max for Live対応）向け · 開発中",
- "hero.lede":"Deskはあなたの Ableton プロジェクトを見て、トラックを曲の中での役割ごとに分けます。ドラム、ベース、ボーカルなどです。各グループには、両端に平易な言葉がついたノブが2つ付きます。たとえば<i>奥まる ↔ 前に出る</i>や<i>重い ↔ すっきり</i>。ノブを回すと、Deskがその裏にあるLiveのデバイスを動かします。すべてのノブの中心がMINE、つまりDeskがあなたのトラックのために整えたミックスです。",
- "stage.cap":"現在のデバイスの姿です。デモは、私たち自身の曲を実際に分析した記録を再生します。Liveには接続されていません。デバイス自体の表示は英語です。",
- "h1.v":"上下にドラッグして回す。Shiftを押すと細かく動く",
- "h4.v":"数値を入力：Shift 4 = +4、Shift 0 = MINEに戻す",
- "h5.k":"グループ名",
- "h5.v":"クリックでそのグループをオフ。ドラッグで順番を変更",
- "h6.v":"押している間だけ聴く。クリックでオン／オフ",
- "h7.v":"もう一度分析（デモは記録を4倍速で再生）",
- "s1.h":"ファイルではなく、あなたのプロジェクトで。",
- "s1.p":"DeskはLiveの中で、すでにあるトラックに対して動きます。書き出しもアップロードも不要です。ANALYZEを押すと、Deskがトラックを読み取り、グループ分けし、マスター用のノブを追加して、すべてをLive標準のデバイス上に設定します。",
- "proof.aria":"私たち自身の曲の分析1回分（2026年10月3日に記録）",
- "proof.2":"グループ＋マスター",
- "proof.3":"ノブ",
- "proof.4":"他社製プラグイン（このセット内）",
- "c1.h":"役割ごとのグループ",
- "c1.p":"トラックは、曲の中での役割ごとにグループ化されます。デバイスは一度に6グループを表示し、残りはキー1つで切り替えられます。",
- "c2.p":"EQ Eight、Saturator、Limiter、Utility、Drum Buss、トラックボリューム、センド。すべての変更は、開いて確認し、変更できるデバイス上で行われます。",
- "c3.p":"Deskは自分のデバイスをトラックの末尾に追加し、ボリュームやセンドなどの値を変更します。あなたが入れたデバイスは決して削除しません。Cmd+Zを1回押せば、分析全体が元に戻ります。",
- "s2.p":"これらはDeskが私たち自身の曲のために作ったノブです。それぞれMINEを中心に−10から+10まで動きます。ノブにポインタを合わせると、動かす内容がdB、Hz、%で一覧表示されます。",
- "s3.cap":"03 · あなたのミックスはすぐ手元に",
- "s3.h":"ワンクリックでMINEに戻る。",
- "s3.p":"MINEはDeskがあなたのトラックのために作ったミックスで、すべてのノブの中心です。BP（バイパス）は元の音を鳴らします。上のデモで両方のキーを試してみてください。",
- "m1.p":"MINEを押し続けると、押している間Deskのミックスが聴こえます。クリックでオン／オフもできます。グレーの点は、あなた自身のノブがあった位置を覚えています。ノブをダブルクリックするとMINEに戻ります。",
- "m2.p":"BPはDeskが行ったすべてをオフにします。マスターも同様です。安全用のリミッターだけがオンのままです。グループ名をクリックすると、そのグループだけをオフにできます。",
- "m3.h":"ラウドネスを測定",
- "m3.p":"ラウドネスメーター（放送の標準であるEBU R128）がデバイスの中に入っていて、曲の再生中にマスターを読み取ります。10秒後には、Spotifyの−14 LUFSのレベルに合わせるために曲の音量がどれだけ上がるか下がるかも表示します。このページには音声がないため、ここでの数値はマスターパッドからの推定値です。",
- "r1.p":"Max for Liveを含むAbleton Live 12.4 Suiteで作成・テストしています。",
- "r2.p":"あなたのコンピューターの中にとどまります。Deskはプロジェクトを読み取り、マスターをあなたのマシン上で測定し、どこにも何も送信しません。",
- "r3.p":"すべての変更は、追加される前に、デバイス、ノブの計算、インターフェースの自動テストに合格します。",
- "stk.t":"すべてのノブの中心",
- "stk.a":"MINE、すべてのノブの中心。デモへ。",
- "foot":"AbletonおよびLiveはAbleton AGの商標です。DeskはAbletonとは提携していません。"
-},
-zh:{
- "meta.desc":"Volume Attack 出品的 Desk：开发中的 Max for Live 设备。它读取你的 Ableton 工程，把轨道归入模块，并为每个模块配上两个用大白话命名的旋钮，全部建立在 Live 自带设备之上。",
-
- "lang.aria":"语言",
- "nav.aria":"章节","nav.project":"项目","nav.meaning":"含义","nav.mine":"MINE","nav.status":"进展",
-
- "hero.h1":"调的是意思，<br>不是旋钮。",
-
-
- "stage.frame":"Desk 设备，交互演示",
- "h1.k":"拖动旋钮",
- "h2.k":"主控面板","h2.v":"拖动圆点：温暖 ↔ 空气感，轻 ↔ 响",
- "h3.k":"双击","h3.v":"回到 MINE",
- "h4.k":"Shift + 数字",
-
-
- "h7.k":"左侧圆形按键",
- "info.def":"把指针移到设备上的任何位置：这是它为每个控件写的帮助文字。",
- "info.idle":"把指针移到任意控件上，即可查看它的作用。",
- "s1.cap":"01 · 在你的工程里",
-
-
- "proof.1":"已读取的轨道",
-
- "c2.h":"Live 自带设备",
- "c3.h":"你的设备原样保留",
- "s2.cap":"02 · 含义","s2.h":"你调含义，设备交给 Desk。",
-
-
-
- "m1.cap":"MINE","m1.h":"听 MINE",
- "m2.cap":"Bypass","m2.h":"听你的原始声音",
- "m3.cap":"响度",
- "s4.cap":"04 · 进展","s4.h":"开发中。","s4.p":"Desk 目前还不能使用。以下是现在的情况。",
-
- "r2.cap":"你的音频",
- "r3.cap":"测试",
- "r4.cap":"联系",
- "hero.cap":"适用于带 Max for Live 的 Ableton Live 12 · 开发中",
- "hero.lede":"Desk 会查看你的 Ableton 工程，按轨道在歌曲里的作用把它们分组：鼓、贝斯、人声等等。每个分组有两个旋钮，两端是大白话，比如<i>靠后 ↔ 靠前</i>或<i>厚重 ↔ 清晰</i>。转动旋钮，Desk 就去调它背后的 Live 设备。每个旋钮的中间位置是 MINE：Desk 为你的曲目调好的混音。",
- "stage.cap":"这是设备目前的样子。演示回放的是我们自己一首曲目的一次真实分析，没有连接 Live。设备本身的标签是英文的。",
- "h1.v":"上下拖动来转动；按住 Shift 可小步调整",
- "h4.v":"输入数值：Shift 4 = +4，Shift 0 = 回到 MINE",
- "h5.k":"分组名称",
- "h5.v":"点击关闭该分组；拖动可调整顺序",
- "h6.v":"按住时试听；点击可开关",
- "h7.v":"重新分析（演示以 4 倍速回放录制的过程）",
- "s1.h":"不是文件，是你的工程。",
- "s1.p":"Desk 在 Live 里工作，处理你已有的轨道。无需导出，也无需上传。按下 ANALYZE，Desk 会读取轨道、分组、为主控添加旋钮，并全部设置在 Live 自带设备上。",
- "proof.aria":"我们自己一首曲目的一次分析，录制于 2026 年 10 月 3 日",
- "proof.2":"个分组 + 主控",
- "proof.3":"个旋钮",
- "proof.4":"个其他厂商的插件（在这个工程里）",
- "c1.h":"按作用分组",
- "c1.p":"轨道按它们在歌曲里的作用分组。设备一次显示六个分组，其余的只需按一个键。",
- "c2.p":"EQ Eight、Saturator、Limiter、Utility、Drum Buss、轨道音量和发送。每一步调整都发生在你可以打开、查看和修改的设备上。",
- "c3.p":"Desk 会把自己的设备加在轨道末尾，并修改音量和发送等数值。你放进去的设备，它绝不会删除。按一次 Cmd+Z 就能撤销整个分析。",
- "s2.p":"这些是 Desk 为我们自己的曲目做的旋钮。每个都围绕 MINE 在 −10 到 +10 之间变化。把指针移到旋钮上，帮助文字会列出它调整的内容，单位是 dB、Hz 和 %。",
- "s3.cap":"03 · 你的混音随手可及",
- "s3.h":"一键回到 MINE。",
- "s3.p":"MINE 是 Desk 为你的曲目做的混音，也是每个旋钮的中间位置。BP（旁通）播放你的原始声音。可以在顶部的演示里试试这两个键。",
- "m1.p":"按住 MINE，按住期间就能听到 Desk 的混音；也可以点击来开关。灰点会记住你自己的旋钮原来的位置。双击旋钮可把它送回 MINE。",
- "m2.p":"BP 会关闭 Desk 做的一切，主控也一样。只留下一个安全限幅器。点击分组名称，只关闭那一个分组。",
- "m3.h":"响度，实测",
- "m3.p":"响度表（EBU R128，广播标准）就在设备里，歌曲播放时读取你的主控。10 秒后，它还会显示 Spotify 为了达到 −14 LUFS 的电平，会把这首歌调高或调低多少。本页没有音频，所以这里的数字是根据主控面板得出的估算值。",
- "r1.p":"在包含 Max for Live 的 Ableton Live 12.4 Suite 上构建和测试。",
- "r2.p":"留在你的电脑上。Desk 在你的电脑上读取工程、测量主控，不会向任何地方发送任何内容。",
- "r3.p":"每次改动在加入之前，都要通过对设备、旋钮计算和界面的自动测试。",
- "stk.t":"每个旋钮的中心",
- "stk.a":"MINE，每个旋钮的中心。前往演示。",
- "foot":"Ableton 和 Live 是 Ableton AG 的商标。Desk 与 Ableton 无关联。"
-},
-ko:{
- "meta.desc":"Volume Attack의 Desk: 개발 중인 Max for Live 디바이스입니다. Ableton 세트를 읽어 트랙을 모듈로 묶고, 각 모듈에 쉬운 말로 된 노브 두 개를 만들어 줍니다. 기반은 Live 기본 디바이스입니다.",
-
- "lang.aria":"언어",
- "nav.aria":"섹션","nav.project":"프로젝트","nav.meaning":"의미","nav.mine":"MINE","nav.status":"현황",
-
- "hero.h1":"노브가 아니라,<br>의미를 돌리세요.",
-
-
- "stage.frame":"Desk 디바이스, 인터랙티브 데모",
- "h1.k":"노브 드래그",
- "h2.k":"마스터 패드","h2.v":"점을 끌어 보세요: 따뜻함 ↔ 공기감, 작게 ↔ 크게",
- "h3.k":"더블클릭","h3.v":"MINE으로 되돌리기",
- "h4.k":"Shift + 숫자",
-
-
- "h7.k":"왼쪽 둥근 키",
- "info.def":"디바이스의 아무 곳에나 포인터를 올려 보세요. 디바이스가 각 컨트롤에 대해 써 주는 도움말이 여기에 나옵니다.",
- "info.idle":"아무 컨트롤에나 포인터를 올리면 그 기능이 표시됩니다.",
- "s1.cap":"01 · 내 프로젝트 안에서",
-
-
- "proof.1":"읽은 트랙",
-
- "c2.h":"Live 기본 디바이스",
- "c3.h":"내 디바이스는 그대로",
- "s2.cap":"02 · 의미","s2.h":"의미는 내가 돌리고, 디바이스는 Desk가 돌립니다.",
-
-
-
- "m1.cap":"MINE","m1.h":"MINE 듣기",
- "m2.cap":"Bypass","m2.h":"원본 듣기",
- "m3.cap":"라우드니스",
- "s4.cap":"04 · 현황","s4.h":"개발 중.","s4.p":"Desk는 아직 사용할 수 없습니다. 지금 상황은 이렇습니다.",
-
- "r2.cap":"내 오디오",
- "r3.cap":"테스트",
- "r4.cap":"문의",
- "hero.cap":"Max for Live가 포함된 Ableton Live 12용 · 개발 중",
- "hero.lede":"Desk는 Ableton 프로젝트를 살펴보고 트랙을 곡 안에서 하는 일에 따라 나눕니다. 드럼, 베이스, 보컬 같은 식입니다. 각 그룹에는 양 끝에 쉬운 말이 붙은 노브 두 개가 생깁니다. 예를 들면 <i>뒤로 ↔ 앞으로</i>나 <i>무겁게 ↔ 맑게</i> 같은 것입니다. 노브를 돌리면 Desk가 그 뒤의 Live 디바이스를 움직입니다. 모든 노브의 가운데는 MINE, 즉 Desk가 내 트랙을 위해 맞춰 둔 믹스입니다.",
- "stage.cap":"오늘의 디바이스 모습입니다. 데모는 우리 곡 하나를 실제로 분석한 기록을 다시 재생합니다. Live에는 연결되어 있지 않습니다. 디바이스 자체의 표시는 영어입니다.",
- "h1.v":"위아래로 끌어서 돌립니다. Shift를 누르면 작은 단위로 움직입니다",
- "h4.v":"값을 입력: Shift 4 = +4, Shift 0 = MINE으로 되돌리기",
- "h5.k":"그룹 이름",
- "h5.v":"클릭하면 그 그룹이 꺼집니다. 끌어서 순서를 바꿉니다",
- "h6.v":"누르고 있는 동안 듣기. 클릭하면 켜고 끕니다",
- "h7.v":"다시 분석 (데모는 녹화본을 4배 빠르게 재생합니다)",
- "s1.h":"파일이 아니라, 내 프로젝트.",
- "s1.p":"Desk는 Live 안에서, 이미 가진 트랙 위에서 작동합니다. 내보내거나 업로드할 것이 없습니다. ANALYZE를 누르면 Desk가 트랙을 읽고, 그룹으로 묶고, 마스터용 노브를 추가하고, 모든 것을 Live 기본 디바이스 위에 설정합니다.",
- "proof.aria":"우리 곡 하나의 분석 1회, 2026년 10월 3일 기록",
- "proof.2":"그룹 + 마스터",
- "proof.3":"노브",
- "proof.4":"다른 제작사의 플러그인 (이 세트 안)",
- "c1.h":"역할별 그룹",
- "c1.p":"트랙은 곡 안에서 하는 일에 따라 묶입니다. 디바이스는 한 번에 여섯 그룹을 보여 주고, 나머지는 키 하나로 넘길 수 있습니다.",
- "c2.p":"EQ Eight, Saturator, Limiter, Utility, Drum Buss, 트랙 볼륨, 센드. 모든 변경은 열어 보고, 읽고, 바꿀 수 있는 디바이스에서 일어납니다.",
- "c3.p":"Desk는 자기 디바이스를 트랙 끝에 추가하고 볼륨이나 센드 같은 값을 바꿉니다. 내가 넣은 디바이스는 절대 지우지 않습니다. Cmd+Z 한 번이면 분석 전체가 취소됩니다.",
- "s2.p":"이것은 Desk가 우리 곡을 위해 만든 노브입니다. 각 노브는 MINE을 중심으로 −10에서 +10까지 움직입니다. 노브에 포인터를 올리면 도움말에 움직이는 항목이 dB, Hz, %로 나옵니다.",
- "s3.cap":"03 · 내 믹스는 언제나 손닿는 곳에",
- "s3.h":"한 번 클릭으로 MINE으로.",
- "s3.p":"MINE은 Desk가 내 트랙을 위해 만든 믹스이자 모든 노브의 가운데입니다. BP(바이패스)는 원본을 재생합니다. 위쪽 데모에서 두 키를 모두 눌러 보세요.",
- "m1.p":"MINE을 누르고 있는 동안 Desk의 믹스를 들을 수 있고, 클릭하면 켜고 끕니다. 회색 점은 내 노브가 있던 위치를 기억합니다. 노브를 더블클릭하면 MINE으로 돌아갑니다.",
- "m2.p":"BP는 Desk가 한 모든 것을 끕니다. 마스터도 마찬가지입니다. 안전용 리미터만 켜진 채로 남습니다. 그룹 이름을 클릭하면 그 그룹만 끌 수 있습니다.",
- "m3.h":"라우드니스, 측정",
- "m3.p":"라우드니스 미터(방송 표준인 EBU R128)가 디바이스 안에 있어서 곡이 재생되는 동안 마스터를 읽습니다. 10초 뒤에는 Spotify가 −14 LUFS 레벨에 맞추려고 곡을 얼마나 키우거나 줄일지도 보여 줍니다. 이 페이지에는 오디오가 없어서 여기의 숫자는 마스터 패드로 계산한 추정치입니다.",
- "r1.p":"Max for Live가 포함된 Ableton Live 12.4 Suite에서 만들고 테스트했습니다.",
- "r2.p":"내 컴퓨터에만 남습니다. Desk는 프로젝트를 읽고 마스터를 내 컴퓨터에서 측정하며, 어디로도 아무것도 보내지 않습니다.",
- "r3.p":"모든 변경은 추가되기 전에 디바이스, 노브 계산, 인터페이스의 자동 테스트를 통과합니다.",
- "stk.t":"모든 노브의 중심",
- "stk.a":"MINE, 모든 노브의 중심. 데모로 이동.",
- "foot":"Ableton과 Live는 Ableton AG의 상표입니다. Desk는 Ableton과 제휴 관계가 없습니다."
-}
-};
+const I18N={};
 // the knobs of the demo analysis (filled in by tools/site/build.py from tests/fixtures/analyze/knobs.json)
 const KNOBS=[{"s":"pad","l":"close","r":"spacious"},{"s":"pad","l":"warm","r":"airy"},{"s":"drums","l":"dark","r":"bright"},{"s":"drums","l":"tucked","r":"upfront"},{"s":"vocal","l":"tucked","r":"upfront"},{"s":"vocal","l":"close","r":"spacious"},{"s":"lead","l":"close","r":"spacious"},{"s":"lead","l":"steady","r":"wobbly"},{"s":"fx","l":"warm","r":"airy"},{"s":"fx","l":"tucked","r":"upfront"},{"s":"bass","l":"heavy","r":"clear"},{"s":"bass","l":"dark","r":"bright"},{"s":"master","l":"warm","r":"airy"},{"s":"master","l":"quiet","r":"loud"}];
 // Desk look module colours (tools/knobs/design.js PALETTE)
@@ -882,7 +320,7 @@ const opts=[...list.children];let hi=0;
 function mark(i){hi=(i+opts.length)%opts.length;opts.forEach((o,j)=>o.classList.toggle("cur",j===hi));list.setAttribute("aria-activedescendant",opts[hi].id);opts[hi].scrollIntoView({block:"nearest"});}
 function open(){box.classList.add("open");btn.setAttribute("aria-expanded","true");mark(LANGS.findIndex(l=>l[0]===lang));list.focus({preventScroll:true});}
 function close(back){box.classList.remove("open");btn.setAttribute("aria-expanded","false");if(back)btn.focus();}
-function choose(code){try{localStorage.setItem("desk-lang",code);}catch(e){/* private window: the choice lasts until the page closes */}applyLang(code);close(true);}
+function choose(code){try{localStorage.setItem("desk-lang",code);}catch(e){/* private window: the choice is not kept */}if(code===lang){close(true);return;}location.href=DESK_PATH[code]+location.hash;}
 btn.addEventListener("click",()=>box.classList.contains("open")?close(true):open());
 btn.addEventListener("keydown",e=>{if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();open();}});
 list.addEventListener("click",e=>{const o=e.target.closest("li");if(o)choose(o.dataset.c);});
@@ -898,7 +336,27 @@ list.addEventListener("keydown",e=>{
   else if(k==="Tab")close(false);
 });
 document.addEventListener("pointerdown",e=>{if(!box.contains(e.target))close(false);});
-try{applyLang(DESK_LANG);}finally{document.documentElement.removeAttribute("data-pending");}
+applyLang(DESK_LANG);
+// a small, dismissible offer in the visitor's own language: the saved choice, else the browser's first supported language. Never a redirect.
+const OFFER={en:["Read in English","Close"],ru:["Читать по-русски","Закрыть"],es:["Leer en español","Cerrar"],pt:["Ler em português","Fechar"],de:["Auf Deutsch lesen","Schließen"],fr:["Lire en français","Fermer"],ja:["日本語で読む","閉じる"],zh:["阅读简体中文版","关闭"],ko:["한국어로 보기","닫기"]};
+(function(){
+  let want=null,off=false;
+  try{want=localStorage.getItem("desk-lang");off=sessionStorage.getItem("desk-offer-off")==="1";}catch(e){/* no storage: the offer is simply shown again */}
+  if(!want||DESK_LANGS.indexOf(want)<0){
+    want=null;
+    for(const l of (navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||""])){
+      const t=String(l).toLowerCase(),p=t.split("-")[0];
+      if(p==="zh"&&/-(hant|tw|hk|mo)\b/.test(t))continue;   // Traditional Chinese is not offered: look at the next language
+      if(DESK_LANGS.indexOf(p)>=0){want=p;break;}
+    }
+  }
+  if(!want||want===lang||off)return;
+  const o=document.createElement("div");o.className="offer";o.lang=LANG_TAG[want]||want;
+  const a=document.createElement("a");a.href=DESK_PATH[want]+location.hash;a.textContent=OFFER[want][0];
+  const x=document.createElement("button");x.type="button";x.setAttribute("aria-label",OFFER[want][1]);x.innerHTML='<svg viewBox="0 0 8 8" aria-hidden="true"><path d="M1 1 7 7M7 1 1 7" fill="none" stroke="currentColor" stroke-width="1"/></svg>';
+  x.addEventListener("click",()=>{o.remove();try{sessionStorage.setItem("desk-offer-off","1");}catch(e){/* ignore */}});
+  o.append(a,x);document.body.append(o);
+})();
 // the device page reports its help text and its size; the frame takes the device's width (scaled down on narrow screens)
 let devW=692;
 const size=()=>{frame.style.width=Math.min(devW,fit.clientWidth)+"px";};

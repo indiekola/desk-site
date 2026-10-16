@@ -1,8 +1,9 @@
 {
- "version": "216b17f49fb3",
+ "version": "40c1d07ffcbf",
  "files": [
   ".nojekyll",
   "README.md",
+  "de/index.html",
   "device/controls.js",
   "device/demo.js",
   "device/design.css",
@@ -10,9 +11,18 @@
   "device/flow.js",
   "device/glyphs.js",
   "device/index.html",
+  "es/index.html",
   "fonts-ofl/OFL.txt",
   "fonts-ofl/SplineSans.ttf",
   "fonts-ofl/SplineSansMono.ttf",
-  "index.html"
+  "fr/index.html",
+  "index.html",
+  "ja/index.html",
+  "ko/index.html",
+  "pt-br/index.html",
+  "robots.txt",
+  "ru/index.html",
+  "sitemap.xml",
+  "zh-hans/index.html"
  ]
 }
